@@ -42,7 +42,7 @@ pub enum CatalystCommand {
     /// Interact with the Idescale API
     Ideascale(ideascale::Ideascale),
     /// Validate elections
-    VoteCheck(vote_check::VoteCheck)
+    VoteCheck(vote_check::VoteCheck),
 }
 
 impl Cli {
