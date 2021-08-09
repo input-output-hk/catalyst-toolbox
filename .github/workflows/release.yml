@@ -184,7 +184,7 @@ jobs:
           use-cross: ${{ matrix.cross }}
           command: build
           args: >
-            --manifest-path catalyst-toolbox/Cargo.toml
+            --manifest-path ./Cargo.toml
             --bin catalyst-toolbox
             --verbose
             --locked
