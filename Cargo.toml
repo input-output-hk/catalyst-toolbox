@@ -1,6 +1,6 @@
 [package]
 name = "catalyst-toolbox"
-version = "0.2.0-ci-test.3"
+version = "0.2.0-ci-test.4"
 edition = "2018"
 
 authors = ["danielsanchezq <daniel.sanchez@iohk.io>"]
