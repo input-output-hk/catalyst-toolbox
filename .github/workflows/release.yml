@@ -142,6 +142,11 @@ jobs:
         with:
           submodules: true
 
+      - name: Add rust components
+        uses: actions-rs/toolchain@v1
+        with:
+          components: rustfmt
+
       - name: Restore cargo registry index
         uses: actions/cache@v2
         with:
