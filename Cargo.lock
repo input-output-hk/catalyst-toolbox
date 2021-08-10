@@ -313,7 +313,7 @@ dependencies = [
 
 [[package]]
 name = "catalyst-toolbox"
-version = "0.2.0-ci-test.5"
+version = "0.2.0-ci-test.6"
 dependencies = [
  "assert_cmd",
  "assert_fs",
