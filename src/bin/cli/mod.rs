@@ -4,6 +4,7 @@ mod logs;
 mod notifications;
 mod recovery;
 mod rewards;
+mod vote_check;
 
 use std::error::Error;
 use structopt::StructOpt;
@@ -40,6 +41,8 @@ pub enum CatalystCommand {
     QrCode(kedqr::QrCodeCmd),
     /// Interact with the Idescale API
     Ideascale(ideascale::Ideascale),
+    /// Validate elections
+    VoteCheck(vote_check::VoteCheck)
 }
 
 impl Cli {
@@ -68,6 +71,7 @@ impl CatalystCommand {
             Logs(logs) => logs.exec()?,
             QrCode(kedqr) => kedqr.exec()?,
             Ideascale(ideascale) => ideascale.exec()?,
+            VoteCheck(vote_check) => vote_check.exec()?,
         };
         Ok(())
     }
