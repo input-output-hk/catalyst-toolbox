@@ -127,10 +127,6 @@ jobs:
           - config: {os: windows-latest, target: x86_64-pc-windows-msvc}
             toolchain: stable-x86_64-pc-windows-msvc
             cross: false
-          # Cross targets
-          - config: {os: ubuntu-latest,  target: x86_64-unknown-linux-musl}
-            toolchain: stable
-            cross: true
 
     steps:
 
