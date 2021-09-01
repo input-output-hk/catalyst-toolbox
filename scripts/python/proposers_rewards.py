@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List, Tuple, Generator, TextIO, Union
+from typing import Dict, Optional, List, Tuple, Generator, TextIO, Union, Any
 
 import sys
 import asyncio
@@ -217,6 +217,10 @@ async def get_proposals_voteplans_and_challenges_from_api(
     return proposals, voteplans_proposals, challenges
 
 
+def load_block0_data(block0_path: str) -> Dict[str, Any]:
+    with open(block0_path) as f:
+        return json.load(f)
+
 # Checkers
 
 
@@ -251,11 +255,17 @@ def extract_yes_no_votes(proposal: Proposal, voteplan_proposal: ProposalStatus):
 
 
 def calc_approval_threshold(
-    proposal: Proposal, voteplan_proposal: ProposalStatus, threshold: float
+    proposal: Proposal,
+    voteplan_proposal: ProposalStatus,
+    threshold: float,
+    total_stake_threshold: float,
 ) -> Tuple[int, bool]:
     yes_result, no_result = extract_yes_no_votes(proposal, voteplan_proposal)
+    total_stake = yes_result + no_result
+    pass_total_threshold = total_stake >= total_stake_threshold
     diff = yes_result - no_result
-    success = diff >= (no_result * threshold)
+    normalized_stake = diff / total_stake_threshold
+    success = normalized_stake >= threshold
     return diff, success
 
 
@@ -263,11 +273,15 @@ def calc_vote_difference_and_threshold_success(
     proposals: Dict[str, Proposal],
     voteplan_proposals: Dict[str, ProposalStatus],
     threshold: float,
+    total_stake_threshold: float,
 ) -> Dict[str, Tuple[int, bool]]:
     full_ids = set(proposals.keys())
     result = {
         proposal_id: calc_approval_threshold(
-            proposals[proposal_id], voteplan_proposals[proposal_id], threshold
+            proposals[proposal_id],
+            voteplan_proposals[proposal_id],
+            threshold,
+            total_stake_threshold
         )
         for proposal_id in full_ids
     }
@@ -301,9 +315,10 @@ def calc_results(
     fund: float,
     conversion_factor: float,
     threshold: float,
+    total_stake_threshold: float,
 ) -> List[Result]:
     success_results = calc_vote_difference_and_threshold_success(
-        proposals, voteplan_proposals, threshold
+        proposals, voteplan_proposals, threshold, total_stake_threshold
     )
     sorted_ids = sorted(
         success_results.keys(), key=lambda x: success_results[x][0], reverse=True
@@ -373,6 +388,11 @@ def filter_data_by_challenge(
     return proposals, voteplans
 
 
+def calculate_total_stake_from_block0_configuration(block0_config: Dict[str, Dict]):
+    return sum(int(initial["value"]) for initial in block0_config["initial"] if "value" in initial)
+
+
+
 # Output results
 
 
@@ -409,6 +429,8 @@ class OutputFormat(enum.Enum):
 def calculate_rewards(
     conversion_factor: float = typer.Option(...),
     output_file: str = typer.Option(...),
+    block0_path: str = typer.Option(...),
+    total_stake_threshold: float = typer.Option(0.1),
     approval_threshold: float = typer.Option(0.15),
     output_format: OutputFormat = typer.Option("csv"),
     proposals_path: Optional[str] = typer.Option(None),
@@ -446,6 +468,11 @@ def calculate_rewards(
         print(f"{e}")
         sys.exit(1)
 
+    block0_config = load_block0_data(block0_path)
+    total_stake = calculate_total_stake_from_block0_configuration(block0_config)
+    # minimum amount of stake needed for a proposal to be accepted
+    total_stake_approval_threshold = total_stake_threshold * total_stake
+
     for challenge in challenges.values():
         challenge_proposals, challenge_voteplan_proposals = filter_data_by_challenge(
             challenge.id, proposals, voteplan_proposals
@@ -456,6 +483,7 @@ def calculate_rewards(
             challenge.rewards_total,
             conversion_factor,
             approval_threshold,
+            total_stake_approval_threshold,
         )
         out_stream = (
             output_json(results)
