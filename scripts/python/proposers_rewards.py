@@ -265,7 +265,8 @@ def calc_approval_threshold(
     pass_total_threshold = total_stake >= total_stake_threshold
     diff = yes_result - no_result
     normalized_stake = diff / total_stake_threshold
-    success = normalized_stake >= threshold
+    pass_relative_threshold = normalized_stake >= threshold
+    success = pass_total_threshold and pass_relative_threshold
     return diff, success
 
 
