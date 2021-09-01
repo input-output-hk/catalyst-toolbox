@@ -11,6 +11,7 @@ from collections import namedtuple
 import pydantic
 import httpx
 import typer
+import yaml
 
 # VIT servicing station models
 
@@ -218,8 +219,8 @@ async def get_proposals_voteplans_and_challenges_from_api(
 
 
 def load_block0_data(block0_path: str) -> Dict[str, Any]:
-    with open(block0_path) as f:
-        return json.load(f)
+    with open(block0_path, encoding="utf8") as f:
+        return yaml.load(f, Loader=yaml.FullLoader)
 
 # Checkers
 
@@ -390,7 +391,8 @@ def filter_data_by_challenge(
 
 
 def calculate_total_stake_from_block0_configuration(block0_config: Dict[str, Dict]):
-    return sum(int(initial["value"]) for initial in block0_config["initial"] if "value" in initial)
+    funds = (initial["fund"] for initial in block0_config["initial"] if "fund" in initial)
+    return sum(fund["value"] for fund in itertools.chain.from_iterable(funds))
 
 
 
