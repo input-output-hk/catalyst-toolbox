@@ -206,7 +206,7 @@ async def get_proposals_voteplans_and_challenges_from_api(
         get_challenges_from_api(vit_servicing_station_url)
     )
 
-    proposals = {proposal.proposal_id: proposal for proposal in await proposals_task}
+    proposals = {proposal.chain_proposal_id: proposal for proposal in await proposals_task}
     voteplans_proposals = {
         proposal.proposal_id: proposal
         for proposal in itertools.chain.from_iterable(
@@ -393,7 +393,6 @@ def filter_data_by_challenge(
 def calculate_total_stake_from_block0_configuration(block0_config: Dict[str, Dict]):
     funds = (initial["fund"] for initial in block0_config["initial"] if "fund" in initial)
     return sum(fund["value"] for fund in itertools.chain.from_iterable(funds))
-
 
 
 # Output results
