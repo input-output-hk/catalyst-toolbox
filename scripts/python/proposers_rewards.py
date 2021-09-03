@@ -250,12 +250,14 @@ def sanity_check_data(
 
 
 def extract_yes_no_votes(proposal: Proposal, voteplan_proposal: ProposalStatus):
+    blank_index = proposal.chain_vote_options["blank"]
     yes_index = proposal.chain_vote_options["yes"]
     no_index = proposal.chain_vote_options["no"]
     # we check before if tally is available, so it should be safe to direct access the data
+    blank_result = voteplan_proposal.tally.results[blank_index]  # type: ignore
     yes_result = voteplan_proposal.tally.results[yes_index]  # type: ignore
     no_result = voteplan_proposal.tally.results[no_index]  # type: ignore
-    return yes_result, no_result
+    return blank_result, yes_result, no_result
 
 
 def calc_approval_threshold(
@@ -264,12 +266,11 @@ def calc_approval_threshold(
     threshold: float,
     total_stake_threshold: float,
 ) -> Tuple[int, bool]:
-    yes_result, no_result = extract_yes_no_votes(proposal, voteplan_proposal)
-    total_stake = yes_result + no_result
+    blank_result, yes_result, no_result = extract_yes_no_votes(proposal, voteplan_proposal)
+    total_stake = blank_result + yes_result + no_result
     pass_total_threshold = total_stake >= total_stake_threshold
     diff = yes_result - no_result
-    normalized_stake = yes_result / total_stake_threshold
-    pass_relative_threshold = normalized_stake >= threshold
+    pass_relative_threshold = diff >= (no_result * threshold)
     success = pass_total_threshold and pass_relative_threshold
     return diff, success
 
