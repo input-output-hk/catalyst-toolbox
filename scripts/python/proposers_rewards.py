@@ -266,7 +266,9 @@ def calc_approval_threshold(
     threshold: float,
     total_stake_threshold: float,
 ) -> Tuple[int, bool]:
-    blank_result, yes_result, no_result = extract_yes_no_votes(proposal, voteplan_proposal)
+    blank_result, yes_result, no_result = extract_yes_no_votes(
+        proposal, voteplan_proposal
+    )
     total_stake = blank_result + yes_result + no_result
     pass_total_threshold = total_stake >= total_stake_threshold
     diff = yes_result - no_result
