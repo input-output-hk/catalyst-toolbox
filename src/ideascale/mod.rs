@@ -2,22 +2,26 @@ mod fetch;
 mod models;
 
 use crate::ideascale::fetch::Scores;
-use crate::ideascale::models::de::{Challenge, Fund, Funnel, Proposal, Stage};
+use crate::ideascale::models::de::{clean_str, Challenge, Fund, Funnel, Proposal, Stage};
 
 use std::collections::HashMap;
 
 pub use crate::ideascale::models::custom_fields::CustomFieldTags;
+use regex::Regex;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error(transparent)]
-    FetchError(#[from] fetch::Error),
+    Fetch(#[from] fetch::Error),
 
     #[error(transparent)]
-    JoinError(#[from] tokio::task::JoinError),
+    Join(#[from] tokio::task::JoinError),
 
     #[error(transparent)]
-    SerdeError(#[from] serde_json::Error),
+    Serde(#[from] serde_json::Error),
+
+    #[error(transparent)]
+    Regex(#[from] regex::Error),
 }
 
 #[derive(Debug)]
@@ -32,6 +36,7 @@ pub struct IdeaScaleData {
 pub async fn fetch_all(
     fund: usize,
     stage_label: &str,
+    stages_filters: &[&str],
     api_token: String,
 ) -> Result<IdeaScaleData, Error> {
     let funnels_task = tokio::spawn(fetch::get_funnels_data_for_fund(api_token.clone()));
@@ -54,13 +59,16 @@ pub async fn fetch_all(
         .map(|c| tokio::spawn(fetch::get_proposals_data(c.id, api_token.clone())))
         .collect();
 
+    let matches = regex::Regex::new(&stages_filters.join("|"))?;
     let proposals = futures::future::try_join_all(proposals_tasks)
         .await?
         .into_iter()
+        // forcefully unwrap to pop errors directly
+        // TODO: Handle error better here
+        .map(Result::unwrap)
         .flatten()
-        .flatten()
-        // filter out non
-        .filter(|p| filter_proposal_by_stage_type(&p.stage_type));
+        // filter out non approved or staged proposals
+        .filter(|p| p.approved && filter_proposal_by_stage_type(&p.stage_type, &matches));
 
     let mut stages: Vec<_> = fetch::get_stages(api_token.clone()).await?;
     stages.retain(|stage| filter_stages(stage, stage_label, &funnels));
@@ -107,10 +115,8 @@ pub fn build_challenges(
     ideascale_data: &IdeaScaleData,
 ) -> HashMap<u32, models::se::Challenge> {
     let funnels = &ideascale_data.funnels;
-    ideascale_data
-        .challenges
-        .values()
-        .enumerate()
+    (1..)
+        .zip(ideascale_data.challenges.values())
         .map(|(i, c)| {
             (
                 c.id,
@@ -160,7 +166,12 @@ pub fn build_proposals(
                 challenge_type: challenge.challenge_type.clone(),
                 chain_vote_type: chain_vote_type.to_string(),
                 internal_id: i.to_string(),
-                proposal_funds: p.custom_fields.proposal_funds.clone(),
+                // this may change to an integer type in the future, would have to get from json value as so
+                proposal_funds: get_from_extra_fields(
+                    &p.custom_fields.fields,
+                    &tags.proposal_funds,
+                )
+                .unwrap_or_default(),
                 proposal_id: p.proposal_id.to_string(),
                 proposal_impact_score: scores
                     .get(&p.proposal_id)
@@ -174,29 +185,30 @@ pub fn build_proposals(
                 proposal_url: p.proposal_url.to_string(),
                 proposer_email: p.proposer.contact.clone(),
                 proposer_name: p.proposer.name.clone(),
-                proposer_relevant_experience: p
-                    .custom_fields
-                    .proposal_relevant_experience
-                    .to_string(),
-                proposer_url: p
-                    .custom_fields
-                    .extra
-                    .get(&tags.proposer_url)
-                    .map(|c| c.as_str().unwrap())
-                    .unwrap_or("")
-                    .to_string(),
+                proposer_relevant_experience: get_from_extra_fields(
+                    &p.custom_fields.fields,
+                    &tags.proposal_relevant_experience,
+                )
+                .map(|s| clean_str(&s))
+                .unwrap_or_default(),
+                proposer_url: get_from_extra_fields(&p.custom_fields.fields, &tags.proposer_url)
+                    .unwrap_or_default(),
                 proposal_solution: get_from_extra_fields(
-                    &p.custom_fields.extra,
+                    &p.custom_fields.fields,
                     &tags.proposal_solution,
                 ),
-                proposal_brief: get_from_extra_fields(&p.custom_fields.extra, &tags.proposal_brief),
-                proposal_importance: get_from_extra_fields(
-                    &p.custom_fields.extra,
-                    &tags.proposal_importance,
+                proposal_brief: get_from_extra_fields(
+                    &p.custom_fields.fields,
+                    &tags.proposal_brief,
                 ),
-                proposal_goal: get_from_extra_fields(&p.custom_fields.extra, &tags.proposal_goal),
+                proposal_importance: get_from_extra_fields(
+                    &p.custom_fields.fields,
+                    &tags.proposal_importance,
+                )
+                .map(|s| clean_str(&s)),
+                proposal_goal: get_from_extra_fields(&p.custom_fields.fields, &tags.proposal_goal),
                 proposal_metrics: get_from_extra_fields(
-                    &p.custom_fields.extra,
+                    &p.custom_fields.fields,
                     &tags.proposal_metrics,
                 ),
             }
@@ -204,8 +216,8 @@ pub fn build_proposals(
         .collect()
 }
 
-fn filter_proposal_by_stage_type(stage: &str) -> bool {
-    matches!(stage, "Governance phase" | "Assess QA")
+fn filter_proposal_by_stage_type(stage: &str, re: &Regex) -> bool {
+    re.is_match(stage)
 }
 
 fn filter_stages(stage: &Stage, stage_label: &str, funnel_ids: &HashMap<u32, Funnel>) -> bool {
