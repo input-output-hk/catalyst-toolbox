@@ -1,5 +1,5 @@
-use crate::cli::rewards::ca::excel::Error::MissingWorksheet;
 use calamine::{open_workbook, DataType, Range, Reader, Xlsx};
+use serde::de::DeserializeOwned;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
@@ -17,9 +17,14 @@ pub enum Error {
     #[error("Couldn't find workbook {0}")]
     CouldNotFindWorkbook(String),
 
-    #[error("Workbook is missing worksheet {0}")]
+    #[error("Workbook is missing worksheets {0:?}")]
     MissingWorksheets(HashSet<String>),
+
+    #[error("Workbook is missing worksheet {0}")]
+    MissingWorksheet(String),
 }
+
+pub type Worksheets = HashMap<String, Range<DataType>>;
 
 pub fn read_ca_aggregated_file(
     filepath: &Path,
@@ -29,8 +34,23 @@ pub fn read_ca_aggregated_file(
     let worksheets = workbook.worksheets();
     let worksheets_names: HashSet<String> = worksheets.iter().map(|x| x.0.clone()).collect();
     if !tabs_list.is_subset(&worksheets_names) {
-        let missing_sheets: HashSet<String> = tabs_list.difference(&worksheets_names).collect();
-        return Err(MissingWorksheet(missing_sheets));
+        let missing_sheets: HashSet<String> =
+            tabs_list.difference(&worksheets_names).cloned().collect();
+        return Err(Error::MissingWorksheets(missing_sheets));
     }
     Ok(worksheets.into_iter().collect())
+}
+
+pub fn load_from_worksheet<T: DeserializeOwned>(
+    worksheet: &str,
+    worksheets: Worksheets,
+) -> Result<Vec<T>, Error> {
+    let range = worksheets
+        .get(worksheet)
+        .ok_or_else(|| Error::MissingWorksheet(worksheet.to_string()))?;
+    let mut res = Vec::new();
+    for entry in range.deserialize()? {
+        res.push(entry?);
+    }
+    Ok(res)
 }
