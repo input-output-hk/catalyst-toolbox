@@ -1,14 +1,14 @@
+use super::Ca;
 use rand::{
     distributions::{Distribution, WeightedIndex},
     thread_rng,
 };
 use std::collections::HashMap;
 
-type Ca = String;
 type TotalTickets = usize;
 type TicketsDistribution = HashMap<Ca, TotalTickets>;
 
-pub fn winner(distribution: &TicketsDistribution) -> Ca {
+pub fn lottery_winner(distribution: &TicketsDistribution) -> Ca {
     let mut rng = thread_rng();
     let items: Vec<(Ca, TotalTickets)> = distribution
         .iter()
