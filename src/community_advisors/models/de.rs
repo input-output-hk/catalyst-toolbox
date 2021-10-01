@@ -30,6 +30,6 @@ mod tests {
 
     #[test]
     fn test_deserialize() {
-        let file_path = PathBuf::from("./resources/tests/valid_assessments.csv");
+        let file_path = PathBuf::from("../../../resources/testing/valid_assessments.csv");
     }
 }
