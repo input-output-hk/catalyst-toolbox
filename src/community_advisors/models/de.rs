@@ -22,6 +22,8 @@ pub struct AdvisorReviewRow {
     auditability_note: String,
     #[serde(alias = "Auditability Rating")]
     pub auditability_rating: u8,
+    pub excellent: u32,
+    pub good: u32,
 }
 
 #[cfg(test)]
