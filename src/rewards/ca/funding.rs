@@ -26,3 +26,20 @@ impl FundSetting {
         self.total
     }
 }
+
+#[derive(Deserialize)]
+pub struct ProposalRewardSlots {
+    pub excellent_slots: usize,
+    pub good_slots: usize,
+    pub filled_slots: usize,
+}
+
+impl Default for ProposalRewardSlots {
+    fn default() -> Self {
+        Self {
+            excellent_slots: 12,
+            good_slots: 4,
+            filled_slots: 35,
+        }
+    }
+}
