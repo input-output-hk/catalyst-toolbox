@@ -25,13 +25,18 @@ impl FundSetting {
     pub fn total_funds(&self) -> Funds {
         self.total
     }
+
+    #[inline]
+    pub fn funds_per_proposal(&self, number_of_proposals: u64) -> Funds {
+        self.total / Funds::from(number_of_proposals)
+    }
 }
 
 #[derive(Deserialize)]
 pub struct ProposalRewardSlots {
-    pub excellent_slots: usize,
-    pub good_slots: usize,
-    pub filled_slots: usize,
+    pub excellent_slots: u64,
+    pub good_slots: u64,
+    pub filled_slots: u64,
 }
 
 impl Default for ProposalRewardSlots {
@@ -39,7 +44,7 @@ impl Default for ProposalRewardSlots {
         Self {
             excellent_slots: 12,
             good_slots: 4,
-            filled_slots: 35,
+            filled_slots: 36,
         }
     }
 }

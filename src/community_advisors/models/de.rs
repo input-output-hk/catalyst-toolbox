@@ -1,7 +1,5 @@
 use serde::Deserialize;
 
-use vit_servicing_station_lib::db::models::community_advisors_reviews::ReviewTag;
-
 #[derive(Deserialize)]
 pub struct AdvisorReviewRow {
     pub proposal_id: String,
@@ -22,9 +20,30 @@ pub struct AdvisorReviewRow {
     #[serde(alias = "Auditability Rating")]
     pub auditability_rating: u8,
     #[serde(alias = "Excellent")]
-    pub excellent: u32,
+    excellent: bool,
     #[serde(alias = "Good")]
-    pub good: u32,
+    good: bool,
+}
+
+pub enum ReviewScore {
+    Excellent,
+    Good,
+}
+
+impl AdvisorReviewRow {
+    pub fn score(&self) -> ReviewScore {
+        match (self.excellent, self.good) {
+            (true, false) => ReviewScore::Excellent,
+            (false, true) => ReviewScore::Excellent,
+            _ => {
+                // This should never happen
+                panic!(
+                    "Invalid combination of scores from assessor {} for proposal {}",
+                    self.assessor, self.proposal_id
+                )
+            }
+        }
+    }
 }
 
 #[cfg(test)]

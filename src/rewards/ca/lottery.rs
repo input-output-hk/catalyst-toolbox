@@ -14,6 +14,6 @@ pub fn lottery_winner(distribution: &TicketsDistribution) -> Ca {
         .iter()
         .map(|(ca, &tickets)| (ca.clone(), tickets))
         .collect();
-    let mut dist = WeightedIndex::new(items.iter().map(|x| x.1)).unwrap();
+    let dist = WeightedIndex::new(items.iter().map(|x| x.1)).unwrap();
     items[dist.sample(&mut rng)].0.clone()
 }
