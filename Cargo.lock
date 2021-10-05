@@ -356,21 +356,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "calamine"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b86ca78da4bdce5ac0f0bdbc0218ad14232f1e668376e044233f64c527cf5abb"
-dependencies = [
- "byteorder",
- "codepage",
- "encoding_rs",
- "log",
- "quick-xml",
- "serde",
- "zip",
-]
-
-[[package]]
 name = "cardano-legacy-address"
 version = "0.1.1"
 source = "git+https://github.com/input-output-hk/chain-libs.git?branch=master#b5163e68258226de03ad9082158b6e2d9373e2bb"
@@ -396,7 +381,6 @@ version = "0.3.0"
 dependencies = [
  "assert_cmd 0.10.2",
  "assert_fs",
- "calamine",
  "chain-addr",
  "chain-core",
  "chain-crypto",
@@ -629,15 +613,6 @@ dependencies = [
  "textwrap",
  "unicode-width",
  "vec_map",
-]
-
-[[package]]
-name = "codepage"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b0e9222c0cdf2c6ac27d73f664f9520266fa911c3106329d359f8861cb8bde9"
-dependencies = [
- "encoding_rs",
 ]
 
 [[package]]
@@ -2897,16 +2872,6 @@ name = "quick-error"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a993555f31e5a609f617c12db6250dedcac1b0a85076912c436e6fc9b2c8e6a3"
-
-[[package]]
-name = "quick-xml"
-version = "0.19.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3d72d5477478f85bd00b6521780dfba1ec6cdaadcf90b8b181c36d7de561f9b"
-dependencies = [
- "encoding_rs",
- "memchr",
-]
 
 [[package]]
 name = "quickcheck"
