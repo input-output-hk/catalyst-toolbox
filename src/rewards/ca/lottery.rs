@@ -5,8 +5,8 @@ use rand::{
 };
 use std::collections::HashMap;
 
-type TotalTickets = usize;
-type TicketsDistribution = HashMap<Ca, TotalTickets>;
+pub type TotalTickets = u64;
+pub type TicketsDistribution = HashMap<Ca, TotalTickets>;
 
 pub fn lottery_winner(distribution: &TicketsDistribution) -> Ca {
     let mut rng = thread_rng();
