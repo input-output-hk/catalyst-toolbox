@@ -10,7 +10,7 @@ pub use funding::FundSetting;
 pub type Ca = String;
 pub type ProposalId = String;
 
-pub type ProposalsRewards = HashMap<ProposalId, Funds>;
+type ProposalsRewards = HashMap<ProposalId, ProposalReward>;
 pub type CaRewards = HashMap<Ca, Funds>;
 pub type ProposalsReviews = HashMap<ProposalId, Vec<AdvisorReviewRow>>;
 
@@ -19,8 +19,13 @@ enum ProposalRewardsState {
     Exact,
     // Proposal has less reviews as needed so some of the funds should go back into the rewards pool
     Unfilled(Funds),
-    //
+    // It has more reviews than fitted rewards
     OverLoaded,
+}
+
+struct ProposalReward {
+    pub state: ProposalRewardsState,
+    pub funds: Funds,
 }
 
 fn proposal_rewards_state(
@@ -47,33 +52,44 @@ fn proposal_rewards_state(
     }
 }
 
-pub fn calculate_funds_per_proposal(
+fn calculate_funds_per_proposal(
     funding: &FundSetting,
     proposal_reviews: &ProposalsReviews,
     rewards_slots: &ProposalRewardSlots,
 ) -> ProposalsRewards {
     let per_proposal_reward = funding.funds_per_proposal(proposal_reviews.len() as u64);
-    // proportionally split rewards
-    let mut rewards: ProposalsRewards = proposal_reviews
-        .keys()
-        .cloned()
-        .zip(std::iter::repeat(per_proposal_reward))
-        .collect();
 
     // check rewards and split extra until there is no more to split
-    let underbudget_funds: Funds = proposal_reviews
+    let proposal_rewards_states: HashMap<ProposalId, ProposalRewardsState> = proposal_reviews
         .iter()
         .map(|(id, reviews)| {
-            match proposal_rewards_state(reviews, per_proposal_reward, rewards_slots) {
-                ProposalRewardsState::Unfilled(extra_funds) => extra_funds,
-                _ => Funds::from(0u64),
-            }
+            (
+                id.clone(),
+                proposal_rewards_state(reviews, per_proposal_reward, rewards_slots),
+            )
+        })
+        .collect();
+
+    let underbudget_funds: Funds = proposal_rewards_states
+        .values()
+        .map(|state| match state {
+            ProposalRewardsState::Unfilled(value) => value.clone(),
+            _ => Funds::from(0u64),
         })
         .sum();
 
     let underbudget_rewards = underbudget_funds / Funds::from(proposal_reviews.len() as u64);
-    rewards.values_mut().for_each(|v| {
-        *v += underbudget_rewards;
-    });
-    rewards
+
+    proposal_rewards_states
+        .into_iter()
+        .map(|(id, state)| {
+            let funds = match state {
+                ProposalRewardsState::Unfilled(unfilled_funds) => {
+                    per_proposal_reward - unfilled_funds
+                }
+                _ => per_proposal_reward + underbudget_rewards,
+            };
+            (id, ProposalReward { state, funds })
+        })
+        .collect()
 }
