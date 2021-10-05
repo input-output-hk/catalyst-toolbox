@@ -3,18 +3,22 @@ mod lottery;
 
 use crate::community_advisors::models::{AdvisorReviewRow, ReviewScore};
 use crate::rewards::ca::funding::{Funds, ProposalRewardSlots};
+
+use lottery::TicketsDistribution;
 use std::collections::HashMap;
 
 pub use funding::FundSetting;
 
 pub type Ca = String;
 pub type ProposalId = String;
+// Lets match to the same type as the funds, but naming it funds would be confusing
+pub type Rewards = Funds;
 
 type ProposalsFunds = HashMap<ProposalId, ProposalReward>;
-pub type CaRewards = HashMap<Ca, Funds>;
+pub type CaRewards = HashMap<Ca, Rewards>;
 pub type ProposalsReviews = HashMap<ProposalId, Vec<AdvisorReviewRow>>;
 
-enum ProposalFundssState {
+enum ProposalFundsState {
     // Proposal has the exact quantity reviews to be rewarded
     Exact,
     // Proposal has less reviews as needed so some of the funds should go back into the rewards pool
@@ -24,7 +28,7 @@ enum ProposalFundssState {
 }
 
 struct ProposalReward {
-    pub state: ProposalFundssState,
+    pub state: ProposalFundsState,
     pub funds: Funds,
 }
 
@@ -32,7 +36,7 @@ fn proposal_rewards_state(
     proposal_reviews: &[AdvisorReviewRow],
     proposal_fund: Funds,
     rewards_slots: &ProposalRewardSlots,
-) -> ProposalFundssState {
+) -> ProposalFundsState {
     let filled_slots: u64 = proposal_reviews
         .iter()
         .map(|review| match review.score() {
@@ -44,23 +48,23 @@ fn proposal_rewards_state(
     if filled_slots < rewards_slots.filled_slots {
         let unfilled_funds =
             proposal_fund * (Funds::from(filled_slots) / Funds::from(rewards_slots.filled_slots));
-        ProposalFundssState::Unfilled(unfilled_funds)
+        ProposalFundsState::Unfilled(unfilled_funds)
     } else if filled_slots > rewards_slots.filled_slots {
-        ProposalFundssState::OverLoaded
+        ProposalFundsState::OverLoaded
     } else {
-        ProposalFundssState::Exact
+        ProposalFundsState::Exact
     }
 }
 
 fn calculate_funds_per_proposal(
-    funding: &FundSetting,
     proposal_reviews: &ProposalsReviews,
+    funding: &FundSetting,
     rewards_slots: &ProposalRewardSlots,
 ) -> ProposalsFunds {
     let per_proposal_reward = funding.funds_per_proposal(proposal_reviews.len() as u64);
 
     // check rewards and split extra until there is no more to split
-    let proposal_rewards_states: HashMap<ProposalId, ProposalFundssState> = proposal_reviews
+    let proposal_rewards_states: HashMap<ProposalId, ProposalFundsState> = proposal_reviews
         .iter()
         .map(|(id, reviews)| {
             (
@@ -73,7 +77,7 @@ fn calculate_funds_per_proposal(
     let underbudget_funds: Funds = proposal_rewards_states
         .values()
         .map(|state| match state {
-            ProposalFundssState::Unfilled(value) => value.clone(),
+            ProposalFundsState::Unfilled(value) => value.clone(),
             _ => Funds::from(0u64),
         })
         .sum();
@@ -84,7 +88,7 @@ fn calculate_funds_per_proposal(
         .into_iter()
         .map(|(id, state)| {
             let funds = match state {
-                ProposalFundssState::Unfilled(unfilled_funds) => {
+                ProposalFundsState::Unfilled(unfilled_funds) => {
                     per_proposal_reward - unfilled_funds
                 }
                 _ => per_proposal_reward + underbudget_rewards,
@@ -92,4 +96,78 @@ fn calculate_funds_per_proposal(
             (id, ProposalReward { state, funds })
         })
         .collect()
+}
+
+fn load_tickets_from_reviews(
+    proposal_reviews: &[AdvisorReviewRow],
+    rewards_slots: &ProposalRewardSlots,
+) -> TicketsDistribution {
+    let mut tickets_distribution = TicketsDistribution::new();
+    for review in proposal_reviews {}
+    tickets_distribution
+}
+
+fn distribute_rewards(
+    funds: Funds,
+    cas: &TicketsDistribution,
+    rewards_slots: &ProposalRewardSlots,
+) -> CaRewards {
+    let rewards_per_ticket = funds / Funds::from(rewards_slots.filled_slots);
+    cas.iter()
+        .map(|(id, tickets)| {
+            (
+                id.clone(),
+                Rewards::from(rewards_per_ticket * rewards_per_ticket),
+            )
+        })
+        .collect()
+}
+
+fn lottery_rewards(
+    funds: Funds,
+    cas: &TicketsDistribution,
+    rewards_slots: &ProposalRewardSlots,
+) -> CaRewards {
+    let rewards_per_ticket = funds / Funds::from(rewards_slots.filled_slots);
+    cas.iter()
+        .map(|(id, tickets)| {
+            (
+                id.clone(),
+                Rewards::from(rewards_per_ticket * rewards_per_ticket),
+            )
+        })
+        .collect()
+}
+
+fn calculate_ca_rewards_for_proposal(
+    proposal_reward: &ProposalReward,
+    proposal_reviews: &[AdvisorReviewRow],
+    rewards_slots: &ProposalRewardSlots,
+) -> CaRewards {
+    let ProposalReward { state, funds } = proposal_reward;
+    let tickets_distribution = load_tickets_from_reviews(proposal_reviews, rewards_slots);
+    match state {
+        ProposalFundsState::Exact | ProposalFundsState::Unfilled(_) => {
+            distribute_rewards(*funds, &tickets_distribution, rewards_slots)
+        }
+        ProposalFundsState::OverLoaded => {
+            lottery_rewards(*funds, &tickets_distribution, rewards_slots)
+        }
+    }
+}
+
+pub fn calculate_ca_rewards(
+    proposal_reviews: &ProposalsReviews,
+    funding: &FundSetting,
+    rewards_slots: &ProposalRewardSlots,
+) -> CaRewards {
+    let proposal_funds = calculate_funds_per_proposal(proposal_reviews, funding, rewards_slots);
+
+    let mut ca_rewards = proposal_reviews
+        .values()
+        .flat_map(|reviews| reviews.iter().map(|review| review.assessor.clone()))
+        .zip(std::iter::repeat(Rewards::default()))
+        .collect();
+
+    ca_rewards
 }
