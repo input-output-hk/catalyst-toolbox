@@ -10,11 +10,11 @@ pub use funding::FundSetting;
 pub type Ca = String;
 pub type ProposalId = String;
 
-type ProposalsRewards = HashMap<ProposalId, ProposalReward>;
+type ProposalsFunds = HashMap<ProposalId, ProposalReward>;
 pub type CaRewards = HashMap<Ca, Funds>;
 pub type ProposalsReviews = HashMap<ProposalId, Vec<AdvisorReviewRow>>;
 
-enum ProposalRewardsState {
+enum ProposalFundssState {
     // Proposal has the exact quantity reviews to be rewarded
     Exact,
     // Proposal has less reviews as needed so some of the funds should go back into the rewards pool
@@ -24,7 +24,7 @@ enum ProposalRewardsState {
 }
 
 struct ProposalReward {
-    pub state: ProposalRewardsState,
+    pub state: ProposalFundssState,
     pub funds: Funds,
 }
 
@@ -32,7 +32,7 @@ fn proposal_rewards_state(
     proposal_reviews: &[AdvisorReviewRow],
     proposal_fund: Funds,
     rewards_slots: &ProposalRewardSlots,
-) -> ProposalRewardsState {
+) -> ProposalFundssState {
     let filled_slots: u64 = proposal_reviews
         .iter()
         .map(|review| match review.score() {
@@ -44,11 +44,11 @@ fn proposal_rewards_state(
     if filled_slots < rewards_slots.filled_slots {
         let unfilled_funds =
             proposal_fund * (Funds::from(filled_slots) / Funds::from(rewards_slots.filled_slots));
-        ProposalRewardsState::Unfilled(unfilled_funds)
+        ProposalFundssState::Unfilled(unfilled_funds)
     } else if filled_slots > rewards_slots.filled_slots {
-        ProposalRewardsState::OverLoaded
+        ProposalFundssState::OverLoaded
     } else {
-        ProposalRewardsState::Exact
+        ProposalFundssState::Exact
     }
 }
 
@@ -56,11 +56,11 @@ fn calculate_funds_per_proposal(
     funding: &FundSetting,
     proposal_reviews: &ProposalsReviews,
     rewards_slots: &ProposalRewardSlots,
-) -> ProposalsRewards {
+) -> ProposalsFunds {
     let per_proposal_reward = funding.funds_per_proposal(proposal_reviews.len() as u64);
 
     // check rewards and split extra until there is no more to split
-    let proposal_rewards_states: HashMap<ProposalId, ProposalRewardsState> = proposal_reviews
+    let proposal_rewards_states: HashMap<ProposalId, ProposalFundssState> = proposal_reviews
         .iter()
         .map(|(id, reviews)| {
             (
@@ -73,7 +73,7 @@ fn calculate_funds_per_proposal(
     let underbudget_funds: Funds = proposal_rewards_states
         .values()
         .map(|state| match state {
-            ProposalRewardsState::Unfilled(value) => value.clone(),
+            ProposalFundssState::Unfilled(value) => value.clone(),
             _ => Funds::from(0u64),
         })
         .sum();
@@ -84,7 +84,7 @@ fn calculate_funds_per_proposal(
         .into_iter()
         .map(|(id, state)| {
             let funds = match state {
-                ProposalRewardsState::Unfilled(unfilled_funds) => {
+                ProposalFundssState::Unfilled(unfilled_funds) => {
                     per_proposal_reward - unfilled_funds
                 }
                 _ => per_proposal_reward + underbudget_rewards,
