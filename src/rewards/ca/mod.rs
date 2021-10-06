@@ -103,7 +103,16 @@ fn load_tickets_from_reviews(
     rewards_slots: &ProposalRewardSlots,
 ) -> TicketsDistribution {
     let mut tickets_distribution = TicketsDistribution::new();
-    for review in proposal_reviews {}
+    for review in proposal_reviews {
+        let entry = tickets_distribution
+            .entry(review.assessor.clone())
+            .or_insert(0);
+        let tickets_to_add = match review.score() {
+            ReviewScore::Excellent => rewards_slots.excellent_slots,
+            ReviewScore::Good => rewards_slots.good_slots,
+        };
+        *entry += tickets_to_add;
+    }
     tickets_distribution
 }
 
@@ -114,12 +123,7 @@ fn distribute_rewards(
 ) -> CaRewards {
     let rewards_per_ticket = funds / Funds::from(rewards_slots.filled_slots);
     cas.iter()
-        .map(|(id, tickets)| {
-            (
-                id.clone(),
-                Rewards::from(rewards_per_ticket * rewards_per_ticket),
-            )
-        })
+        .map(|(id, &tickets)| (id.clone(), Rewards::from(tickets) * rewards_per_ticket))
         .collect()
 }
 
@@ -129,13 +133,10 @@ fn lottery_rewards(
     rewards_slots: &ProposalRewardSlots,
 ) -> CaRewards {
     let rewards_per_ticket = funds / Funds::from(rewards_slots.filled_slots);
-    cas.iter()
-        .map(|(id, tickets)| {
-            (
-                id.clone(),
-                Rewards::from(rewards_per_ticket * rewards_per_ticket),
-            )
-        })
+    let lottery_winnings = lottery::lottery_distribution(cas, rewards_slots.filled_slots);
+    lottery_winnings
+        .into_iter()
+        .map(|(ca, tickets_won)| (ca, Rewards::from(tickets_won) * rewards_per_ticket))
         .collect()
 }
 
