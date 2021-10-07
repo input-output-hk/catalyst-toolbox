@@ -1,8 +1,9 @@
+use serde::Serialize;
 use std::path::{Path, PathBuf};
 
 use super::Error;
 use catalyst_toolbox::rewards::ca::{
-    calculate_ca_rewards, ApprovedProposals, FundSetting, Funds, ProposalRewardSlots,
+    calculate_ca_rewards, ApprovedProposals, CaRewards, FundSetting, Funds, ProposalRewardSlots,
     ProposalsReviews, Rewards,
 };
 use catalyst_toolbox::utils;
@@ -10,6 +11,7 @@ use catalyst_toolbox::utils;
 use catalyst_toolbox::community_advisors::models::{
     AdvisorReviewRow, ApprovedProposalRow, ProposalStatus,
 };
+use catalyst_toolbox::utils::csv::dump_data_to_csv;
 use structopt::StructOpt;
 
 #[derive(StructOpt)]
@@ -21,16 +23,20 @@ struct FundSettingOpt {
     #[structopt(long = "bonus-ratio")]
     bonus_ratio: u8,
     /// total amount of funds to be rewarded
+    #[structopt(long = "funds")]
     total: Funds,
 }
 
 #[derive(StructOpt)]
 struct ProposalRewardsSlotsOpt {
     /// excellent reviews amount of rewards tickets
+    #[structopt(long)]
     excellent_slots: u64,
     /// good reviews amount of rewards tickets
+    #[structopt(long)]
     good_slots: u64,
     /// maximum number of tickets being rewarded per proposal
+    #[structopt(long)]
     filled_slots: u64,
 }
 
@@ -48,6 +54,9 @@ pub struct CommunityAdvisors {
 
     #[structopt(flatten)]
     rewards_slots: ProposalRewardsSlotsOpt,
+
+    #[structopt(long)]
+    output: PathBuf,
 }
 
 impl CommunityAdvisors {
@@ -57,6 +66,7 @@ impl CommunityAdvisors {
             approved_proposals_path,
             fund_settings,
             rewards_slots,
+            output,
         } = self;
 
         assert_eq!(
@@ -74,6 +84,9 @@ impl CommunityAdvisors {
             &fund_settings.into(),
             &rewards_slots.into(),
         );
+
+        let csv_data = rewards_to_csv_data(&rewards);
+        dump_data_to_csv(&csv_data, &output)?;
         Ok(())
     }
 }
@@ -121,4 +134,20 @@ impl From<ProposalRewardsSlotsOpt> for ProposalRewardSlots {
             filled_slots: settings.filled_slots,
         }
     }
+}
+
+fn rewards_to_csv_data(rewards: &CaRewards) -> Vec<impl Serialize> {
+    #[derive(Serialize)]
+    struct Entry {
+        id: String,
+        rewards: Rewards,
+    }
+
+    rewards
+        .iter()
+        .map(|(id, rewards)| Entry {
+            id: id.clone(),
+            rewards: rewards.clone(),
+        })
+        .collect()
 }
