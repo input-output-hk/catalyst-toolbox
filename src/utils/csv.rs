@@ -19,3 +19,13 @@ pub fn dump_data_to_csv<T: Serialize>(data: &[T], file_path: &Path) -> Result<()
     }
     Ok(())
 }
+
+pub fn dump_data_to_csv<T: Serialize>(data: &[T], file_path: &Path) -> Result<(), csv::Error> {
+    let mut writer = csv::WriterBuilder::new()
+        .has_headers(true)
+        .from_path(file_path)?;
+    for entry in data {
+        writer.serialize(entry)?;
+    }
+    Ok(())
+}
