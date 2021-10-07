@@ -147,7 +147,7 @@ fn rewards_to_csv_data(rewards: &CaRewards) -> Vec<impl Serialize> {
         .iter()
         .map(|(id, rewards)| Entry {
             id: id.clone(),
-            rewards: rewards.clone(),
+            rewards: *rewards,
         })
         .collect()
 }

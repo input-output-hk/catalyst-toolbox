@@ -3,6 +3,7 @@ mod lottery;
 
 use crate::community_advisors::models::{AdvisorReviewRow, ReviewScore};
 use lottery::TicketsDistribution;
+use std::cmp::Ordering;
 
 use std::collections::{HashMap, HashSet};
 
@@ -46,14 +47,15 @@ fn proposal_rewards_state(
         })
         .sum();
 
-    if filled_slots < rewards_slots.filled_slots {
-        let unfilled_funds =
-            proposal_fund * (Funds::from(filled_slots) / Funds::from(rewards_slots.filled_slots));
-        ProposalFundsState::Unfilled(unfilled_funds)
-    } else if filled_slots > rewards_slots.filled_slots {
-        ProposalFundsState::OverLoaded
-    } else {
-        ProposalFundsState::Exact
+    match filled_slots.cmp(&rewards_slots.filled_slots) {
+        Ordering::Less => {
+            let unfilled_funds = proposal_fund
+                * (Funds::from(filled_slots) / Funds::from(rewards_slots.filled_slots));
+            ProposalFundsState::Unfilled(unfilled_funds)
+        }
+        Ordering::Equal => ProposalFundsState::Exact,
+
+        Ordering::Greater => ProposalFundsState::OverLoaded,
     }
 }
 
@@ -80,7 +82,7 @@ fn calculate_funds_per_proposal(
     let underbudget_funds: Funds = proposal_rewards_states
         .values()
         .map(|state| match state {
-            ProposalFundsState::Unfilled(value) => value.clone(),
+            ProposalFundsState::Unfilled(value) => *value,
             _ => Funds::from(0u64),
         })
         .sum();
@@ -93,7 +95,7 @@ fn calculate_funds_per_proposal(
             let bonus_funds = approved_proposals
                 .contains(&id)
                 .then(|| bonus_proposals_rewards)
-                .unwrap_or(Funds::from(0u64));
+                .unwrap_or_else(|| Funds::from(0u64));
             let funds = match state {
                 ProposalFundsState::Unfilled(unfilled_funds) => {
                     per_proposal_reward - unfilled_funds
