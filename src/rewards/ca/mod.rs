@@ -2,12 +2,12 @@ mod funding;
 mod lottery;
 
 use crate::community_advisors::models::{AdvisorReviewRow, ReviewScore};
-use crate::rewards::ca::funding::{Funds, ProposalRewardSlots};
-
 use lottery::TicketsDistribution;
-use std::collections::HashMap;
 
-pub use funding::FundSetting;
+use std::collections::{HashMap, HashSet};
+
+pub use crate::rewards::ca::funding::ProposalRewardSlots;
+pub use funding::{FundSetting, Funds};
 
 pub type Ca = String;
 pub type ProposalId = String;
@@ -17,6 +17,7 @@ pub type Rewards = Funds;
 type ProposalsFunds = HashMap<ProposalId, ProposalReward>;
 pub type CaRewards = HashMap<Ca, Rewards>;
 pub type ProposalsReviews = HashMap<ProposalId, Vec<AdvisorReviewRow>>;
+pub type ApprovedProposals = HashSet<ProposalId>;
 
 enum ProposalFundsState {
     // Proposal has the exact quantity reviews to be rewarded
@@ -58,10 +59,12 @@ fn proposal_rewards_state(
 
 fn calculate_funds_per_proposal(
     proposal_reviews: &ProposalsReviews,
+    approved_proposals: &ApprovedProposals,
     funding: &FundSetting,
     rewards_slots: &ProposalRewardSlots,
 ) -> ProposalsFunds {
     let per_proposal_reward = funding.funds_per_proposal(proposal_reviews.len() as u64);
+    let bonus_proposals_rewards = funding.bonus_funds_per_proposal(approved_proposals.len() as u64);
 
     // check rewards and split extra until there is no more to split
     let proposal_rewards_states: HashMap<ProposalId, ProposalFundsState> = proposal_reviews
@@ -87,13 +90,23 @@ fn calculate_funds_per_proposal(
     proposal_rewards_states
         .into_iter()
         .map(|(id, state)| {
+            let bonus_funds = approved_proposals
+                .contains(&id)
+                .then(|| bonus_proposals_rewards)
+                .unwrap_or(Funds::from(0u64));
             let funds = match state {
                 ProposalFundsState::Unfilled(unfilled_funds) => {
                     per_proposal_reward - unfilled_funds
                 }
                 _ => per_proposal_reward + underbudget_rewards,
             };
-            (id, ProposalReward { state, funds })
+            (
+                id,
+                ProposalReward {
+                    state,
+                    funds: funds + bonus_funds,
+                },
+            )
         })
         .collect()
 }
@@ -159,10 +172,12 @@ fn calculate_ca_rewards_for_proposal(
 
 pub fn calculate_ca_rewards(
     proposal_reviews: &ProposalsReviews,
+    approved_proposals: &ApprovedProposals,
     funding: &FundSetting,
     rewards_slots: &ProposalRewardSlots,
 ) -> CaRewards {
-    let proposal_funds = calculate_funds_per_proposal(proposal_reviews, funding, rewards_slots);
+    let proposal_funds =
+        calculate_funds_per_proposal(proposal_reviews, approved_proposals, funding, rewards_slots);
 
     let mut ca_rewards: CaRewards = proposal_reviews
         .values()

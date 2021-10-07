@@ -5,19 +5,19 @@ pub type Funds = U64F64;
 
 #[derive(Deserialize)]
 pub struct FundSetting {
-    proposal_ratio: u8,
-    bonus_ratio: u8,
-    total: Funds,
+    pub proposal_ratio: u8,
+    pub bonus_ratio: u8,
+    pub total: Funds,
 }
 
 impl FundSetting {
     #[inline]
-    pub fn proposal_funds(self) -> Funds {
+    pub fn proposal_funds(&self) -> Funds {
         self.total * (U64F64::from(self.proposal_ratio) / 100)
     }
 
     #[inline]
-    pub fn bonus_funds(self) -> Funds {
+    pub fn bonus_funds(&self) -> Funds {
         self.total * (U64F64::from(self.bonus_ratio) / 100)
     }
 
@@ -28,7 +28,12 @@ impl FundSetting {
 
     #[inline]
     pub fn funds_per_proposal(&self, number_of_proposals: u64) -> Funds {
-        self.total / Funds::from(number_of_proposals)
+        self.proposal_funds() / Funds::from(number_of_proposals)
+    }
+
+    #[inline]
+    pub fn bonus_funds_per_proposal(&self, number_of_proposals: u64) -> Funds {
+        self.bonus_funds() / Funds::from(number_of_proposals)
     }
 }
 
