@@ -1131,7 +1131,6 @@ dependencies = [
  "az",
  "bytemuck",
  "half",
- "serde",
  "typenum",
 ]
 
@@ -4423,8 +4422,8 @@ dependencies = [
  "serde_json",
  "simplelog",
  "structopt",
- "strum",
- "strum_macros",
+ "strum 0.21.0",
+ "strum_macros 0.21.1",
  "thiserror",
  "tokio",
  "tracing",

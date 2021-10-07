@@ -1,4 +1,4 @@
-mod ca;
+mod community_advisors;
 mod veterans;
 mod voters;
 
@@ -10,6 +10,7 @@ use thiserror::Error;
 pub enum Error {
     #[error("error while writing to csv")]
     Csv(#[from] csv::Error),
+
     #[error(transparent)]
     Other(#[from] jcli_lib::jcli_lib::block::Error),
 }
@@ -20,6 +21,9 @@ pub enum Rewards {
     /// Calculate rewards for voters base on their stake
     Voters(voters::VotersRewards),
 
+    /// Calculate community advisors rewards
+    Cas(community_advisors::CommunityAdvisors),
+
     /// Calculate rewards for veteran community advisors
     Veterans(veterans::VeteransRewards),
 }
@@ -28,6 +32,7 @@ impl Rewards {
     pub fn exec(self) -> Result<(), Error> {
         match self {
             Rewards::Voters(cmd) => cmd.exec(),
+            Rewards::Cas(cmd) => cmd.exec(),
             Rewards::Veterans(cmd) => cmd.exec(),
         }
     }

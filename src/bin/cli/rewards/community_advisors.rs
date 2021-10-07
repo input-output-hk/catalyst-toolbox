@@ -1,0 +1,124 @@
+use std::path::{Path, PathBuf};
+
+use super::Error;
+use catalyst_toolbox::rewards::ca::{
+    calculate_ca_rewards, ApprovedProposals, FundSetting, Funds, ProposalRewardSlots,
+    ProposalsReviews, Rewards,
+};
+use catalyst_toolbox::utils;
+
+use catalyst_toolbox::community_advisors::models::{
+    AdvisorReviewRow, ApprovedProposalRow, ProposalStatus,
+};
+use structopt::StructOpt;
+
+#[derive(StructOpt)]
+struct FundSettingOpt {
+    /// % ratio, range in [0, 100]
+    #[structopt(long = "rewards-ratio")]
+    proposal_ratio: u8,
+    /// % ratio, range in [0, 100]
+    #[structopt(long = "bonus-ratio")]
+    bonus_ratio: u8,
+    /// total amount of funds to be rewarded
+    total: Funds,
+}
+
+#[derive(StructOpt)]
+struct ProposalRewardsSlotsOpt {
+    /// excellent reviews amount of rewards tickets
+    excellent_slots: u64,
+    /// good reviews amount of rewards tickets
+    good_slots: u64,
+    /// maximum number of tickets being rewarded per proposal
+    filled_slots: u64,
+}
+
+#[derive(StructOpt)]
+#[structopt(rename_all = "kebab-case")]
+pub struct CommunityAdvisors {
+    #[structopt(long = "assessments")]
+    assessments_path: PathBuf,
+
+    #[structopt(long = "proposals")]
+    approved_proposals_path: PathBuf,
+
+    #[structopt(flatten)]
+    fund_settings: FundSettingOpt,
+
+    #[structopt(flatten)]
+    rewards_slots: ProposalRewardsSlotsOpt,
+}
+
+impl CommunityAdvisors {
+    pub fn exec(self) -> Result<(), Error> {
+        let Self {
+            assessments_path,
+            approved_proposals_path,
+            fund_settings,
+            rewards_slots,
+        } = self;
+
+        assert_eq!(
+            fund_settings.bonus_ratio + fund_settings.proposal_ratio,
+            100,
+            "Wrong ratios: bonus + proposal ratios should be 100"
+        );
+
+        let proposal_reviews = read_proposal_reviews(&assessments_path)?;
+        let approved_proposals = read_approved_proposals(&approved_proposals_path)?;
+
+        let rewards = calculate_ca_rewards(
+            &proposal_reviews,
+            &approved_proposals,
+            &fund_settings.into(),
+            &rewards_slots.into(),
+        );
+        Ok(())
+    }
+}
+
+fn read_proposal_reviews(path: &Path) -> Result<ProposalsReviews, Error> {
+    let reviews: Vec<AdvisorReviewRow> = utils::csv::load_data_from_csv(path)?;
+    let mut proposal_reviews = ProposalsReviews::new();
+
+    for review in reviews.into_iter() {
+        proposal_reviews
+            .entry(review.proposal_id.clone())
+            .or_default()
+            .push(review);
+    }
+
+    Ok(proposal_reviews)
+}
+
+fn read_approved_proposals(path: &Path) -> Result<ApprovedProposals, Error> {
+    let approved_proposals: Vec<ApprovedProposalRow> = utils::csv::load_data_from_csv(path)?;
+    Ok(approved_proposals
+        .into_iter()
+        .filter_map(|proposal_status| match proposal_status.status {
+            ProposalStatus::Approved => Some(proposal_status.proposal_id),
+            ProposalStatus::NotApproved => None,
+        })
+        .collect())
+}
+
+impl From<FundSettingOpt> for FundSetting {
+    fn from(settings: FundSettingOpt) -> Self {
+        Self {
+            proposal_ratio: settings.proposal_ratio,
+            bonus_ratio: settings.bonus_ratio,
+            total: settings.total,
+        }
+    }
+}
+
+impl From<ProposalRewardsSlotsOpt> for ProposalRewardSlots {
+    fn from(settings: ProposalRewardsSlotsOpt) -> Self {
+        Self {
+            excellent_slots: settings.excellent_slots,
+            good_slots: settings.good_slots,
+            filled_slots: settings.filled_slots,
+        }
+    }
+}
