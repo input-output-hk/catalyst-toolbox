@@ -381,7 +381,7 @@ dependencies = [
  "sscanf",
  "stderrlog",
  "structopt",
- "symmetric-cipher 0.5.0 (git+https://github.com/input-output-hk/chain-wallet-libs.git?branch=master)",
+ "symmetric-cipher",
  "thiserror",
  "tokio",
  "url",
@@ -1890,7 +1890,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "strum",
- "symmetric-cipher 0.5.0 (git+https://github.com/input-output-hk/chain-wallet-libs.git?branch=catalyst-fund6)",
+ "symmetric-cipher",
  "sysinfo 0.17.5",
  "tar",
  "thiserror",
@@ -3413,16 +3413,6 @@ checksum = "734676eb262c623cec13c3155096e08d1f8f29adce39ba17948b18dad1e54142"
 name = "symmetric-cipher"
 version = "0.5.0"
 source = "git+https://github.com/input-output-hk/chain-wallet-libs.git?branch=catalyst-fund6#09b38e6689271094c99657037dc4c3ea92d79e88"
-dependencies = [
- "cryptoxide",
- "rand 0.8.4",
- "thiserror",
-]
-
-[[package]]
-name = "symmetric-cipher"
-version = "0.5.0"
-source = "git+https://github.com/input-output-hk/chain-wallet-libs.git?branch=master#b8c883e2c392afc33d2b6f2384490c52af169f8d"
 dependencies = [
  "cryptoxide",
  "rand 0.8.4",
