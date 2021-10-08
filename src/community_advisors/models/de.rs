@@ -1,6 +1,8 @@
 use crate::utils::serde::deserialize_truthy_falsy;
 use serde::Deserialize;
 
+// TODO: When using this for the reviews import cmd remove allow dead_code
+#[allow(dead_code)]
 #[derive(Deserialize)]
 pub struct AdvisorReviewRow {
     pub proposal_id: String,

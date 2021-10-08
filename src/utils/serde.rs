@@ -5,10 +5,8 @@ where
     D: Deserializer<'de>,
 {
     let truthy_value: String = String::deserialize(deserializer)?;
-    Ok(match truthy_value.to_lowercase().as_ref() {
-        "x" => true,
-        "1" => true,
-        "true" => true,
-        _ => false,
-    })
+    Ok(matches!(
+        truthy_value.to_lowercase().as_ref(),
+        "x" | "1" | "true"
+    ))
 }
