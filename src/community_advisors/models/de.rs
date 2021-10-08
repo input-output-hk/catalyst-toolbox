@@ -1,3 +1,4 @@
+use crate::utils::serde::deserialize_truthy_falsy;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -19,9 +20,9 @@ pub struct AdvisorReviewRow {
     auditability_note: String,
     #[serde(alias = "Auditability Rating")]
     pub auditability_rating: u8,
-    #[serde(alias = "Excellent")]
+    #[serde(alias = "Excellent", deserialize_with = "deserialize_truthy_falsy")]
     excellent: bool,
-    #[serde(alias = "Good")]
+    #[serde(alias = "Good", deserialize_with = "deserialize_truthy_falsy")]
     good: bool,
 }
 
