@@ -11,6 +11,9 @@ pub enum Error {
     #[error("error while writing to csv")]
     Csv(#[from] csv::Error),
 
+    #[error("requested funds cannot be parsed: {0}")]
+    InvalidRequestedFunds(String),
+
     #[error(transparent)]
     Other(#[from] jcli_lib::jcli_lib::block::Error),
 }

@@ -15,6 +15,7 @@ pub enum ProposalStatus {
 pub struct ApprovedProposalRow {
     pub proposal_id: String,
     pub status: ProposalStatus,
+    pub requested_funds: String,
 }
 
 impl<'de> Deserialize<'de> for ProposalStatus {

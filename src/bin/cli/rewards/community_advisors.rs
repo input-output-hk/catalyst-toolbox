@@ -1,5 +1,6 @@
 use serde::Serialize;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 
 use super::Error;
 use catalyst_toolbox::rewards::ca::{
@@ -107,13 +108,17 @@ fn read_proposal_reviews(path: &Path) -> Result<ProposalsReviews, Error> {
 
 fn read_approved_proposals(path: &Path) -> Result<ApprovedProposals, Error> {
     let approved_proposals: Vec<ApprovedProposalRow> = utils::csv::load_data_from_csv(path)?;
-    Ok(approved_proposals
+    approved_proposals
         .into_iter()
-        .filter_map(|proposal_status| match proposal_status.status {
-            ProposalStatus::Approved => Some(proposal_status.proposal_id),
+        .filter_map(|proposal| match proposal.status {
+            ProposalStatus::Approved => Some(
+                Funds::from_str(&proposal.requested_funds)
+                    .map(|funds| (proposal.proposal_id, funds)),
+            ),
             ProposalStatus::NotApproved => None,
         })
-        .collect())
+        .collect::<Result<_, _>>()
+        .map_err(|e| Error::InvalidRequestedFunds(e.to_string())) // ParseFixedError does not implement std::Error
 }
 
 impl From<FundSettingOpt> for FundSetting {

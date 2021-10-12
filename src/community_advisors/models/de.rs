@@ -31,6 +31,8 @@ pub struct AdvisorReviewRow {
 pub enum ReviewScore {
     Excellent,
     Good,
+    FilteredOut,
+    NA,
 }
 
 impl AdvisorReviewRow {
@@ -38,6 +40,7 @@ impl AdvisorReviewRow {
         match (self.excellent, self.good) {
             (true, false) => ReviewScore::Excellent,
             (false, true) => ReviewScore::Good,
+            (false, false) => ReviewScore::NA,
             _ => {
                 // This should never happen
                 panic!(

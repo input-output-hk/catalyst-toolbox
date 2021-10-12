@@ -30,11 +30,6 @@ impl FundSetting {
     pub fn funds_per_proposal(&self, number_of_proposals: u64) -> Funds {
         self.proposal_funds() / Funds::from(number_of_proposals)
     }
-
-    #[inline]
-    pub fn bonus_funds_per_proposal(&self, number_of_proposals: u64) -> Funds {
-        self.bonus_funds() / Funds::from(number_of_proposals)
-    }
 }
 
 #[derive(Deserialize)]
