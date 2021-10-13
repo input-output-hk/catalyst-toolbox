@@ -1,7 +1,7 @@
-use fixed::types::U64F64;
+use rust_decimal::Decimal;
 use serde::Deserialize;
 
-pub type Funds = U64F64;
+pub type Funds = Decimal;
 
 #[derive(Deserialize)]
 pub struct FundSetting {
@@ -13,12 +13,12 @@ pub struct FundSetting {
 impl FundSetting {
     #[inline]
     pub fn proposal_funds(&self) -> Funds {
-        self.total * (U64F64::from(self.proposal_ratio) / 100)
+        self.total * (Funds::from(self.proposal_ratio) / Funds::from(100))
     }
 
     #[inline]
     pub fn bonus_funds(&self) -> Funds {
-        self.total * (U64F64::from(self.bonus_ratio) / 100)
+        self.total * (Funds::from(self.bonus_ratio) / Funds::from(100))
     }
 
     #[inline]
