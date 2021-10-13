@@ -10,13 +10,13 @@ use std::collections::{HashMap, HashSet};
 pub use crate::rewards::ca::funding::ProposalRewardSlots;
 pub use funding::{FundSetting, Funds};
 
-pub type Ca = String;
+pub type CommunityAdvisor = String;
 pub type ProposalId = String;
 // Lets match to the same type as the funds, but naming it funds would be confusing
 pub type Rewards = Funds;
 
 type ProposalsFunds = HashMap<ProposalId, ProposalReward>;
-pub type CaRewards = HashMap<Ca, Rewards>;
+pub type CaRewards = HashMap<CommunityAdvisor, Rewards>;
 pub type ProposalsReviews = HashMap<ProposalId, Vec<AdvisorReviewRow>>;
 pub type ApprovedProposals = HashSet<ProposalId>;
 

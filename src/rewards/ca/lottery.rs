@@ -1,4 +1,4 @@
-use super::Ca;
+use super::CommunityAdvisor;
 use rand::{
     distributions::{Distribution, WeightedIndex},
     thread_rng,
@@ -6,12 +6,12 @@ use rand::{
 use std::collections::HashMap;
 
 pub type TotalTickets = u64;
-pub type TicketsDistribution = HashMap<Ca, TotalTickets>;
-pub type CasWinnings = HashMap<Ca, TotalTickets>;
+pub type TicketsDistribution = HashMap<CommunityAdvisor, TotalTickets>;
+pub type CasWinnings = HashMap<CommunityAdvisor, TotalTickets>;
 
-pub fn lottery_winner(distribution: &TicketsDistribution) -> Ca {
+pub fn lottery_winner(distribution: &TicketsDistribution) -> CommunityAdvisor {
     let mut rng = thread_rng();
-    let items: Vec<(Ca, TotalTickets)> = distribution
+    let items: Vec<(CommunityAdvisor, TotalTickets)> = distribution
         .iter()
         .map(|(ca, &tickets)| (ca.clone(), tickets))
         .collect();
