@@ -37,7 +37,7 @@ impl AdvisorReviewRow {
     pub fn score(&self) -> ReviewScore {
         match (self.excellent, self.good) {
             (true, false) => ReviewScore::Excellent,
-            (false, true) => ReviewScore::Excellent,
+            (false, true) => ReviewScore::Good,
             _ => {
                 // This should never happen
                 panic!(

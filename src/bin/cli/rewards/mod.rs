@@ -22,7 +22,7 @@ pub enum Rewards {
     Voters(voters::VotersRewards),
 
     /// Calculate community advisors rewards
-    Cas(community_advisors::CommunityAdvisors),
+    CommunityAdvisors(community_advisors::CommunityAdvisors),
 
     /// Calculate rewards for veteran community advisors
     Veterans(veterans::VeteransRewards),
@@ -32,7 +32,7 @@ impl Rewards {
     pub fn exec(self) -> Result<(), Error> {
         match self {
             Rewards::Voters(cmd) => cmd.exec(),
-            Rewards::Cas(cmd) => cmd.exec(),
+            Rewards::CommunityAdvisors(cmd) => cmd.exec(),
             Rewards::Veterans(cmd) => cmd.exec(),
         }
     }
