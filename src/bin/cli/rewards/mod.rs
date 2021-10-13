@@ -16,6 +16,9 @@ pub enum Error {
 
     #[error(transparent)]
     Other(#[from] jcli_lib::jcli_lib::block::Error),
+
+    #[error("{0}")]
+    InvalidInput(String),
 }
 
 #[derive(StructOpt)]

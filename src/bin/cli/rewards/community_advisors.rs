@@ -70,11 +70,11 @@ impl CommunityAdvisors {
             output,
         } = self;
 
-        assert_eq!(
-            fund_settings.bonus_ratio + fund_settings.proposal_ratio,
-            100,
-            "Wrong ratios: bonus + proposal ratios should be 100"
-        );
+        if fund_settings.bonus_ratio + fund_settings.proposal_ratio != 100 {
+            return Err(Error::InvalidInput(
+                "Wrong ratios: bonus + proposal ratios should be 100".to_string(),
+            ));
+        }
 
         let proposal_reviews = read_proposal_reviews(&assessments_path)?;
         let approved_proposals = read_approved_proposals(&approved_proposals_path)?;
