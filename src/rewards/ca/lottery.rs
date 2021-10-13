@@ -23,17 +23,11 @@ pub fn lottery_distribution(
     distribution: &TicketsDistribution,
     tickets_to_distribute: TotalTickets,
 ) -> CasWinnings {
-    let mut winnings: CasWinnings = distribution
-        .keys()
-        .cloned()
-        .zip(std::iter::repeat(0))
-        .collect();
+    let mut winnings: CasWinnings = CasWinnings::new();
 
     for _ in 0..tickets_to_distribute {
         let winner = lottery_winner(distribution);
-        // we build a default winnings hashmap from the original distribution keys so it is ensured
-        // that the key will be present
-        *winnings.get_mut(&winner).unwrap() += 1;
+        *winnings.entry(winner).or_insert(0) += 1
     }
 
     winnings

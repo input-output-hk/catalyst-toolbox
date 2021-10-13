@@ -181,11 +181,7 @@ pub fn calculate_ca_rewards(
     let proposal_funds =
         calculate_funds_per_proposal(proposal_reviews, approved_proposals, funding, rewards_slots);
 
-    let mut ca_rewards: CaRewards = proposal_reviews
-        .values()
-        .flat_map(|reviews| reviews.iter().map(|review| review.assessor.clone()))
-        .zip(std::iter::repeat(Rewards::default()))
-        .collect();
+    let mut ca_rewards: CaRewards = CaRewards::new();
 
     for (proposal, reviews) in proposal_reviews {
         let proposal_reward = proposal_funds.get(proposal).unwrap();
@@ -193,7 +189,7 @@ pub fn calculate_ca_rewards(
             calculate_ca_rewards_for_proposal(proposal_reward, reviews, rewards_slots);
 
         for (ca, rewards) in proposal_rewards {
-            *ca_rewards.get_mut(&ca).unwrap() += rewards;
+            *ca_rewards.entry(ca).or_insert_with(Rewards::default) += rewards;
         }
     }
 
