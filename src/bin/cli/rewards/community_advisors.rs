@@ -1,3 +1,5 @@
+use chain_crypto::digest::Digest;
+use chain_crypto::Blake2b256;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -5,7 +7,7 @@ use std::str::FromStr;
 use super::Error;
 use catalyst_toolbox::rewards::community_advisors::{
     calculate_ca_rewards, ApprovedProposals, CaRewards, FundSetting, Funds, ProposalRewardSlots,
-    ProposalsReviews, Rewards,
+    ProposalsReviews, Rewards, Seed,
 };
 use catalyst_toolbox::utils;
 
@@ -58,6 +60,9 @@ pub struct CommunityAdvisors {
 
     #[structopt(long)]
     output: PathBuf,
+
+    #[structopt(long)]
+    seed: String,
 }
 
 impl CommunityAdvisors {
@@ -68,6 +73,7 @@ impl CommunityAdvisors {
             fund_settings,
             rewards_slots,
             output,
+            seed,
         } = self;
 
         if fund_settings.bonus_ratio + fund_settings.proposal_ratio != 100 {
@@ -84,6 +90,10 @@ impl CommunityAdvisors {
             &approved_proposals,
             &fund_settings.into(),
             &rewards_slots.into(),
+            Seed::from(
+                Digest::<Blake2b256>::from_str(&seed)
+                    .map_err(|e| Error::InvalidSeed(Box::new(e)))?,
+            ),
         );
 
         let csv_data = rewards_to_csv_data(&rewards);

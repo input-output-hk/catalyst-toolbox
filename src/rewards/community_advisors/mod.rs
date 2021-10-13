@@ -7,6 +7,7 @@ use lottery::TicketsDistribution;
 use std::collections::HashMap;
 
 pub use crate::rewards::community_advisors::funding::ProposalRewardSlots;
+pub use crate::rewards::community_advisors::lottery::Seed;
 pub use funding::{FundSetting, Funds};
 
 pub type CommunityAdvisor = String;
@@ -89,6 +90,7 @@ fn calculate_ca_rewards_for_proposal(
     proposal_reward: &TicketRewards,
     proposal_reviews: &[AdvisorReviewRow],
     rewards_slots: &ProposalRewardSlots,
+    seed: Seed,
 ) -> CaRewards {
     let tickets_distribution = load_tickets_from_reviews(proposal_reviews, rewards_slots);
     let total_proposal_tickets = tickets_distribution.values().sum();
@@ -99,7 +101,7 @@ fn calculate_ca_rewards_for_proposal(
         } else {
             proposal_reward.base_ticket_reward
         };
-    lottery::lottery_distribution(tickets_distribution, tickets_to_distribute, [0; 32])
+    lottery::lottery_distribution(tickets_distribution, tickets_to_distribute, seed)
         .into_iter()
         .map(|(ca, tickets_won)| (ca, Rewards::from(tickets_won) * reward_per_ticket))
         .collect()
@@ -110,14 +112,20 @@ pub fn calculate_ca_rewards(
     approved_proposals: &ApprovedProposals,
     funding: &FundSetting,
     rewards_slots: &ProposalRewardSlots,
+    seed: Seed,
 ) -> CaRewards {
     let ticket_rewards =
         calculate_rewards_per_ticket(proposal_reviews, approved_proposals, funding, rewards_slots);
     let mut ca_rewards = CaRewards::new();
 
     for (proposal, reviews) in proposal_reviews {
-        let proposal_rewards =
-            calculate_ca_rewards_for_proposal(proposal, &ticket_rewards, reviews, rewards_slots);
+        let proposal_rewards = calculate_ca_rewards_for_proposal(
+            proposal,
+            &ticket_rewards,
+            reviews,
+            rewards_slots,
+            seed,
+        );
 
         for (ca, rewards) in proposal_rewards {
             *ca_rewards.entry(ca).or_insert(Rewards::ZERO) += rewards;
