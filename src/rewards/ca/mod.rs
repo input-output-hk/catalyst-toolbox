@@ -46,7 +46,8 @@ fn calculate_rewards_per_ticket(
             })
             .sum::<u64>();
 
-        total_tickets += filled_slots;
+        // at most we reward the maximum allowed tickets per proposal
+        total_tickets += std::cmp::min(filled_slots, rewards_slots.filled_slots);
 
         if let Some(proposal_budget) = approved_proposals.get(id) {
             per_proposal_bonus_reward.insert(
