@@ -6,7 +6,7 @@ use lottery::TicketsDistribution;
 
 use std::collections::HashMap;
 
-pub use crate::rewards::ca::funding::ProposalRewardSlots;
+pub use crate::rewards::community_advisors::funding::ProposalRewardSlots;
 pub use funding::{FundSetting, Funds};
 
 pub type CommunityAdvisor = String;

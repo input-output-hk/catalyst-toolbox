@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use super::Error;
-use catalyst_toolbox::rewards::ca::{
+use catalyst_toolbox::rewards::community_advisors::{
     calculate_ca_rewards, ApprovedProposals, CaRewards, FundSetting, Funds, ProposalRewardSlots,
     ProposalsReviews, Rewards,
 };
