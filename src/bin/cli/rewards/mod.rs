@@ -19,9 +19,6 @@ pub enum Error {
 
     #[error("{0}")]
     InvalidInput(String),
-
-    #[error("Invalid seed: {0}")]
-    InvalidSeed(Box<dyn std::error::Error>),
 }
 
 #[derive(StructOpt)]
