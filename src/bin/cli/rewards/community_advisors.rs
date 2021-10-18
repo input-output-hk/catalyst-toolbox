@@ -1,5 +1,4 @@
-use chain_crypto::digest::Digest;
-use chain_crypto::Blake2b256;
+use chain_crypto::digest::DigestOf;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -90,10 +89,7 @@ impl CommunityAdvisors {
             &approved_proposals,
             &fund_settings.into(),
             &rewards_slots.into(),
-            Seed::from(
-                Digest::<Blake2b256>::from_str(&seed)
-                    .map_err(|e| Error::InvalidSeed(Box::new(e)))?,
-            ),
+            Seed::from(DigestOf::digest(&seed)),
         );
 
         let csv_data = rewards_to_csv_data(&rewards);
