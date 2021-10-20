@@ -17,7 +17,7 @@ pub fn lottery_distribution<R: Rng>(
     let mut indexes =
         rand::seq::index::sample(rng, total_tickets, tickets_to_distribute as usize).into_vec();
     indexes.sort_unstable();
-    let mut indexes = indexes.into_iter();
+    let mut indexes = indexes.into_iter().peekable();
 
     // To avoid using too much memory, tickets are not actually created, and we iterate
     // the CAs to reconstruct the owner of each ticket.
@@ -27,10 +27,10 @@ pub fn lottery_distribution<R: Rng>(
     // Consistent iteration is needed to get reproducible results. In this case,
     // it's ensured by the use of BTreeMap::iter()
     for (ca, n_tickets) in distribution.into_iter() {
-        let tickets_won = indexes
-            .by_ref()
-            .take_while(|winning_tkt| (*winning_tkt as u64) < cumulative_ticket_index + n_tickets)
-            .count();
+        let tickets_won = std::iter::from_fn(|| {
+            indexes.next_if(|tkt| *tkt < (cumulative_ticket_index + n_tickets) as usize)
+        })
+        .count();
         cumulative_ticket_index += n_tickets;
         winnings.insert(ca, tickets_won as u64);
     }
