@@ -32,7 +32,7 @@ pub enum ReviewScore {
     Excellent,
     Good,
     FilteredOut,
-    NA,
+    NA, // not reviewwd by vCAs
 }
 
 impl AdvisorReviewRow {
@@ -54,8 +54,10 @@ impl AdvisorReviewRow {
 
 #[cfg(test)]
 mod tests {
+    use super::ReviewScore;
     use crate::community_advisors::models::AdvisorReviewRow;
     use crate::utils::csv as csv_utils;
+    use rand::RngCore;
     use std::path::PathBuf;
 
     #[test]
@@ -63,5 +65,30 @@ mod tests {
         let file_path = PathBuf::from("./resources/testing/valid_assessments.csv");
         let data: Vec<AdvisorReviewRow> = csv_utils::load_data_from_csv(&file_path).unwrap();
         assert_eq!(data.len(), 1);
+    }
+
+    impl AdvisorReviewRow {
+        pub fn dummy(score: ReviewScore) -> Self {
+            let (excellent, good) = match score {
+                ReviewScore::Good => (false, true),
+                ReviewScore::Excellent => (true, false),
+                ReviewScore::NA => (false, false),
+                _ => unimplemented!(),
+            };
+
+            AdvisorReviewRow {
+                proposal_id: String::new(),
+                idea_url: String::new(),
+                assessor: rand::thread_rng().next_u64().to_string(),
+                impact_alignment_note: String::new(),
+                impact_alignment_rating: 0,
+                feasibility_note: String::new(),
+                feasibility_rating: 0,
+                auditability_note: String::new(),
+                auditability_rating: 0,
+                excellent,
+                good,
+            }
+        }
     }
 }

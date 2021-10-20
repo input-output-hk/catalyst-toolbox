@@ -21,13 +21,15 @@ pub type CaRewards = HashMap<CommunityAdvisor, Rewards>;
 pub type ProposalsReviews = HashMap<ProposalId, Vec<AdvisorReviewRow>>;
 pub type ApprovedProposals = HashMap<ProposalId, Funds>;
 
-const LEGACY_max_winning_tickets: u64 = 3;
+const LEGACY_MAX_WINNING_TICKETS: u64 = 3;
 
+#[derive(Debug)]
 struct ProposalRewards {
     per_ticket_reward: Rewards,
     tickets: ProposalTickets,
 }
 
+#[derive(Debug)]
 enum ProposalTickets {
     Legacy {
         eligible_assessors: HashSet<CommunityAdvisor>,
@@ -63,10 +65,10 @@ fn calculate_rewards_per_proposal(
                 // complexity now
                 assert_eq!(
                     0,
-                    rewards_slots.max_winning_tickets() % LEGACY_max_winning_tickets
+                    rewards_slots.max_winning_tickets() % LEGACY_MAX_WINNING_TICKETS
                 );
                 total_tickets += winning_tkts
-                    * (rewards_slots.max_winning_tickets() / LEGACY_max_winning_tickets);
+                    * (rewards_slots.max_winning_tickets() / LEGACY_MAX_WINNING_TICKETS);
             }
             ProposalTickets::Fund6 { winning_tkts, .. } => total_tickets += winning_tkts,
         }
@@ -86,7 +88,7 @@ fn calculate_rewards_per_proposal(
             let per_ticket_reward = match tickets {
                 ProposalTickets::Legacy { winning_tkts, .. } => {
                     base_ticket_reward * Rewards::from(rewards_slots.max_winning_tickets())
-                        / Rewards::from(LEGACY_max_winning_tickets)
+                        / Rewards::from(LEGACY_MAX_WINNING_TICKETS)
                         + bonus_reward / Rewards::from(winning_tkts)
                 }
                 ProposalTickets::Fund6 { winning_tkts, .. } => {
@@ -115,7 +117,7 @@ fn load_tickets_from_reviews(
                 .iter()
                 .map(|rev| rev.assessor.clone())
                 .collect(),
-            winning_tkts: std::cmp::min(proposal_reviews.len() as u64, LEGACY_max_winning_tickets),
+            winning_tkts: std::cmp::min(proposal_reviews.len() as u64, LEGACY_MAX_WINNING_TICKETS),
         };
     }
 
@@ -166,9 +168,9 @@ fn calculate_ca_rewards_for_proposal<R: Rng>(
 
     let (tickets_distribution, tickets_to_distribute) = match tickets {
         ProposalTickets::Fund6 {
-            tickets_distribution,
+            ticket_distribution,
             winning_tkts,
-        } => (distribution, winning_tkts),
+        } => (ticket_distribution, winning_tkts),
         ProposalTickets::Legacy {
             eligible_assessors,
             winning_tkts,
@@ -198,7 +200,7 @@ pub fn calculate_ca_rewards(
         rewards_slots,
     );
     let mut ca_rewards = CaRewards::new();
-
+    println!("{:?}", proposal_rewards);
     let mut rng = ChaCha8Rng::from_seed(seed);
 
     for proposal_reward in proposal_rewards {
@@ -210,4 +212,125 @@ pub fn calculate_ca_rewards(
     }
 
     ca_rewards
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn gen_dummy_reviews(n_excellent: u32, n_good: u32, n_na: u32) -> Vec<AdvisorReviewRow> {
+        (0..n_excellent)
+            .map(|_| AdvisorReviewRow::dummy(ReviewScore::Excellent))
+            .chain((0..n_good).map(|_| AdvisorReviewRow::dummy(ReviewScore::Good)))
+            .chain((0..n_na).map(|_| AdvisorReviewRow::dummy(ReviewScore::NA)))
+            .collect()
+    }
+
+    #[test]
+    fn test_legacy_mode() {
+        let reviews = gen_dummy_reviews(5, 10, 1);
+        assert!(matches!(
+            load_tickets_from_reviews(&reviews, &ProposalRewardSlots::default()),
+            ProposalTickets::Legacy {
+                winning_tkts: LEGACY_MAX_WINNING_TICKETS,
+                ..
+            }
+        ));
+    }
+
+    macro_rules! check_fund6_winning_tkts {
+        ($excellent:expr, $good:expr, $expected:expr) => {
+            let p = gen_dummy_reviews($excellent, $good, 0);
+            match load_tickets_from_reviews(&p, &Default::default()) {
+                ProposalTickets::Fund6 { winning_tkts, .. } => assert_eq!(winning_tkts, $expected),
+                _ => panic!("invalid lottery setup"),
+            }
+        };
+    }
+
+    #[test]
+    fn test_reviews_limits() {
+        // testcases taken from presentation slides
+        check_fund6_winning_tkts!(3, 2, 32);
+        check_fund6_winning_tkts!(5, 5, 36);
+        check_fund6_winning_tkts!(1, 3, 24);
+        check_fund6_winning_tkts!(5, 0, 24);
+        check_fund6_winning_tkts!(0, 3, 12);
+    }
+
+    fn are_close(a: Funds, b: Funds) -> bool {
+        const DECIMAL_PRECISION: u32 = 10;
+        a.round_dp(DECIMAL_PRECISION) == b.round_dp(DECIMAL_PRECISION)
+    }
+
+    #[test]
+    fn test_underbudget_redistribution() {
+        let mut proposals = HashMap::new();
+        proposals.insert("1".into(), gen_dummy_reviews(1, 5, 0)); // winning tickets: 24
+        proposals.insert("2".into(), gen_dummy_reviews(2, 3, 0)); // winning tickets: 32
+        let res = calculate_ca_rewards(
+            proposals,
+            &ApprovedProposals::new(),
+            &FundSetting {
+                proposal_ratio: 100,
+                bonus_ratio: 0,
+                total: Funds::from(100),
+            },
+            &Default::default(),
+            [0; 32],
+        );
+        assert!(are_close(res.values().sum::<Funds>(), Funds::from(100)));
+    }
+
+    #[test]
+    fn test_bonus_distribution() {
+        let mut proposals = HashMap::new();
+        proposals.insert("1".into(), gen_dummy_reviews(1, 5, 0)); // winning tickets: 24
+        proposals.insert("2".into(), gen_dummy_reviews(1, 1, 0)); // winning tickets: 16
+        proposals.insert("3".into(), gen_dummy_reviews(2, 3, 0)); // winning tickets: 32
+        let res = calculate_ca_rewards(
+            proposals,
+            &vec![("1".into(), Funds::from(2)), ("2".into(), Funds::from(1))]
+                .into_iter()
+                .collect(),
+            &FundSetting {
+                proposal_ratio: 80,
+                bonus_ratio: 20,
+                total: Funds::from(100),
+            },
+            &Default::default(),
+            [0; 32],
+        );
+        assert!(are_close(res.values().sum::<Funds>(), Funds::from(100)));
+    }
+
+    #[test]
+    fn test_all() {
+        use rand::RngCore;
+
+        let mut proposals = HashMap::new();
+        let mut approved_proposals = ApprovedProposals::new();
+        let mut rng = ChaChaRng::from_seed([0; 32]);
+        for i in 0..100 {
+            proposals.insert(
+                i.to_string(),
+                gen_dummy_reviews(rng.next_u32() % 10, rng.next_u32() % 10, rng.next_u32() % 2),
+            );
+            if rng.gen_bool(0.5) {
+                approved_proposals.insert(i.to_string(), Funds::from(rng.next_u32() % 1000));
+            }
+        }
+        let res = calculate_ca_rewards(
+            proposals,
+            &approved_proposals,
+            &FundSetting {
+                proposal_ratio: 80,
+                bonus_ratio: 20,
+                total: Funds::from(100),
+            },
+            &Default::default(),
+            [0; 32],
+        );
+        assert!(are_close(res.values().sum::<Funds>(), Funds::from(100)));
+    }
 }
