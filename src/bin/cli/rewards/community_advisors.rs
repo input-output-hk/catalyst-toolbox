@@ -37,9 +37,12 @@ struct ProposalRewardsSlotsOpt {
     /// good reviews amount of rewards tickets
     #[structopt(long)]
     good_slots: u64,
-    /// maximum number of tickets being rewarded per proposal
+    /// maximum number of excellent reviews being rewarded per proposal
     #[structopt(long)]
-    filled_slots: u64,
+    max_excellent_reviews: u64,
+    /// maximum number of good reviews being rewarded per proposal
+    #[structopt(long)]
+    max_good_reviews: u64,
 }
 
 #[derive(StructOpt)]
@@ -85,7 +88,7 @@ impl CommunityAdvisors {
         let approved_proposals = read_approved_proposals(&approved_proposals_path)?;
 
         let rewards = calculate_ca_rewards(
-            &proposal_reviews,
+            proposal_reviews,
             &approved_proposals,
             &fund_settings.into(),
             &rewards_slots.into(),
@@ -142,7 +145,8 @@ impl From<ProposalRewardsSlotsOpt> for ProposalRewardSlots {
         Self {
             excellent_slots: settings.excellent_slots,
             good_slots: settings.good_slots,
-            filled_slots: settings.filled_slots,
+            max_good_reviews: settings.max_good_reviews,
+            max_excellent_reviews: settings.max_excellent_reviews,
         }
     }
 }

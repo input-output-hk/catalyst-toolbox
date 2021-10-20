@@ -31,7 +31,8 @@ impl FundSetting {
 pub struct ProposalRewardSlots {
     pub excellent_slots: u64,
     pub good_slots: u64,
-    pub filled_slots: u64,
+    pub max_good_reviews: u64,
+    pub max_excellent_reviews: u64,
 }
 
 impl Default for ProposalRewardSlots {
@@ -39,7 +40,14 @@ impl Default for ProposalRewardSlots {
         Self {
             excellent_slots: 12,
             good_slots: 4,
-            filled_slots: 36,
+            max_good_reviews: 3,
+            max_excellent_reviews: 2,
         }
+    }
+}
+
+impl ProposalRewardSlots {
+    pub fn max_winning_tickets(&self) -> u64 {
+        self.max_excellent_reviews * self.excellent_slots + self.max_good_reviews * self.good_slots
     }
 }
