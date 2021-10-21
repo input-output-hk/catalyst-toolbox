@@ -41,6 +41,39 @@ enum ProposalTickets {
     },
 }
 
+fn get_tickets_per_proposal(
+    proposal_reviews: ProposalsReviews,
+    rewards_slots: &ProposalRewardSlots,
+) -> (u64, HashMap<ProposalId, ProposalTickets>) {
+    let (winning_tickets, proposals_tickets): (Vec<_>, _) = proposal_reviews
+        .into_iter()
+        .map(|(id, reviews)| {
+            let filtered = reviews
+                .into_iter()
+                .filter(|review| !matches!(review.score(), ReviewScore::FilteredOut))
+                .collect::<Vec<_>>();
+            let tickets = load_tickets_from_reviews(&filtered, rewards_slots);
+            let winning_tickets = match tickets {
+                ProposalTickets::Legacy { winning_tkts, .. } => {
+                    // it would be a bit harder to track it otherwise, and we don't need this additional
+                    // complexity now
+                    assert_eq!(
+                        0,
+                        rewards_slots.max_winning_tickets() % LEGACY_MAX_WINNING_TICKETS
+                    );
+                    winning_tkts
+                        * (rewards_slots.max_winning_tickets() / LEGACY_MAX_WINNING_TICKETS)
+                }
+                ProposalTickets::Fund6 { winning_tkts, .. } => winning_tkts,
+            };
+
+            (winning_tickets, (id, tickets))
+        })
+        .unzip();
+
+    (winning_tickets.into_iter().sum(), proposals_tickets)
+}
+
 fn calculate_rewards_per_proposal(
     proposal_reviews: ProposalsReviews,
     approved_proposals: &ApprovedProposals,
@@ -49,32 +82,9 @@ fn calculate_rewards_per_proposal(
 ) -> Vec<ProposalRewards> {
     let bonus_funds = funding.bonus_funds();
 
-    let mut total_tickets = 0;
     let total_approved_budget = approved_proposals.values().sum::<Funds>();
-    let mut proposals_tickets = Vec::new();
-
-    for (id, reviews) in proposal_reviews {
-        let filtered = reviews
-            .into_iter()
-            .filter(|review| !matches!(review.score(), ReviewScore::FilteredOut))
-            .collect::<Vec<_>>();
-        let tickets = load_tickets_from_reviews(&filtered, rewards_slots);
-        match tickets {
-            ProposalTickets::Legacy { winning_tkts, .. } => {
-                // it would be a bit harder to track it otherwise, and we don't need this additional
-                // complexity now
-                assert_eq!(
-                    0,
-                    rewards_slots.max_winning_tickets() % LEGACY_MAX_WINNING_TICKETS
-                );
-                total_tickets += winning_tkts
-                    * (rewards_slots.max_winning_tickets() / LEGACY_MAX_WINNING_TICKETS);
-            }
-            ProposalTickets::Fund6 { winning_tkts, .. } => total_tickets += winning_tkts,
-        }
-
-        proposals_tickets.push((id, tickets));
-    }
+    let (total_tickets, proposals_tickets) =
+        get_tickets_per_proposal(proposal_reviews, rewards_slots);
 
     let base_ticket_reward = funding.proposal_funds() / Rewards::from(total_tickets);
 
@@ -198,7 +208,6 @@ pub fn calculate_ca_rewards(
         rewards_slots,
     );
     let mut ca_rewards = CaRewards::new();
-    println!("{:?}", proposal_rewards);
     let mut rng = ChaCha8Rng::from_seed(seed);
 
     for proposal_reward in proposal_rewards {
