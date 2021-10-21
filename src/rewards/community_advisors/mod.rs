@@ -124,11 +124,11 @@ fn load_tickets_from_reviews(
     let excellent_reviews = proposal_reviews
         .iter()
         .filter(|rev| matches!(rev.score(), ReviewScore::Excellent))
-        .count();
+        .count() as u64;
     let good_reviews = proposal_reviews
         .iter()
         .filter(|rev| matches!(rev.score(), ReviewScore::Good))
-        .count();
+        .count() as u64;
 
     // assumes only one review per assessor in a single proposal
     let ticket_distribution = proposal_reviews
@@ -144,12 +144,10 @@ fn load_tickets_from_reviews(
         })
         .collect();
 
-    let excellent_winning_tkts = std::cmp::min(
-        excellent_reviews as u64,
-        rewards_slots.max_excellent_reviews,
-    ) * rewards_slots.excellent_slots;
-    let good_winning_tkts = std::cmp::min(good_reviews as u64, rewards_slots.max_good_reviews)
-        * rewards_slots.good_slots;
+    let excellent_winning_tkts =
+        excellent_reviews.min(rewards_slots.max_excellent_reviews) * rewards_slots.excellent_slots;
+    let good_winning_tkts =
+        good_reviews.min(rewards_slots.max_good_reviews) * rewards_slots.good_slots;
 
     ProposalTickets::Fund6 {
         ticket_distribution,
