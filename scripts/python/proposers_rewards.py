@@ -272,7 +272,7 @@ def calc_approval_threshold(
     total_stake = blank_result + yes_result + no_result
     pass_total_threshold = total_stake >= total_stake_threshold
     diff = yes_result - no_result
-    pass_relative_threshold = diff >= (no_result * threshold)
+    pass_relative_threshold = (yes_result / no_result) >= threshold
     success = pass_total_threshold and pass_relative_threshold
     return diff, success
 
@@ -440,8 +440,8 @@ def calculate_rewards(
     conversion_factor: float = typer.Option(...),
     output_file: str = typer.Option(...),
     block0_path: str = typer.Option(...),
-    total_stake_threshold: float = typer.Option(0.1),
-    approval_threshold: float = typer.Option(0.15),
+    total_stake_threshold: float = typer.Option(0.01),
+    approval_threshold: float = typer.Option(1.15),
     output_format: OutputFormat = typer.Option("csv"),
     proposals_path: Optional[str] = typer.Option(None),
     active_voteplan_path: Optional[str] = typer.Option(None),
@@ -482,6 +482,7 @@ def calculate_rewards(
     total_stake = calculate_total_stake_from_block0_configuration(block0_config)
     # minimum amount of stake needed for a proposal to be accepted
     total_stake_approval_threshold = total_stake_threshold * total_stake
+    print("Total stake: ", total_stake, total_stake_threshold, total_stake_approval_threshold)
 
     for challenge in challenges.values():
         challenge_proposals, challenge_voteplan_proposals = filter_data_by_challenge(
@@ -501,7 +502,7 @@ def calculate_rewards(
             else output_csv(results)
         )
         chalenge_ouput_file_path = build_path_for_challenge(
-            output_file, challenge.title.replace(" ", "_")
+            output_file, challenge.title.replace(" ", "_").replace(":", "_")
         )
         with open(chalenge_ouput_file_path, "w", encoding="utf-8") as out_file:
             dump_to_file(out_stream, out_file)
