@@ -58,7 +58,7 @@ class TallyResult(pydantic.BaseModel):
 
 
 class DecryptedTally(pydantic.BaseModel):
-    decrypted: TallyResult
+    Decrypted: TallyResult
 
 
 class PrivateTallyState(pydantic.BaseModel):
@@ -71,7 +71,7 @@ class PrivateTally(pydantic.BaseModel):
     @property
     def results(self):
         try:
-            return self.Private.state.decrypted.result.results
+            return self.Private.state.Decrypted.result.results
         except AttributeError:
             return None
 
@@ -384,7 +384,7 @@ def filter_data_by_challenge(
     voteplan_proposals: Dict[str, ProposalStatus],
 ) -> Tuple[Dict[str, Proposal], Dict[str, ProposalStatus]]:
     proposals = {
-        proposal.proposal_id: proposal
+        proposal.chain_proposal_id: proposal
         for proposal in proposals.values()
         if proposal.challenge_id == challenge_id
     }
