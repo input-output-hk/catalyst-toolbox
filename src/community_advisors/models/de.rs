@@ -32,7 +32,7 @@ pub enum ReviewScore {
     Excellent,
     Good,
     FilteredOut,
-    NA, // not reviewwd by vCAs
+    NA, // not reviewed by vCAs
 }
 
 impl AdvisorReviewRow {
