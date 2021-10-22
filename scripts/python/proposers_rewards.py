@@ -337,7 +337,7 @@ def calc_results(
         proposal = proposals[proposal_id]
         voteplan_proposal = voteplan_proposals[proposal_id]
         total_result, threshold_success = success_results[proposal_id]
-        yes_result, no_result = extract_yes_no_votes(proposal, voteplan_proposal)
+        blank, yes_result, no_result = extract_yes_no_votes(proposal, voteplan_proposal)
         funded = all(
             (threshold_success, depletion > 0, depletion >= proposal.proposal_funds)
         )
