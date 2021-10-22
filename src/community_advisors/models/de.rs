@@ -42,7 +42,9 @@ impl AdvisorReviewRow {
             (false, true) => ReviewScore::Good,
             (false, false) => ReviewScore::NA,
             _ => {
-                // This should never happen
+                // This should never happen, from the source of information a review could be either
+                // Excellent or Good or not assessed. It cannot be both and it is considered
+                // a malformed information input.
                 panic!(
                     "Invalid combination of scores from assessor {} for proposal {}",
                     self.assessor, self.proposal_id
