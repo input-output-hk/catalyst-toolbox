@@ -400,7 +400,7 @@ def filter_excluded_proposals(
     return {
         k: v
         for k, v in proposals.items()
-        if all(_id not in excluded for _id in (k, v.chain_proposal_id))
+        if all(_id not in excluded for _id in (v.proposal_id, v.chain_proposal_id))
     }
 
 
