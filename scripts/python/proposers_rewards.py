@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List, Tuple, Generator, TextIO, Union, Any
+from typing import Dict, Optional, List, Tuple, Generator, TextIO, Union, Any, Set
 
 import sys
 import asyncio
@@ -163,6 +163,11 @@ def get_proposals_voteplans_and_challenges_from_files(
     return proposals, voteplan_proposals, challeges
 
 
+def get_excluded_proposals_from_file(excluded_proposals_path: str) -> List[str]:
+    with open(excluded_proposals_path, encoding="utf-8") as f:
+        return json.load(f)
+
+
 # API loaders
 
 
@@ -195,7 +200,7 @@ async def get_challenges_from_api(vit_servicing_station_url: str) -> List[Challe
 
 async def get_proposals_voteplans_and_challenges_from_api(
     vit_servicing_station_url: str,
-) -> Tuple[Dict[str, Proposal], Dict[str, ProposalStatus]]:
+) -> Tuple[Dict[str, Proposal], Dict[str, ProposalStatus], Dict[str, Challenge]]:
     proposals_task = asyncio.create_task(
         get_proposals_from_api(vit_servicing_station_url)
     )
@@ -310,8 +315,6 @@ Result = namedtuple(
         "status",
         "fund_depletion",
         "not_funded_reason",
-        "ada_to_be_payed",
-        "lovelace_to_be_payed",
         "link_to_ideascale",
     ),
 )
@@ -321,7 +324,6 @@ def calc_results(
     proposals: Dict[str, Proposal],
     voteplan_proposals: Dict[str, ProposalStatus],
     fund: float,
-    conversion_factor: float,
     threshold: float,
     total_stake_threshold: float,
 ) -> List[Result]:
@@ -354,8 +356,6 @@ def calc_results(
         if funded:
             depletion -= proposal.proposal_funds
 
-        ada_to_be_payed = proposal.proposal_funds / conversion_factor if funded else 0
-
         result = Result(
             proposal_id=proposal_id,
             proposal=proposal.proposal_title,
@@ -368,8 +368,6 @@ def calc_results(
             status=FUNDED if funded else NOT_FUNDED,
             fund_depletion=depletion,
             not_funded_reason=not_funded_reason,
-            ada_to_be_payed=ada_to_be_payed,
-            lovelace_to_be_payed=ada_to_be_payed * LOVELACE_FACTOR,
             link_to_ideascale=proposal.proposal_url,
         )
 
@@ -394,6 +392,16 @@ def filter_data_by_challenge(
         if voteplan.proposal_id in proposals
     }
     return proposals, voteplans
+
+
+def filter_excluded_proposals(
+    proposals: Dict[str, Proposal], excluded: Set[str]
+) -> Dict[str, Proposal]:
+    return {
+        k: v
+        for k, v in proposals.items()
+        if all(_id not in excluded for _id in (k, v.chain_proposal_id))
+    }
 
 
 def calculate_total_stake_from_block0_configuration(block0_config: Dict[str, Dict]):
@@ -437,13 +445,13 @@ class OutputFormat(enum.Enum):
 
 
 def calculate_rewards(
-    conversion_factor: float = typer.Option(...),
     output_file: str = typer.Option(...),
     block0_path: str = typer.Option(...),
     total_stake_threshold: float = typer.Option(0.01),
     approval_threshold: float = typer.Option(1.15),
     output_format: OutputFormat = typer.Option("csv"),
     proposals_path: Optional[str] = typer.Option(None),
+    excluded_proposals_path: Optional[str] = typer.Option(None),
     active_voteplan_path: Optional[str] = typer.Option(None),
     challenges_path: Optional[str] = typer.Option(None),
     vit_station_url: str = typer.Option("https://servicing-station.vit.iohk.io"),
@@ -478,11 +486,18 @@ def calculate_rewards(
         print(f"{e}")
         sys.exit(1)
 
+    excluded_proposals: Set[str] = (
+        set(get_excluded_proposals_from_file(excluded_proposals_path))
+        if excluded_proposals_path
+        else set()
+    )
+
+    proposals = filter_excluded_proposals(proposals, excluded_proposals)
+
     block0_config = load_block0_data(block0_path)
     total_stake = calculate_total_stake_from_block0_configuration(block0_config)
     # minimum amount of stake needed for a proposal to be accepted
     total_stake_approval_threshold = total_stake_threshold * total_stake
-    print("Total stake: ", total_stake, total_stake_threshold, total_stake_approval_threshold)
 
     for challenge in challenges.values():
         challenge_proposals, challenge_voteplan_proposals = filter_data_by_challenge(
@@ -492,7 +507,6 @@ def calculate_rewards(
             challenge_proposals,
             challenge_voteplan_proposals,
             challenge.rewards_total,
-            conversion_factor,
             approval_threshold,
             total_stake_approval_threshold,
         )
