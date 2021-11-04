@@ -102,7 +102,7 @@ impl CommunityAdvisors {
 }
 
 fn read_proposal_reviews(path: &Path) -> Result<ProposalsReviews, Error> {
-    let reviews: Vec<AdvisorReviewRow> = utils::csv::load_data_from_csv(path)?;
+    let reviews: Vec<AdvisorReviewRow> = utils::csv::load_data_from_csv::<_, b','>(path)?;
     let mut proposal_reviews = ProposalsReviews::new();
 
     for review in reviews.into_iter() {
@@ -116,15 +116,16 @@ fn read_proposal_reviews(path: &Path) -> Result<ProposalsReviews, Error> {
 }
 
 fn read_approved_proposals(path: &Path) -> Result<ApprovedProposals, Error> {
-    let approved_proposals: Vec<ApprovedProposalRow> = utils::csv::load_data_from_csv(path)?;
+    let approved_proposals: Vec<ApprovedProposalRow> =
+        utils::csv::load_data_from_csv::<_, b';'>(path)?;
     approved_proposals
         .into_iter()
         .filter_map(|proposal| match proposal.status {
-            ProposalStatus::Approved => Some(
+            ProposalStatus::Funded => Some(
                 Funds::from_str(&proposal.requested_funds)
                     .map(|funds| (proposal.proposal_id, funds)),
             ),
-            ProposalStatus::NotApproved => None,
+            ProposalStatus::NotFunded => None,
         })
         .collect::<Result<_, _>>()
         .map_err(|e| Error::InvalidRequestedFunds(e.to_string())) // ParseFixedError does not implement std::Error

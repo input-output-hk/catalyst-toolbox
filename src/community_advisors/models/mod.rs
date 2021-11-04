@@ -5,8 +5,8 @@ use serde::{Deserialize, Deserializer};
 pub use de::{AdvisorReviewRow, ReviewScore};
 
 pub enum ProposalStatus {
-    Approved,
-    NotApproved,
+    Funded,
+    NotFunded,
 }
 
 #[derive(Deserialize)]
@@ -23,8 +23,8 @@ impl<'de> Deserialize<'de> for ProposalStatus {
     {
         let status: String = String::deserialize(deserializer)?;
         Ok(match status.to_lowercase().as_ref() {
-            "approved" => ProposalStatus::Approved,
-            _ => ProposalStatus::NotApproved,
+            "funded" => ProposalStatus::Funded,
+            _ => ProposalStatus::NotFunded,
         })
     }
 }
