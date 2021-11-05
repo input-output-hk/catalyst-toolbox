@@ -422,7 +422,7 @@ def output_csv(results: List[Result]) -> Generator[str, None, None]:
     writer = csv.writer(buff_io)
     writer.writerow(fields)
     writer.writerows(results)
-    yield from buff_io
+    yield from buff_io.getvalue().splitlines()
 
 
 def output_json(results: List[Result]) -> Generator[str, None, None]:
