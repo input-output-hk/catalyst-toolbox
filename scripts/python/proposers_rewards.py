@@ -306,6 +306,7 @@ def calc_vote_difference_and_threshold_success(
 Result = namedtuple(
     "Result",
     (
+        "internal_id",
         "proposal_id",
         "proposal",
         "overall_score",
@@ -359,6 +360,7 @@ def calc_results(
             depletion -= proposal.proposal_funds
 
         result = Result(
+            internal_id=proposal.internal_id,
             proposal_id=proposal_id,
             proposal=proposal.proposal_title,
             overall_score=proposal.proposal_impact_score / 100,
