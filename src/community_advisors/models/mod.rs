@@ -11,6 +11,7 @@ pub enum ProposalStatus {
 
 #[derive(Deserialize)]
 pub struct ApprovedProposalRow {
+    #[serde(alias = "internal_id")]
     pub proposal_id: String,
     pub status: ProposalStatus,
     pub requested_funds: String,
