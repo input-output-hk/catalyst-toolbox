@@ -117,7 +117,7 @@ fn read_proposal_reviews(path: &Path) -> Result<ProposalsReviews, Error> {
 
 fn read_approved_proposals(path: &Path) -> Result<ApprovedProposals, Error> {
     let approved_proposals: Vec<ApprovedProposalRow> =
-        utils::csv::load_data_from_csv::<_, b';'>(path)?;
+        utils::csv::load_data_from_csv::<_, b','>(path)?;
     approved_proposals
         .into_iter()
         .filter_map(|proposal| match proposal.status {
