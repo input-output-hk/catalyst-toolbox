@@ -3,10 +3,12 @@ from typing import Dict, Optional, List, Tuple, Generator, TextIO, Union, Any, S
 import sys
 import asyncio
 import json
+import csv
 import itertools
 import enum
 import os
 from collections import namedtuple
+from io import StringIO
 
 import pydantic
 import httpx
@@ -416,11 +418,11 @@ def calculate_total_stake_from_block0_configuration(block0_config: Dict[str, Dic
 
 def output_csv(results: List[Result]) -> Generator[str, None, None]:
     fields = results[0]._fields
-    yield f"{';'.join(fields)}\n"
-    yield from (
-        f"{';'.join(str(getattr(result, field)) for field in fields)}\n"
-        for result in results
-    )
+    buff_io = StringIO()
+    writer = csv.writer(buff_io)
+    writer.writerow(fields)
+    writer.writerows(results)
+    yield from buff_io
 
 
 def output_json(results: List[Result]) -> Generator[str, None, None]:
