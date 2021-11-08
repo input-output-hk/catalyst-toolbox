@@ -25,18 +25,16 @@ def file_as_csv(file: TextIO, delimiter: chr) -> Tuple[List[str], Iterator[List[
 
 def merge_csv(pattern: str, base_path: Path, output_file: Path, input_delimiter: chr, output_delimiter: chr):
     files = search_file_pattern(pattern, base_path)
-    with (
-            open(output_file, "w", encoding="utf-8", newline='') as out_file,
-            open_files(files) as fs
-    ):
-        writer = csv.writer(out_file, delimiter=output_delimiter)
-        header, first_content = file_as_csv(next(fs), delimiter=input_delimiter)
-        writer.writerow(header)
-        writer.writerows(first_content)
-        for file in fs:
-            # skip headers and use just content
-            _, content = file_as_csv(file, delimiter=input_delimiter)
-            writer.writerows(content)
+    with open(output_file, "w", encoding="utf-8", newline='') as out_file:
+        with open_files(files) as fs:
+            writer = csv.writer(out_file, delimiter=output_delimiter)
+            header, first_content = file_as_csv(next(fs), delimiter=input_delimiter)
+            writer.writerow(header)
+            writer.writerows(first_content)
+            for file in fs:
+                # skip headers and use just content
+                _, content = file_as_csv(file, delimiter=input_delimiter)
+                writer.writerows(content)
 
 
 def merge_csv_files(
