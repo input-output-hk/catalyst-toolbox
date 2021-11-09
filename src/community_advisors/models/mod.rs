@@ -11,10 +11,10 @@ pub enum ProposalStatus {
 
 #[derive(Deserialize)]
 pub struct ApprovedProposalRow {
-    #[serde(alias = "internal_id")]
+    #[serde(rename(deserialize = "internal_id"))]
     pub proposal_id: String,
     pub status: ProposalStatus,
-    pub requested_funds: String,
+    pub requested_dollars: String,
 }
 
 impl<'de> Deserialize<'de> for ProposalStatus {

@@ -126,7 +126,7 @@ def get_proposals_from_file(proposals_file_path: str) -> Dict[str, Proposal]:
         Proposal(**proposal_data)
         for proposal_data in load_json_from_file(proposals_file_path)
     )
-    proposals_dict = {proposal.proposal_id: proposal for proposal in proposals}
+    proposals_dict = {proposal.chain_proposal_id: proposal for proposal in proposals}
     return proposals_dict
 
 
@@ -217,7 +217,7 @@ async def get_proposals_voteplans_and_challenges_from_api(
         proposal.chain_proposal_id: proposal for proposal in await proposals_task
     }
     voteplans_proposals = {
-        proposal.proposal_id: proposal
+        proposal.chain_proposal_id: proposal
         for proposal in itertools.chain.from_iterable(
             voteplan.proposals for voteplan in await voteplans_task
         )
@@ -242,9 +242,13 @@ class SanityException(Exception):
 def sanity_check_data(
     proposals: Dict[str, Proposal], voteplan_proposals: Dict[str, ProposalStatus]
 ):
-    if set(proposals.keys()) != set(voteplan_proposals.keys()):
+    proposals_set = set(proposals.keys())
+    voteplan_proposals_set = set(voteplan_proposals.keys())
+    if proposals_set != voteplan_proposals_set:
+        from pprint import pformat
+        diff = proposals_set.difference(voteplan_proposals_set)
         raise SanityException(
-            "Extra proposals found, voteplan proposals do not match servicing station proposals"
+            f"Extra proposals found, voteplan proposals do not match servicing station proposals: \n{pformat(diff)}"
         )
     if any(proposal.tally is None for proposal in voteplan_proposals.values()):
         raise SanityException("Some proposal do not have a valid tally available")
@@ -360,7 +364,7 @@ def calc_results(
             depletion -= proposal.proposal_funds
 
         result = Result(
-            internal_id=proposal.internal_id,
+            internal_id=proposal.proposal_id,
             proposal_id=proposal_id,
             proposal=proposal.proposal_title,
             overall_score=proposal.proposal_impact_score / 100,
@@ -418,21 +422,15 @@ def calculate_total_stake_from_block0_configuration(block0_config: Dict[str, Dic
 # Output results
 
 
-def output_csv(results: List[Result]) -> Generator[str, None, None]:
+def output_csv(results: List[Result], f: TextIO):
     fields = results[0]._fields
-    buff_io = StringIO()
-    writer = csv.writer(buff_io)
+    writer = csv.writer(f)
     writer.writerow(fields)
     writer.writerows(results)
-    yield from buff_io.getvalue().splitlines()
 
 
-def output_json(results: List[Result]) -> Generator[str, None, None]:
-    yield json.dumps(list(map(Result._asdict, results)))
-
-
-def dump_to_file(stream: Generator[str, None, None], out: TextIO):
-    out.writelines(stream)
+def output_json(results: List[Result], f: TextIO):
+    json.dump(list(map(Result._asdict, results)), f)
 
 
 # CLI
@@ -514,16 +512,16 @@ def calculate_rewards(
             approval_threshold,
             total_stake_approval_threshold,
         )
-        out_stream = (
-            output_json(results)
-            if output_format == OutputFormat.JSON
-            else output_csv(results)
-        )
+
         chalenge_ouput_file_path = build_path_for_challenge(
             output_file, challenge.title.replace(" ", "_").replace(":", "_")
         )
-        with open(chalenge_ouput_file_path, "w", encoding="utf-8") as out_file:
-            dump_to_file(out_stream, out_file)
+
+        with open(chalenge_ouput_file_path, "w", encoding="utf-8", newline="") as out_file:
+            if output_format == OutputFormat.JSON:
+                output_json(results, out_file)
+            elif output_format == OutputFormat.CSV:
+                output_csv(results, out_file)
 
 
 if __name__ == "__main__":

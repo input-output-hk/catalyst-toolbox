@@ -122,7 +122,7 @@ fn read_approved_proposals(path: &Path) -> Result<ApprovedProposals, Error> {
         .into_iter()
         .filter_map(|proposal| match proposal.status {
             ProposalStatus::Funded => Some(
-                Funds::from_str(&proposal.requested_funds)
+                Funds::from_str(&proposal.requested_dollars)
                     .map(|funds| (proposal.proposal_id, funds)),
             ),
             ProposalStatus::NotFunded => None,

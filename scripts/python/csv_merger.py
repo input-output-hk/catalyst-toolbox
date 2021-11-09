@@ -1,6 +1,7 @@
 import csv
 import glob
 from pathlib import Path
+import os
 from typing import List, Generator, Iterator, TextIO, Tuple
 import typer
 from contextlib import contextmanager
@@ -15,7 +16,7 @@ def open_files(files: Iterator[str]) -> Generator[Iterator[TextIO], None, None]:
 
 
 def search_file_pattern(pattern: str, base_path: Path) -> Iterator[str]:
-    yield from glob.iglob(pathname=pattern, root_dir=base_path)
+    yield from map(lambda file: os.path.join(base_path, file), glob.iglob(pathname=pattern, root_dir=base_path))
 
 
 def file_as_csv(file: TextIO, delimiter: chr) -> Tuple[List[str], Iterator[List[str]]]:
@@ -30,6 +31,7 @@ def merge_csv(
     input_delimiter: chr,
     output_delimiter: chr,
 ):
+    print(pattern)
     files = search_file_pattern(pattern, base_path)
     with open(output_file, "w", encoding="utf-8", newline="") as out_file:
         with open_files(files) as fs:
