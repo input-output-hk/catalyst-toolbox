@@ -16,19 +16,19 @@ bench = false
 [dependencies]
 assert_fs = "1"
 csv = "1.1"
-wallet = { git = "https://github.com/input-output-hk/chain-wallet-libs.git", branch = "master" }
-chain-addr = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "master" }
-chain-core = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "master" }
-chain-crypto = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "master" }
-chain-ser = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "master" }
-chain-storage = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "master" }
-chain-time = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "master" }
-chain-impl-mockchain = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "master" }
+wallet = { git = "https://github.com/input-output-hk/chain-wallet-libs.git", branch = "catalyst-fund7" }
+chain-addr = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "catalyst-fund7" }
+chain-core = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "catalyst-fund7" }
+chain-crypto = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "catalyst-fund7" }
+chain-ser = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "catalyst-fund7" }
+chain-storage = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "catalyst-fund7" }
+chain-time = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "catalyst-fund7" }
+chain-impl-mockchain = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "catalyst-fund7" }
 chrono = "0.4"
-jcli = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "master" }
-jormungandr-lib = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "master" }
-jormungandr-testing-utils = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "master" }
-jormungandr-integration-tests = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "master" }
+jcli = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "catalyst-fund7" }
+jormungandr-lib = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "catalyst-fund7" }
+jormungandr-testing-utils = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "catalyst-fund7" }
+jormungandr-integration-tests = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "catalyst-fund7" }
 jortestkit = { git = "https://github.com/input-output-hk/jortestkit.git", branch = "master" }
 # TODO: Remove fixed and migrate to rust_decimal
 fixed = { version = "1.7", features = ["serde"] }
@@ -36,7 +36,7 @@ rust_decimal = "1.16"
 futures = "0.3"
 log = "0.4"
 once_cell = "1.8"
-reqwest = { version = "0.11", features = ["blocking", "json"] }
+reqwest = { version = "0.11.6", features = ["blocking", "json"] }
 rand = "0.8.3"
 rand_chacha = "0.3"
 regex = "1.5"
@@ -53,7 +53,7 @@ hex = "0.4"
 image = "0.23.12"
 qrcode = "0.12"
 quircs = "0.10.0"
-symmetric-cipher = { git = "https://github.com/input-output-hk/chain-wallet-libs.git", branch = "master" }
+symmetric-cipher = { git = "https://github.com/input-output-hk/chain-wallet-libs.git", branch = "catalyst-fund7" }
 graphql_client = "0.10"
 gag = "1"
 vit-servicing-station-lib = { git = "https://github.com/danielsanchezq/vit-servicing-station.git", branch = "reviews-grouped" }
@@ -63,7 +63,7 @@ rand_chacha = "0.3"
 assert_cmd = "0.10"
 predicates = "1"
 assert_fs = "1.0.0"
-chain-vote = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "master" }
+chain-vote = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "catalyst-fund7" }
 
 [build-dependencies]
 versionisator = "1.0.3"

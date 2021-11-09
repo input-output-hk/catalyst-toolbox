@@ -140,11 +140,7 @@ fn verify_original_tx(
 
 fn increment_ledger_time_up_to(ledger: &Ledger, blockdate: BlockDate) -> Ledger {
     ledger
-        .begin_block(
-            ledger.get_ledger_parameters(),
-            ledger.chain_length().increase(),
-            blockdate,
-        )
+        .begin_block(ledger.chain_length().increase(), blockdate)
         .unwrap()
         .finish(&ConsensusEvalContext::Bft)
 }
