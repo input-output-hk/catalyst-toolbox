@@ -246,6 +246,7 @@ def sanity_check_data(
     voteplan_proposals_set = set(voteplan_proposals.keys())
     if proposals_set != voteplan_proposals_set:
         from pprint import pformat
+
         diff = proposals_set.difference(voteplan_proposals_set)
         raise SanityException(
             f"Extra proposals found, voteplan proposals do not match servicing station proposals: \n{pformat(diff)}"
@@ -517,7 +518,9 @@ def calculate_rewards(
             output_file, challenge.title.replace(" ", "_").replace(":", "_")
         )
 
-        with open(chalenge_ouput_file_path, "w", encoding="utf-8", newline="") as out_file:
+        with open(
+            chalenge_ouput_file_path, "w", encoding="utf-8", newline=""
+        ) as out_file:
             if output_format == OutputFormat.JSON:
                 output_json(results, out_file)
             elif output_format == OutputFormat.CSV:

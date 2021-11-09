@@ -16,7 +16,10 @@ def open_files(files: Iterator[str]) -> Generator[Iterator[TextIO], None, None]:
 
 
 def search_file_pattern(pattern: str, base_path: Path) -> Iterator[str]:
-    yield from map(lambda file: os.path.join(base_path, file), glob.iglob(pathname=pattern, root_dir=base_path))
+    yield from map(
+        lambda file: os.path.join(base_path, file),
+        glob.iglob(pathname=pattern, root_dir=base_path),
+    )
 
 
 def file_as_csv(file: TextIO, delimiter: chr) -> Tuple[List[str], Iterator[List[str]]]:
