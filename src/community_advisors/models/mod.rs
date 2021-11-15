@@ -5,14 +5,15 @@ use serde::{Deserialize, Deserializer};
 pub use de::{AdvisorReviewRow, ReviewScore};
 
 pub enum ProposalStatus {
-    Funded,
-    NotFunded,
+    Approved,
+    NotApproved,
 }
 
 #[derive(Deserialize)]
 pub struct ApprovedProposalRow {
     #[serde(rename(deserialize = "internal_id"))]
     pub proposal_id: String,
+    #[serde(rename(deserialize = "meets_approval_threshold"))]
     pub status: ProposalStatus,
     pub requested_dollars: String,
 }
@@ -24,8 +25,8 @@ impl<'de> Deserialize<'de> for ProposalStatus {
     {
         let status: String = String::deserialize(deserializer)?;
         Ok(match status.to_lowercase().as_ref() {
-            "funded" => ProposalStatus::Funded,
-            _ => ProposalStatus::NotFunded,
+            "yes" => ProposalStatus::Approved,
+            _ => ProposalStatus::NotApproved,
         })
     }
 }

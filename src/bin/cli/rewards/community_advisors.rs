@@ -121,11 +121,11 @@ fn read_approved_proposals(path: &Path) -> Result<ApprovedProposals, Error> {
     approved_proposals
         .into_iter()
         .filter_map(|proposal| match proposal.status {
-            ProposalStatus::Funded => Some(
+            ProposalStatus::Approved => Some(
                 Funds::from_str(&proposal.requested_dollars)
                     .map(|funds| (proposal.proposal_id, funds)),
             ),
-            ProposalStatus::NotFunded => None,
+            ProposalStatus::NotApproved => None,
         })
         .collect::<Result<_, _>>()
         .map_err(|e| Error::InvalidRequestedFunds(e.to_string())) // ParseFixedError does not implement std::Error
