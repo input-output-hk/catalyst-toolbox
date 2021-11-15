@@ -514,12 +514,12 @@ def calculate_rewards(
             total_stake_approval_threshold,
         )
 
-        chalenge_ouput_file_path = build_path_for_challenge(
+        challenge_output_file_path = build_path_for_challenge(
             output_file, challenge.title.replace(" ", "_").replace(":", "_")
         )
 
         with open(
-            chalenge_ouput_file_path, "w", encoding="utf-8", newline=""
+            challenge_output_file_path, "w", encoding="utf-8", newline=""
         ) as out_file:
             if output_format == OutputFormat.JSON:
                 output_json(results, out_file)
