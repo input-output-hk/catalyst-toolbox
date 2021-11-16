@@ -1,5 +1,6 @@
 use chain_crypto::digest::DigestOf;
 use serde::Serialize;
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
@@ -86,6 +87,20 @@ impl CommunityAdvisors {
 
         let proposal_reviews = read_proposal_reviews(&assessments_path)?;
         let approved_proposals = read_approved_proposals(&approved_proposals_path)?;
+
+        let approved_set = approved_proposals.keys().cloned().collect::<BTreeSet<_>>();
+        let proposal_reviews_set = proposal_reviews.keys().cloned().collect::<BTreeSet<_>>();
+        let diff = approved_set
+            .difference(&proposal_reviews_set)
+            .collect::<BTreeSet<_>>();
+
+        if diff.len() > 0 {
+            println!(
+                "WARNING!, {} proposals without reviews: {:?}",
+                diff.len(),
+                diff,
+            );
+        }
 
         let rewards = calculate_ca_rewards(
             proposal_reviews,
