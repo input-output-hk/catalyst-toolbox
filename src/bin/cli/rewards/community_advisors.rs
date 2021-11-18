@@ -94,7 +94,7 @@ impl CommunityAdvisors {
             .difference(&proposal_reviews_set)
             .collect::<BTreeSet<_>>();
 
-        if diff.len() > 0 {
+        if !diff.is_empty() {
             println!(
                 "WARNING!, {} proposals without reviews: {:?}",
                 diff.len(),
