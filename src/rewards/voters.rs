@@ -37,10 +37,23 @@ pub fn calculate_stake<'address>(
 pub fn calculate_reward_share<'address>(
     total_stake: u64,
     stake_per_voter: &HashMap<&'address Address, u64>,
+    threshold_addresses: &AddressesVoteCount,
+    threshold: u64,
 ) -> HashMap<&'address Address, U64F64> {
     stake_per_voter
         .iter()
-        .map(|(k, v)| (*k, fixed::types::U64F64::from_num(*v) / total_stake as u128))
+        .map(|(k, v)| {
+            let reward = if *threshold_addresses
+                .get(k)
+                .unwrap_or_else(|| panic!("Missing address {} in vote count map", k))
+                >= threshold
+            {
+                U64F64::from_num(*v) / total_stake as u128
+            } else {
+                U64F64::default()
+            };
+            (*k, reward)
+        })
         .collect()
 }
 
@@ -49,12 +62,13 @@ pub fn reward_from_share(share: U64F64, total_reward: u64) -> fixed::types::U64F
     fixed::types::U64F64::from_num(total_reward) * share
 }
 
-pub type VoteCount = HashMap<Address, u64>;
+pub type VoteCount = HashMap<String, u64>;
+pub type AddressesVoteCount = HashMap<Address, u64>;
 
 pub fn vote_count_with_addresses(
-    vote_count: HashMap<String, u64>,
+    vote_count: VoteCount,
     block0: &Block0Configuration,
-) -> VoteCount {
+) -> AddressesVoteCount {
     let discrimination = block0.blockchain_configuration.discrimination;
     vote_count
         .into_iter()

@@ -1,6 +1,7 @@
 use super::Error;
 use catalyst_toolbox::rewards::voters::{
-    calculate_reward_share, calculate_stake, reward_from_share, ADA_TO_LOVELACE_FACTOR,
+    calculate_reward_share, calculate_stake, reward_from_share, vote_count_with_addresses,
+    AddressesVoteCount, VoteCount, ADA_TO_LOVELACE_FACTOR,
 };
 
 use chain_addr::{Discrimination, Kind};
@@ -13,6 +14,7 @@ use structopt::StructOpt;
 
 use std::collections::{HashMap, HashSet};
 use std::ops::Div;
+use std::path::PathBuf;
 
 #[derive(StructOpt)]
 #[structopt(rename_all = "kebab-case")]
@@ -22,6 +24,12 @@ pub struct VotersRewards {
     /// Reward (in LOVELACE) to be distributed
     #[structopt(long = "total-rewards")]
     total_rewards: u64,
+
+    #[structopt(long = "votes-count-path")]
+    votes_count_path: PathBuf,
+
+    #[structopt(long = "vote-threshold", default_value)]
+    vote_threshold: u64,
 }
 
 fn write_rewards_results(
@@ -61,10 +69,20 @@ impl VotersRewards {
         let VotersRewards {
             common,
             total_rewards,
+            votes_count_path,
+            vote_threshold,
         } = self;
         let block = common.input.load_block()?;
         let block0 = Block0Configuration::from_block(&block)
             .map_err(jcli_lib::jcli_lib::block::Error::BuildingGenesisFromBlock0Failed)?;
+
+        let vote_count: VoteCount = serde_json::from_reader(jcli_lib::utils::io::open_file_read(
+            &Some(votes_count_path),
+        )?)?;
+
+        let addresses_vote_count: AddressesVoteCount =
+            vote_count_with_addresses(vote_count, &block0);
+
         let committee_keys: HashSet<Address> = block0
             .blockchain_configuration
             .committees
@@ -79,7 +97,12 @@ impl VotersRewards {
             .collect();
 
         let (total_stake, stake_per_voter) = calculate_stake(&committee_keys, &block0);
-        let rewards = calculate_reward_share(total_stake, &stake_per_voter);
+        let rewards = calculate_reward_share(
+            total_stake,
+            &stake_per_voter,
+            &addresses_vote_count,
+            vote_threshold,
+        );
         write_rewards_results(common, &stake_per_voter, &rewards, total_rewards)?;
         Ok(())
     }
