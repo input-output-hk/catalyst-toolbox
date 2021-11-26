@@ -1,7 +1,7 @@
 use super::Error;
 use catalyst_toolbox::rewards::voters::{
     calculate_reward_share, calculate_stake, reward_from_share, vote_count_with_addresses,
-    AddressesVoteCount, VoteCount, ADA_TO_LOVELACE_FACTOR,
+    AddressesVoteCount, Rewards, VoteCount, ADA_TO_LOVELACE_FACTOR,
 };
 
 use chain_addr::{Discrimination, Kind};
@@ -9,7 +9,6 @@ use chain_impl_mockchain::vote::CommitteeId;
 use jcli_lib::jcli_lib::block::Common;
 use jormungandr_lib::interfaces::{Address, Block0Configuration};
 
-use fixed::types::U64F64;
 use structopt::StructOpt;
 
 use std::collections::{HashMap, HashSet};
@@ -35,7 +34,7 @@ pub struct VotersRewards {
 fn write_rewards_results(
     common: Common,
     stake_per_voter: &HashMap<&Address, u64>,
-    share_results: &HashMap<&Address, U64F64>,
+    share_results: &HashMap<&Address, Rewards>,
     total_rewards: u64,
 ) -> Result<(), Error> {
     let writer = common.open_output()?;

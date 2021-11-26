@@ -7,6 +7,7 @@ use std::collections::{HashMap, HashSet};
 use jormungandr_lib::interfaces::{Address, Block0Configuration, Initial};
 
 pub const ADA_TO_LOVELACE_FACTOR: u64 = 1_000_000;
+pub type Rewards = U64F64;
 
 pub fn calculate_stake<'address>(
     committee_keys: &HashSet<Address>,
@@ -39,15 +40,15 @@ pub fn calculate_reward_share<'address>(
     stake_per_voter: &HashMap<&'address Address, u64>,
     threshold_addresses: &AddressesVoteCount,
     threshold: u64,
-) -> HashMap<&'address Address, U64F64> {
+) -> HashMap<&'address Address, Rewards> {
     stake_per_voter
         .iter()
         .map(|(k, v)| {
             // if it doesnt appear in the votes count, it means it did not vote
             let reward = if *threshold_addresses.get(k).unwrap_or(&0u64) >= threshold {
-                U64F64::from_num(*v) / total_stake as u128
+                Rewards::from_num(*v) / total_stake as u128
             } else {
-                U64F64::ZERO
+                Rewards::ZERO
             };
             (*k, reward)
         })
@@ -55,8 +56,8 @@ pub fn calculate_reward_share<'address>(
 }
 
 /// get the proportional reward from a share and total rewards amount
-pub fn reward_from_share(share: U64F64, total_reward: u64) -> fixed::types::U64F64 {
-    fixed::types::U64F64::from_num(total_reward) * share
+pub fn reward_from_share(share: Rewards, total_reward: u64) -> Rewards {
+    Rewards::from_num(total_reward) * share
 }
 
 pub type VoteCount = HashMap<String, u64>;
