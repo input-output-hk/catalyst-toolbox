@@ -43,14 +43,11 @@ pub fn calculate_reward_share<'address>(
     stake_per_voter
         .iter()
         .map(|(k, v)| {
-            let reward = if *threshold_addresses
-                .get(k)
-                .unwrap_or_else(|| panic!("Missing address {} in vote count map", k))
-                >= threshold
-            {
+            // if it doesnt appear in the votes count, it means it did not vote
+            let reward = if *threshold_addresses.get(k).unwrap_or(&0u64) >= threshold {
                 U64F64::from_num(*v) / total_stake as u128
             } else {
-                U64F64::default()
+                U64F64::ZERO
             };
             (*k, reward)
         })
