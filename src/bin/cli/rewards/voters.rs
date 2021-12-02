@@ -21,13 +21,13 @@ pub struct VotersRewards {
     #[structopt(flatten)]
     common: Common,
     /// Reward (in LOVELACE) to be distributed
-    #[structopt(long = "total-rewards")]
+    #[structopt(long)]
     total_rewards: u64,
 
-    #[structopt(long = "votes-count-path")]
+    #[structopt(long)]
     votes_count_path: PathBuf,
 
-    #[structopt(long = "vote-threshold", default_value)]
+    #[structopt(long, default_value)]
     vote_threshold: u64,
 }
 
