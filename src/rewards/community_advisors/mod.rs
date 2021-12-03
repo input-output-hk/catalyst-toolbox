@@ -173,21 +173,21 @@ fn load_tickets_from_reviews(
 fn double_lottery<R: Rng>(
     stage1: TicketsDistribution,
     mut stage2: TicketsDistribution,
-    to_distribute1: u64,
-    to_distribute2: u64,
+    distribute_first_round: u64,
+    distribute_second_round: u64,
     rng: &mut R,
 ) -> CasWinnings {
     let (mut stage1_winners, stage1_losers) =
-        lottery::lottery_distribution(stage1, to_distribute1, rng);
+        lottery::lottery_distribution(stage1, distribute_first_round, rng);
     stage2.extend(stage1_losers);
     let (stage2_winners, _stage2_losers) =
-        lottery::lottery_distribution(stage2, to_distribute2, rng);
+        lottery::lottery_distribution(stage2, distribute_second_round, rng);
     for (ca, winnings) in stage2_winners {
         *stage1_winners.entry(ca).or_default() += winnings;
     }
     assert_eq!(
         stage1_winners.values().sum::<u64>(),
-        to_distribute2 + to_distribute1
+        distribute_second_round + distribute_first_round
     );
     stage1_winners
 }
