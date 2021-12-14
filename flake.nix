@@ -2,20 +2,19 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     utils.url = "github:kreisys/flake-utils";
-    naersk.url = "github:nmattia/naersk";
-    naersk.inputs.nixpkgs.follows = "nixpkgs";
   };
-  outputs = { self, nixpkgs, utils, naersk }:
+  outputs = { self, nixpkgs, utils }:
     utils.lib.simpleFlake rec {
       inherit nixpkgs;
       systems = [ "x86_64-linux" "aarch64-linux" ];
-      preOverlays = [ naersk overlay ];
+      preOverlays = [ overlay ];
       overlay = final: prev: {
-        catalyst-toolbox = prev.naersk.buildPackage {
+        catalyst-toolbox = prev.rustPlatform.buildRustPackage {
           inherit ((builtins.fromTOML
             (builtins.readFile (./Cargo.toml))).package)
             name version;
-          root = ./.;
+          src = ./.;
+          cargoSha256 = "sha256-LoO4+xM2alSYh+b3Ov9vNL84vbUDXcGNiA0E5x5CC5c";
           nativeBuildInputs = with final; [ pkg-config protobuf rustfmt ];
           buildInputs = with final; [ openssl ];
           PROTOC = "${final.protobuf}/bin/protoc";
