@@ -6,18 +6,15 @@ be listed in the former document.
 
 ## Voters rewards
 
+### Input
+
 Currently, (as per Fund7) the tool needs:
 
 * The block0 file (bin)
 * The amount of rewards to distribute
 * The threshold of votes a voter need in order to access such rewards
 
-
-Algorithm is performed as per:
-
-1. Take all addresses that voted
-2. Check which addresses voted more than threshold
-3. Calculate reward per voter as `(voter_stake/total_voters_stake)*total_rewards`
+### Output 
 
 A Csv is generated with the following headers:
 
@@ -36,7 +33,9 @@ The online mode works with the data living in the vit-servicing-station server.
 The offline mode need to load that data manually through some json files. 
 Those json files can be downloaded from the vit-servicing-station at any time during the fund.
 
-### Json files needed
+### Input
+
+#### Json files needed
 1. challenges: from `https://servicing-station.vit.iohk.io/api/v0/challenges`
 2. active voteplans: from `https://servicing-station.vit.iohk.io/api/v0/vote/active/plans`
 3. proposals: from `https://servicing-station.vit.iohk.io/api/v0/proposals`
@@ -45,7 +44,7 @@ Those json files can be downloaded from the vit-servicing-station at any time du
 ### Output
 
 The proposers output is csv with several data on it. 
-***It is really important***, this output file is used as source of truth for the approved proposals 
+***Really important***, this output file is used as source of truth for the approved proposals 
 (not to be mistaken with funded proposals).
 
 Output csv headers:
@@ -62,3 +61,47 @@ Output csv headers:
 * fund_depletion: fund remaining after proposal depletion
 * not_funded_reason: why wasnt the proposal not funded (if applies, over budget or approval threshold)
 * link_to_ideascale: url to ideascale proposal page
+
+The output files are generated per challenge. So, if we have 30 challenges we would have 30 generated output files 
+in the same fashion.
+
+
+## Community advisors rewards
+
+### Input
+
+There are 2 (two) main input files needed for calculating the community advisors rewards:
+
+1. Proposers reward result output file (approved proposals): We need this to check which of the proposals were approved. 
+Notice that the proposers rewards script output is per proposals. So in order to use it we need to aggregate all the csv
+into a single file (same headers, order is irrelevant). For this we can use the 
+[`csv_merger.py`](https://github.com/input-output-hk/catalyst-toolbox/blob/main/scripts/python/csv_merger.py) script,
+or any other handier tool.
+2.Assessments csv (assessments): This is a file that comes from the community. It holds the information with the reviews performed
+by the CAs.
+
+### Output
+
+ A csv with pairs of anonymize CA ids and the amount of the reward:
+
+```
++----+----------+
+| id | rewards  |
++----+----------+
+```
+
+## Veteran community advisors rewards
+
+### Input
+
+Currently, (as per fund7) it is just a normal distribution based on `(number_of_reviews/total_reviews)*total_rewards`
+
+For that we just need to know the amount of rewards done by each veteran:
+
+1. Veteran reviews count: A csv with pairs of `veteran_id -> total_reviews`. It is also a community based document 
+(it is provided every fund). 
+
+
+### Output
+
+A csv with pairs of anonymize veteran CA ids and the amount of the reward, `veteran_id -> total_rewards`.
