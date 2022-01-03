@@ -2,7 +2,7 @@ mod de;
 
 use serde::{Deserialize, Deserializer};
 
-pub use de::{AdvisorReviewRow, ReviewScore};
+pub use de::{AdvisorReviewId, AdvisorReviewRow, ReviewRanking};
 
 pub enum ProposalStatus {
     Approved,

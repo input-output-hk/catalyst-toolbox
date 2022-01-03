@@ -1,6 +1,8 @@
 use crate::utils::serde::deserialize_truthy_falsy;
 use serde::Deserialize;
 
+pub type AdvisorReviewId = (String, String);
+
 #[derive(Deserialize)]
 pub struct AdvisorReviewRow {
     pub proposal_id: String,
@@ -24,21 +26,35 @@ pub struct AdvisorReviewRow {
     excellent: bool,
     #[serde(alias = "Good", deserialize_with = "deserialize_truthy_falsy")]
     good: bool,
+    #[serde(
+        default,
+        alias = "Filtered Out",
+        deserialize_with = "deserialize_truthy_falsy"
+    )]
+    filtered_out: bool,
 }
 
-pub enum ReviewScore {
+#[derive(Hash, Clone, PartialEq, Eq)]
+pub enum ReviewRanking {
     Excellent,
     Good,
     FilteredOut,
     NA, // not reviewed by vCAs
 }
 
+impl ReviewRanking {
+    pub fn is_positive(&self) -> bool {
+        matches!(self, Self::Excellent | Self::Good)
+    }
+}
+
 impl AdvisorReviewRow {
-    pub fn score(&self) -> ReviewScore {
-        match (self.excellent, self.good) {
-            (true, false) => ReviewScore::Excellent,
-            (false, true) => ReviewScore::Good,
-            (false, false) => ReviewScore::NA,
+    pub fn score(&self) -> ReviewRanking {
+        match (self.excellent, self.good, self.filtered_out) {
+            (true, false, false) => ReviewRanking::Excellent,
+            (false, true, false) => ReviewRanking::Good,
+            (false, false, true) => ReviewRanking::FilteredOut,
+            (false, false, false) => ReviewRanking::NA,
             _ => {
                 // This should never happen, from the source of information a review could be either
                 // Excellent or Good or not assessed. It cannot be both and it is considered
@@ -50,11 +66,16 @@ impl AdvisorReviewRow {
             }
         }
     }
+
+    /// Returns a unique identifier of this review
+    pub fn id(&self) -> AdvisorReviewId {
+        (self.proposal_id.clone(), self.assessor.clone())
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::ReviewScore;
+    use super::ReviewRanking;
     use crate::community_advisors::models::AdvisorReviewRow;
     use crate::utils::csv as csv_utils;
     use rand::{distributions::Alphanumeric, Rng};
@@ -69,11 +90,11 @@ mod tests {
     }
 
     impl AdvisorReviewRow {
-        pub fn dummy(score: ReviewScore) -> Self {
-            let (excellent, good) = match score {
-                ReviewScore::Good => (false, true),
-                ReviewScore::Excellent => (true, false),
-                ReviewScore::NA => (false, false),
+        pub fn dummy(score: ReviewRanking) -> Self {
+            let (excellent, good, filtered_out) = match score {
+                ReviewRanking::Good => (false, true, false),
+                ReviewRanking::Excellent => (true, false, false),
+                ReviewRanking::NA => (false, false, false),
                 _ => unimplemented!(),
             };
 
@@ -91,6 +112,7 @@ mod tests {
                 auditability_rating: 0,
                 excellent,
                 good,
+                filtered_out,
             }
         }
     }
