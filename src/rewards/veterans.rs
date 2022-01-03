@@ -4,6 +4,7 @@ use crate::community_advisors::models::{
 };
 use crate::rewards::Rewards;
 use itertools::Itertools;
+use rust_decimal::{prelude::ToPrimitive, Decimal};
 use std::collections::{BTreeMap, HashMap};
 
 use serde::{Deserialize, Serialize};
@@ -51,18 +52,48 @@ fn calc_final_ranking_per_review(rankings: &[&VeteranRankingRow]) -> ReviewRanki
     }
 }
 
-fn clamp_eligible_rewards(
-    rankings: HashMap<VeteranAdvisorId, usize>,
+fn rewards_disagreement_discount(disagreement_rate: Decimal) -> Decimal {
+    // Cannot use decimal range pattern in matches, and don't want to complicate
+    // stuff by using exact integer arithmetic since it's not really needed at this point
+    if disagreement_rate >= Decimal::new(9, 1) {
+        Decimal::ONE
+    } else if disagreement_rate >= Decimal::new(72, 2) {
+        Decimal::from(5) / Decimal::from(6)
+    } else if disagreement_rate >= Decimal::new(6, 1) {
+        Decimal::from(2) / Decimal::from(3)
+    } else {
+        Decimal::ZERO
+    }
+}
+
+fn reputation_disagreement_discount(disagreement_rate: Decimal) -> Decimal {
+    if disagreement_rate >= Decimal::new(6, 1) {
+        Decimal::ONE
+    } else {
+        Decimal::ZERO
+    }
+}
+
+fn calc_final_eligible_rankings(
+    all_rankings: &HashMap<VeteranAdvisorId, usize>,
+    eligible_rankings: HashMap<VeteranAdvisorId, usize>,
     thresholds: EligibilityThresholds,
-) -> BTreeMap<VeteranAdvisorId, usize> {
-    rankings
+    discount_rate: impl Fn(Decimal) -> Decimal,
+) -> BTreeMap<VeteranAdvisorId, Rewards> {
+    eligible_rankings
         .into_iter()
         .filter_map(|(vca, n_rankings)| {
             if n_rankings < *thresholds.start() {
                 return None;
             }
 
-            Some((vca, n_rankings.min(*thresholds.end())))
+            let to_discount = discount_rate(
+                Decimal::from(n_rankings) / Decimal::from(*all_rankings.get(&vca).unwrap()),
+            );
+
+            let n_rankings = Rewards::from(n_rankings.min(*thresholds.end())) * to_discount;
+
+            Some((vca, n_rankings))
         })
         .collect()
 }
@@ -80,6 +111,10 @@ pub fn calculate_veteran_advisors_incentives(
         .map(|(review, rankings)| (review, calc_final_ranking_per_review(&rankings)))
         .collect::<BTreeMap<_, _>>();
 
+    let rankings_per_vca = veteran_rankings
+        .iter()
+        .counts_by(|ranking| ranking.vca.clone());
+
     let eligible_rankings_per_vca = veteran_rankings
         .iter()
         .filter(|ranking| {
@@ -91,14 +126,21 @@ pub fn calculate_veteran_advisors_incentives(
         })
         .counts_by(|ranking| ranking.vca.clone());
 
-    let reputation_eligible_rankings =
-        clamp_eligible_rewards(eligible_rankings_per_vca.clone(), reputation_thresholds);
+    let reputation_eligible_rankings = calc_final_eligible_rankings(
+        &rankings_per_vca,
+        eligible_rankings_per_vca.clone(),
+        reputation_thresholds,
+        reputation_disagreement_discount,
+    );
 
-    let rewards_eligible_rankings =
-        clamp_eligible_rewards(eligible_rankings_per_vca, rewards_thresholds);
+    let rewards_eligible_rankings = calc_final_eligible_rankings(
+        &rankings_per_vca,
+        eligible_rankings_per_vca,
+        rewards_thresholds,
+        rewards_disagreement_discount,
+    );
 
-    let tot_rewards_eligible_rankings =
-        Rewards::from(rewards_eligible_rankings.values().sum::<usize>());
+    let tot_rewards_eligible_rankings = rewards_eligible_rankings.values().sum::<Rewards>();
 
     reputation_eligible_rankings
         .into_iter()
@@ -108,8 +150,8 @@ pub fn calculate_veteran_advisors_incentives(
             (
                 vca,
                 VeteranAdvisorIncentive {
-                    reputation: reputation as u64,
-                    rewards: total_rewards * Rewards::from(reward) / tot_rewards_eligible_rankings,
+                    reputation: reputation.to_u64().expect("result does not fit into u64"),
+                    rewards: total_rewards * reward / tot_rewards_eligible_rankings,
                 },
             )
         })

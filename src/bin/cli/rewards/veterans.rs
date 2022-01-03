@@ -42,7 +42,7 @@ impl VeteransRewards {
             maximum_ranking_for_reputation,
             maximum_ranking_for_rewards,
         } = self;
-        let reviews: Vec<veterans::VeteranRankingRow> = csv::load_data_from_csv<_, b','>(&from)?;
+        let reviews: Vec<veterans::VeteranRankingRow> = csv::load_data_from_csv::<_, b','>(&from)?;
         let results = veterans::calculate_veteran_advisors_incentives(
             &reviews,
             total_rewards,
