@@ -55,9 +55,10 @@ fn calc_final_ranking_per_review(rankings: &[&VeteranRankingRow]) -> ReviewRanki
 fn rewards_disagreement_discount(disagreement_rate: Decimal) -> Decimal {
     // Cannot use decimal range pattern in matches, and don't want to complicate
     // stuff by using exact integer arithmetic since it's not really needed at this point
+    // Thresholds at 0.9 - 0.75 - 0.6
     if disagreement_rate >= Decimal::new(9, 1) {
         Decimal::ONE
-    } else if disagreement_rate >= Decimal::new(72, 2) {
+    } else if disagreement_rate >= Decimal::new(75, 2) {
         Decimal::from(5) / Decimal::from(6)
     } else if disagreement_rate >= Decimal::new(6, 1) {
         Decimal::from(2) / Decimal::from(3)
