@@ -147,7 +147,7 @@ pub fn calculate_veteran_advisors_incentives(
         .into_iter()
         .zip(rewards_eligible_rankings.into_iter())
         .map(|((vca, reputation), (_vca2, reward))| {
-            assert_eq!(vca, _vca2); // the use BTreeMaps ensures iteration is consistent
+            assert_eq!(vca, _vca2); // the use of BTreeMaps ensures iteration is consistent
             (
                 vca,
                 VeteranAdvisorIncentive {
