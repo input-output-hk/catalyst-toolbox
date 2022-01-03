@@ -58,7 +58,7 @@ Output csv headers:
 * meets_approval_threshold: **is proposal approved**
 * requested_dollars: amount of funding requested
 * status: **is proposal funded**
-* fund_depletion: fund remaining after proposal depletion
+* fund_depletion: fund remaining after proposal depletion (entries are sorted in descending order of 'result')
 * not_funded_reason: why wasnt the proposal not funded (if applies, over budget or approval threshold)
 * link_to_ideascale: url to ideascale proposal page
 
@@ -73,7 +73,7 @@ in the same fashion.
 There are 2 (two) main input files needed for calculating the community advisors rewards:
 
 1. Proposers reward result output file (approved proposals): We need this to check which of the proposals were approved. 
-Notice that the proposers rewards script output is per proposals. So in order to use it we need to aggregate all the csv
+Notice that the proposers rewards script output is per challenge. So in order to use it we need to aggregate all the csv
 into a single file (same headers, order is irrelevant). For this we can use the 
 [`csv_merger.py`](https://github.com/input-output-hk/catalyst-toolbox/blob/main/scripts/python/csv_merger.py) script,
 or any other handier tool.
