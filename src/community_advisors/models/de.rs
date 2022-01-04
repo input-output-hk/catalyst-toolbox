@@ -34,7 +34,7 @@ pub struct AdvisorReviewRow {
     filtered_out: bool,
 }
 
-#[derive(Hash, Clone, PartialEq, Eq)]
+#[derive(Hash, Clone, PartialEq, Eq, Debug)]
 pub enum ReviewRanking {
     Excellent,
     Good,
@@ -91,19 +91,26 @@ mod tests {
 
     impl AdvisorReviewRow {
         pub fn dummy(score: ReviewRanking) -> Self {
+            Self::with_assessor(
+                (0..10)
+                    .map(|_| rand::thread_rng().sample(Alphanumeric) as char)
+                    .collect(),
+                score,
+            )
+        }
+
+        pub fn with_assessor(assessor: String, score: ReviewRanking) -> Self {
             let (excellent, good, filtered_out) = match score {
                 ReviewRanking::Good => (false, true, false),
                 ReviewRanking::Excellent => (true, false, false),
+                ReviewRanking::FilteredOut => (false, false, true),
                 ReviewRanking::NA => (false, false, false),
-                _ => unimplemented!(),
             };
 
             AdvisorReviewRow {
                 proposal_id: String::new(),
                 idea_url: String::new(),
-                assessor: (0..10)
-                    .map(|_| rand::thread_rng().sample(Alphanumeric) as char)
-                    .collect(),
+                assessor,
                 impact_alignment_note: String::new(),
                 impact_alignment_rating: 0,
                 feasibility_note: String::new(),
