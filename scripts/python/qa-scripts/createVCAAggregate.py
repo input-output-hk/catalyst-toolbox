@@ -26,8 +26,11 @@ class createVCAAggregate():
 
         self.dChallenges = self.opt.distinctChallenges
 
+
     def prepareBaseData(self):
         self.gspreadWrapper.getVCAMasterData()
+        self.vcaMerged = pd.DataFrame(columns=self.gspreadWrapper.dfVca.columns, data=None)
+        self.vcaMerged['name'] = ''
         self.dfVca = self.gspreadWrapper.dfVca.set_index('id')
         self.gspreadWrapper.getProposersMasterData()
         self.dfMasterProposers = self.gspreadWrapper.dfMasterProposers.set_index('id')
@@ -91,6 +94,12 @@ class createVCAAggregate():
                                 else:
                                     single_vca[reviews_num_col] = 1
                                 self.dfVca.loc[id, self.opt.noVCAReviewsCol] = self.dfVca.loc[id, self.opt.noVCAReviewsCol] + 1
+                                # Append the single review to the vcaMerged file
+                                toBeMergedAssessment = locAss.copy()
+                                toBeMergedAssessment['id'] = id
+                                toBeMergedAssessment['name'] = single_vca['name']
+                                self.vcaMerged = self.vcaMerged.append(toBeMergedAssessment)
+
                             for col in self.allColumns:
                                 colVal = self.checkIfMarked(locAss, col)
                                 if (colVal > 0):
@@ -175,6 +184,7 @@ class createVCAAggregate():
         vcaList.fillna(0, inplace=True)
 
         # Save csvs
+        self.vcaMerged.to_csv('cache/vca-merged.csv', index=False)
         vcaAggregatedAssessments.to_csv('cache/vca-aggregated.csv')
         aggregatedAssessments.to_csv('cache/aggregated.csv')
         validAssessments.to_csv('cache/valid.csv')
