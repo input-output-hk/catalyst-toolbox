@@ -1,0 +1,4 @@
+gspread==3.7.0
+gspread_formatting
+pandas
+gdown

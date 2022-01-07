@@ -1,0 +1,14 @@
+cache/*
+!cache/.gitkeep
+gsheet-accounts/*
+!gsheet-accounts/.gitkeep
+service_account.json
+__pycache__
+options.json
+proposers-files/*
+vcas-files/*
+users.json
+users-updated.json
+vcas.json
+proposals.json
+download-errors.json

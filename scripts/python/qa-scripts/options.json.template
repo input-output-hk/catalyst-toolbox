@@ -1,0 +1,60 @@
+{
+  "accountEmail": "",
+  "gSheetAuthFile": "gsheet-accounts/service_account.json",
+  "allowedBlankPerAssessor": 1,
+  "minimumVCA": 1,
+  "criteriaGroups": [
+    {
+      "1": "Impact / Alignment",
+      "2": "Feasibility",
+      "6": "Auditability"
+    },
+    {
+      "5": "Impact / Alignment",
+      "3": "Feasibility",
+      "4": "Auditability"
+    }
+  ],
+  "assessmentsSheet": "Assessments",
+  "proposalKeyCol": "Idea Title",
+  "proposalIdCol": "proposal_id",
+  "assessmentsIdCol": "id",
+  "tripletIdCol": "triplet_id",
+  "ideaURLCol": "Idea URL",
+  "questionCol": "Question",
+  "questionIdCol": "question_id",
+  "challengeCol": "Challenge",
+  "ratingCol": "Rating Given",
+  "assessmentCol": "Assessment Note",
+  "assessorCol": "Assessor",
+  "proposerMarkCol": "Proposer Mark",
+  "blankCol": "Blank",
+  "notRelatedCol": "Not Related",
+  "noVCAReviewsCol": "# of vCAs Reviews",
+
+  "q0Col": "Impact / Alignment Note",
+  "q0Rating": "Impact / Alignment Rating",
+  "q1Col": "Feasibility Note",
+  "q1Rating": "Feasibility Rating",
+  "q2Col": "Auditability Note",
+  "q2Rating": "Auditability Rating",
+  "excellentCol": "Excellent",
+  "goodCol": "Good",
+  "notValidCol": "Filtered Out",
+  "notValidAlternativeCol": "Not Valid",
+  "notValidRationaleCol": "Filtered Out rationale or Feedback",
+  "proposersRationaleCol": "Proposer Filtered Out rationale or Feedback",
+  "vcaFeedbackCol": "vCA Feedback",
+  "proposersMasterFile": "",
+  "proposersAggregateFileName": "Proposers Aggregated - Fund 7",
+  "proposersAggregateFile": "",
+
+  "proposerDocumentName": "Proposers Master File - Fund 7",
+  "originalExportFromIdeascale": "",
+  "VCAMasterFileName": "vCA Master File - Fund 7",
+  "VCAMasterFile": "",
+  "VCAAggregateFileName": "vCA Aggregated - Fund 7",
+
+  "distinctChallenges": [],
+  "vcaResponses": ""
+}

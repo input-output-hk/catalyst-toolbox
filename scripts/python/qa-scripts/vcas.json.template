@@ -1,0 +1,22 @@
+[
+  {
+    "name": "John Doe",
+    "vca_link": "",
+    "vca_file": "John-vCA-export.csv",
+    "ca_id": "z_assessor_1012",
+    "email": "",
+    "proposals": [12, 16],
+    "campaigns_as_proposers": [15],
+    "userName": "john1"
+  },
+  {
+    "name": "Mark Boo",
+    "vca_link": "",
+    "vca_file": "Mark-vCA-export.csv",
+    "ca_id": "z_assessor_1017",
+    "email": "",
+    "proposals": [165, 126],
+    "campaigns_as_proposers": [115],
+    "userName": "mark_1"
+  }
+]
