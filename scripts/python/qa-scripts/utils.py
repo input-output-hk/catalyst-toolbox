@@ -1,8 +1,11 @@
+from options import Options
+
 import json
 from gspread_formatting import *
 
 class Utils():
     def __init__(self):
+        self.opt = Options()
         # Global cells style
         self.counterFormat = cellFormat(
             textFormat=textFormat(bold=True, fontSize=10),
@@ -64,3 +67,22 @@ class Utils():
             return data
         except:
             return False
+
+    '''
+    Used in proposers and vCAs aggregatation
+    '''
+
+    def checkIntegrity(self, id, ass1, ass2):
+        return (
+            (ass1[self.opt.proposalIdCol] == ass2[self.opt.proposalIdCol]) and
+            (ass1[self.opt.q0Rating] == ass2[self.opt.q0Rating]) and
+            (ass1[self.opt.q1Rating] == ass2[self.opt.q1Rating]) and
+            (ass1[self.opt.q2Rating] == ass2[self.opt.q2Rating]) and
+            (ass1[self.opt.assessorCol] == ass2[self.opt.assessorCol])
+        )
+
+    '''
+    Used in proposers and vCAs aggregatation
+    '''
+    def checkIfMarked(self, row, column):
+        return (row[column].strip() != '')

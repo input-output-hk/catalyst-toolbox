@@ -20,7 +20,7 @@ class createProposersAggregate():
 
     def prepareBaseData(self):
         self.gspreadWrapper.getProposersMasterData()
-        self.dfMasterProposers = self.gspreadWrapper.dfMasterProposers.set_index('id')
+        self.dfMasterProposers = self.gspreadWrapper.dfMasterProposers.set_index(self.opt.assessmentsIdCol)
         self.dfMasterProposers[self.opt.proposerMarkCol] = 0
         self.dfMasterProposers[self.opt.proposersRationaleCol] = ''
 
@@ -35,14 +35,12 @@ class createProposersAggregate():
         self.prepareBaseData()
         self.prepareProposersFileList()
         self.proposersData = []
-        self.proposersFileList = []
         for proposerFile in self.proposersFiles:
             print("Loading {}".format(proposerFile))
             data = pd.read_csv(proposerFile)
             data.set_index(self.opt.assessmentsIdCol, inplace=True)
             data.fillna('', inplace=True)
             self.proposersData.append(data)
-            self.proposersFileList.append(proposerFile)
 
     def createDoc(self):
         self.loadProposersFiles()
@@ -52,24 +50,24 @@ class createProposersAggregate():
             for filesIdx, proposerDf in enumerate(self.proposersData):
                 if (id in proposerDf.index):
                     locAss = proposerDf.loc[id]
-                    integrity = self.checkIntegrity(id, row, locAss)
-                    if (integrity is False):
-                        fn = self.proposersFileList[filesIdx]
-                        print("{} failed to pass the integrity test at id {}".format(fn, id))
-                    if integrity:
+                    if self.utils.checkIntegrity(id, row, locAss):
                         if (self.isProposerFeedbackValid(locAss)):
-                            colVal = self.checkIfMarked(locAss, self.opt.notValidCol)
+                            colVal = self.utils.checkIfMarked(locAss, self.opt.notValidCol)
                             if (colVal > 0):
                                 self.dfMasterProposers.loc[id, self.opt.proposerMarkCol] = self.dfMasterProposers.loc[id, self.opt.proposerMarkCol] + colVal
-                            ratioColVal = self.checkIfMarked(
+                            ratioColVal = self.utils.checkIfMarked(
                                 locAss, self.opt.notValidRationaleCol
                             )
                             if (ratioColVal > 0):
                                 self.dfMasterProposers.loc[id, self.opt.proposersRationaleCol] = locAss[self.opt.notValidRationaleCol]
+                    else:
+                        fn = self.proposersFiles[filesIdx]
+                        print("{} failed to pass the integrity test at id {}".format(fn, id))
+
 
         self.dfMasterProposers[self.opt.assessmentsIdCol] = self.dfMasterProposers.index
         self.dfMasterProposers.to_csv('cache/test-proposers-aggregate.csv')
-        return
+        
         spreadsheet = self.gspreadWrapper.createDoc(self.opt.proposersAggregateFileName)
 
         # Print valid assessments
@@ -111,35 +109,16 @@ class createProposersAggregate():
             formats=assessmentsFormats
         )
 
-        print('Proposers Aggregated Document created')
         print('Link: {}'.format(spreadsheet.url))
 
-    def checkIntegrity(self, id, ass1, ass2):
-        if (
-            (ass1[self.opt.proposalIdCol] != ass2[self.opt.proposalIdCol]) or
-            (ass1[self.opt.q0Rating] != ass2[self.opt.q0Rating]) or
-            (ass1[self.opt.q1Rating] != ass2[self.opt.q1Rating]) or
-            (ass1[self.opt.q2Rating] != ass2[self.opt.q2Rating]) or
-            (ass1[self.opt.assessorCol] != ass2[self.opt.assessorCol])
-        ):
-            return False
-        return True
-
-    def checkIfMarked(self, row, column):
-        if (row[column].strip() != ''):
-            return 1
-        return 0
-
-    def badValid(self, row):
-        if (
-            (self.checkIfMarked(row, self.opt.notValidCol) == 1) and
-            (self.checkIfMarked(row, self.opt.notValidRationaleCol) == 0)
-        ):
-            return False
-        return True
+    def isFilteredOutValid(self, row):
+        return (
+            not self.utils.checkIfMarked(row, self.opt.notValidCol) or
+            self.utils.checkIfMarked(row, self.opt.notValidRationaleCol)
+        )
 
     def isProposerFeedbackValid(self, row):
-        return self.badValid(row)
+        return self.isFilteredOutValid(row)
 
 c = createProposersAggregate()
 c.createDoc()

@@ -74,7 +74,7 @@ class createVCAAggregate():
             for filesIdx, vcaDf in enumerate(self.vcasData):
                 if (id in vcaDf.index):
                     locAss = vcaDf.loc[id]
-                    integrity = self.checkIntegrity(id, row, locAss)
+                    integrity = self.utils.checkIntegrity(id, row, locAss)
                     vca_fn = self.vcasFileList[filesIdx]
                     vca_filename = os.path.basename(vca_fn.replace('\\',os.sep))
                     single_vca = next((item for item in self.vcas if item['vca_file'] == vca_filename), None)
@@ -101,7 +101,7 @@ class createVCAAggregate():
                                 self.vcaMerged = self.vcaMerged.append(toBeMergedAssessment)
 
                             for col in self.allColumns:
-                                colVal = self.checkIfMarked(locAss, col)
+                                colVal = self.utils.checkIfMarked(locAss, col)
                                 if (colVal > 0):
                                     self.dfVca.loc[id, col] = self.dfVca.loc[id, col] + colVal
 
@@ -440,22 +440,6 @@ class createVCAAggregate():
         print('Aggregated Document created')
         print('Link: {}'.format(spreadsheet.url))
 
-    def checkIntegrity(self, id, ass1, ass2):
-        if (
-            (ass1[self.opt.proposalIdCol] != ass2[self.opt.proposalIdCol]) or
-            (ass1[self.opt.q0Rating] != ass2[self.opt.q0Rating]) or
-            (ass1[self.opt.q1Rating] != ass2[self.opt.q1Rating]) or
-            (ass1[self.opt.q2Rating] != ass2[self.opt.q2Rating]) or
-            (ass1[self.opt.assessorCol] != ass2[self.opt.assessorCol])
-        ):
-            return False
-        return True
-
-    def checkIfMarked(self, row, column):
-        if (row[column].strip() != ''):
-            return 1
-        return 0
-
     def calculateOutcome(self, row):
         bad = ''
         good = ''
@@ -472,19 +456,19 @@ class createVCAAggregate():
 
     def goodFeedback(self, row):
         for col in self.goodColumns:
-            if (self.checkIfMarked(row, col) > 0):
+            if (self.utils.checkIfMarked(row, col) > 0):
                 return True
         return False
 
     def badFeedback(self, row):
         for col in self.badColumns:
-            if (self.checkIfMarked(row, col) > 0):
+            if (self.utils.checkIfMarked(row, col) > 0):
                 return True
         return False
 
     def excellentFeedback(self, row):
         for col in self.excellentColumns:
-            if (self.checkIfMarked(row, col) > 0):
+            if (self.utils.checkIfMarked(row, col) > 0):
                 return True
         return False
 
