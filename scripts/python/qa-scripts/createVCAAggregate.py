@@ -30,10 +30,10 @@ class createVCAAggregate():
     def prepareBaseData(self):
         self.gspreadWrapper.getVCAMasterData()
         self.vcaMerged = pd.DataFrame(columns=self.gspreadWrapper.dfVca.columns, data=None)
-        self.vcaMerged['name'] = ''
-        self.dfVca = self.gspreadWrapper.dfVca.set_index('id')
+        self.vcaMerged[self.opt.vcaName] = ''
+        self.dfVca = self.gspreadWrapper.dfVca.set_index(self.opt.assessmentsIdCol)
         self.gspreadWrapper.getProposersMasterData()
-        self.dfMasterProposers = self.gspreadWrapper.dfMasterProposers.set_index('id')
+        self.dfMasterProposers = self.gspreadWrapper.dfMasterProposers.set_index(self.opt.assessmentsIdCol)
         # Set all counters to 0
         self.dfVca[self.opt.noVCAReviewsCol] = 0
         for col in self.allColumns:
@@ -97,7 +97,7 @@ class createVCAAggregate():
                                 # Append the single review to the vcaMerged file
                                 toBeMergedAssessment = locAss.copy()
                                 toBeMergedAssessment['id'] = id
-                                toBeMergedAssessment['name'] = single_vca['name']
+                                toBeMergedAssessment[self.opt.vcaName] = single_vca[self.opt.vcaName]
                                 self.vcaMerged = self.vcaMerged.append(toBeMergedAssessment)
 
                             for col in self.allColumns:
@@ -365,7 +365,7 @@ class createVCAAggregate():
             ('A1:C1', self.utils.headingFormat),
         ]
 
-        vcaCols = ['name', 'vca_link', 'No. of Reviews']
+        vcaCols = [self.opt.vcaName, 'vca_link', 'No. of Reviews']
         for nativeChallenge in self.dChallenges:
             reviews_num_col = "No. of Reviews " + nativeChallenge
             vcaCols.append(reviews_num_col)
@@ -473,10 +473,7 @@ class createVCAAggregate():
         return False
 
     def isVCAfeedbackValid(self, row, bad, good, excellent):
-        if (sum([bad, good, excellent]) <= 1):
-            return True
-        print("VCA Feedback not valid")
-        return False
+        return (sum([bad, good, excellent]) <= 1)
 
     def filterVCAConficts(self, data, filename):
         toInclude = []
