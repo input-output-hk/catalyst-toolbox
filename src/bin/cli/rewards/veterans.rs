@@ -20,16 +20,16 @@ pub struct VeteransRewards {
 
     /// Minimum number of rankings for each vca to be considered for reputatin and rewards
     /// distribution
-    #[structopt(long, short)]
-    minimum_rankings: usize,
+    #[structopt(long)]
+    min_rankings: usize,
 
     /// Cutoff for monetary rewards: ranking more reviews than this limit will not result in more rewards
-    #[structopt(long, short)]
-    maximum_ranking_for_rewards: usize,
+    #[structopt(long)]
+    max_rankings_rewards: usize,
 
     /// Cutoff for reputation: ranking more reviews than this limit will not result in more reputation awarded
-    #[structopt(long, short)]
-    maximum_ranking_for_reputation: usize,
+    #[structopt(long)]
+    max_rankings_reputation: usize,
 }
 
 impl VeteransRewards {
@@ -38,16 +38,16 @@ impl VeteransRewards {
             from,
             to,
             total_rewards,
-            minimum_rankings,
-            maximum_ranking_for_reputation,
-            maximum_ranking_for_rewards,
+            min_rankings,
+            max_rankings_reputation,
+            max_rankings_rewards,
         } = self;
         let reviews: Vec<veterans::VeteranRankingRow> = csv::load_data_from_csv::<_, b','>(&from)?;
         let results = veterans::calculate_veteran_advisors_incentives(
             &reviews,
             total_rewards,
-            minimum_rankings..=maximum_ranking_for_rewards,
-            minimum_rankings..=maximum_ranking_for_reputation,
+            min_rankings..=max_rankings_rewards,
+            min_rankings..=max_rankings_reputation,
         );
         csv::dump_data_to_csv(&results.into_iter().collect::<Vec<_>>(), &to)?;
 
