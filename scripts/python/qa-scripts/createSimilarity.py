@@ -89,13 +89,14 @@ class CreateSimilarity():
             for assessor_a, text_vector_a in s_vectors:
                 print("{} of {}".format(progress, len(s_vectors)))
                 new_vectors = s_vectors.copy()
-                current_index = new_vectors.index((assessor_a, text_vector_a))
-                del new_vectors[current_index]
-                for assessor_b , text_vector_b in new_vectors:
-                    sim_score = self.similarity(text_vector_a, text_vector_b)[0][1]
-                    assessor_pair = sorted((assessor_a, assessor_b))
-                    score = (assessor_pair[0], assessor_pair[1], sim_score)
-                    plagiarism_results.add(score)
+                current_index = s_vectors.index((assessor_a, text_vector_a))
+                for assessor_b , text_vector_b in s_vectors:
+                    internal_index = s_vectors.index((assessor_b, text_vector_b))
+                    if (internal_index != current_index):
+                        sim_score = self.similarity(text_vector_a, text_vector_b)[0][1]
+                        assessor_pair = sorted((assessor_a, assessor_b))
+                        score = (assessor_pair[0], assessor_pair[1], sim_score)
+                        plagiarism_results.add(score)
                 progress = progress + 1
             for res in plagiarism_results:
                 if (res[2] > self.similarityMinScore):
