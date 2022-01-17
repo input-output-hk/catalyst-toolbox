@@ -31,6 +31,8 @@
   "blankCol": "Blank",
   "notRelatedCol": "Not Related",
   "noVCAReviewsCol": "# of vCAs Reviews",
+  "vcaNameColInRewardsExport": "vca",
+  "vcaNameCol": "name",
 
   "q0Col": "Impact / Alignment Note",
   "q0Rating": "Impact / Alignment Rating",

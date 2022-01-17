@@ -30,7 +30,7 @@ class createVCAAggregate():
     def prepareBaseData(self):
         self.gspreadWrapper.getVCAMasterData()
         self.vcaMerged = pd.DataFrame(columns=self.gspreadWrapper.dfVca.columns, data=None)
-        self.vcaMerged[self.opt.vcaName] = ''
+        self.vcaMerged[self.opt.vcaNameColInRewardsExport] = ''
         self.dfVca = self.gspreadWrapper.dfVca.set_index(self.opt.assessmentsIdCol)
         self.gspreadWrapper.getProposersMasterData()
         self.dfMasterProposers = self.gspreadWrapper.dfMasterProposers.set_index(self.opt.assessmentsIdCol)
@@ -97,7 +97,7 @@ class createVCAAggregate():
                                 # Append the single review to the vcaMerged file
                                 toBeMergedAssessment = locAss.copy()
                                 toBeMergedAssessment['id'] = id
-                                toBeMergedAssessment[self.opt.vcaName] = single_vca[self.opt.vcaName]
+                                toBeMergedAssessment[self.opt.vcaNameColInRewardsExport] = single_vca[self.opt.vcaNameCol]
                                 self.vcaMerged = self.vcaMerged.append(toBeMergedAssessment)
 
                             for col in self.allColumns:
@@ -169,13 +169,23 @@ class createVCAAggregate():
         validAssessmentsRatings['Rating Given'] = validAssessmentsRatings[
             [self.opt.q0Rating, self.opt.q1Rating, self.opt.q2Rating]
         ].mean(axis=1)
-        finalProposals = validAssessmentsRatings.groupby([self.opt.proposalIdCol, self.opt.proposalKeyCol], as_index=False)['Rating Given'].mean().round(2)
+        finalProposals = validAssessmentsRatings.groupby(
+            [self.opt.proposalIdCol, self.opt.proposalKeyCol, self.opt.challengeCol],
+            as_index=False
+        )['Rating Given'].mean().round(2)
+        fProposalsNoAssessments = validAssessmentsRatings.groupby(
+            [self.opt.proposalIdCol, self.opt.proposalKeyCol, self.opt.challengeCol],
+            as_index=False
+        ).size().reset_index()
+        finalProposals['No. Assessments'] = fProposalsNoAssessments['size']
         for oProposal in self.proposals:
             if not (finalProposals[self.opt.proposalIdCol] == oProposal['id']).any():
                 propToAdd = {}
                 propToAdd[self.opt.proposalIdCol] = oProposal['id']
                 propToAdd[self.opt.proposalKeyCol] = oProposal['title']
+                propToAdd[self.opt.challengeCol] = ''
                 propToAdd['Rating Given'] = 0
+                propToAdd['No. Assessments'] = 0
                 finalProposals = finalProposals.append(propToAdd, ignore_index=True)
 
         finalProposals.to_csv('cache/final-proposals.csv')
@@ -184,7 +194,13 @@ class createVCAAggregate():
         vcaList.fillna(0, inplace=True)
 
         # Save csvs
-        self.vcaMerged.to_csv('cache/vca-merged.csv', index=False)
+        self.vcaMerged = self.vcaMerged[[
+            self.opt.assessmentsIdCol, self.opt.assessorCol, self.opt.proposalIdCol,
+            self.opt.excellentCol, self.opt.goodCol, self.opt.notValidCol,
+            self.opt.vcaNameColInRewardsExport
+        ]]
+        self.vcaMerged[self.opt.proposalIdCol] = self.vcaMerged[self.opt.proposalIdCol].astype("string")
+        self.vcaMerged.to_csv('cache/vca-merged.csv', index=False, quoting=2)
         vcaAggregatedAssessments.to_csv('cache/vca-aggregated.csv')
         aggregatedAssessments.to_csv('cache/aggregated.csv')
         validAssessments.to_csv('cache/valid.csv')
@@ -295,22 +311,23 @@ class createVCAAggregate():
 
 
         proposalsWidths = [
-            ('A', 300), ('B', 60), ('C', 60)
+            ('A', 300), ('B', 60), ('C', 300), ('D:E', 60)
         ]
         proposalsFormats = [
             ('B:B', self.utils.counterFormat),
-            ('C:C', self.utils.counterFormat),
+            ('D:D', self.utils.counterFormat),
+            ('E:E', self.utils.counterFormat),
             ('A:A', self.utils.noteFormat),
-            ('A1:C1', self.utils.headingFormat),
-            ('B1', self.utils.verticalHeadingFormat),
+            ('A1:E1', self.utils.headingFormat),
             ('C1', self.utils.verticalHeadingFormat),
+            ('D1', self.utils.verticalHeadingFormat),
         ]
 
         self.gspreadWrapper.createSheetFromDf(
             spreadsheet,
             'Proposals scores',
             finalProposals,
-            [self.opt.proposalKeyCol, self.opt.proposalIdCol, 'Rating Given'],
+            [self.opt.proposalKeyCol, self.opt.proposalIdCol, self.opt.challengeCol, 'Rating Given', 'No. Assessments'],
             columnWidths=proposalsWidths,
             formats=proposalsFormats
         )
@@ -365,7 +382,7 @@ class createVCAAggregate():
             ('A1:C1', self.utils.headingFormat),
         ]
 
-        vcaCols = [self.opt.vcaName, 'vca_link', 'No. of Reviews']
+        vcaCols = [self.opt.vcaNameCol, 'vca_link', 'No. of Reviews']
         for nativeChallenge in self.dChallenges:
             reviews_num_col = "No. of Reviews " + nativeChallenge
             vcaCols.append(reviews_num_col)
