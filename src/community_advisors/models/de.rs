@@ -1,7 +1,9 @@
 use crate::utils::serde::deserialize_truthy_falsy;
 use serde::Deserialize;
 
+/// (Proposal Id, Assessor Id), an assessor cannot assess the same proposal more than once
 pub type AdvisorReviewId = (String, String);
+pub type VeteranAdvisorId = String;
 
 #[derive(Deserialize)]
 pub struct AdvisorReviewRow {
@@ -34,6 +36,24 @@ pub struct AdvisorReviewRow {
     filtered_out: bool,
 }
 
+#[derive(Deserialize)]
+pub struct VeteranRankingRow {
+    pub proposal_id: String,
+    #[serde(alias = "Assessor")]
+    pub assessor: String,
+    #[serde(alias = "Excellent", deserialize_with = "deserialize_truthy_falsy")]
+    excellent: bool,
+    #[serde(alias = "Good", deserialize_with = "deserialize_truthy_falsy")]
+    good: bool,
+    #[serde(
+        default,
+        alias = "Filtered Out",
+        deserialize_with = "deserialize_truthy_falsy"
+    )]
+    filtered_out: bool,
+    pub vca: VeteranAdvisorId,
+}
+
 #[derive(Hash, Clone, PartialEq, Eq, Debug)]
 pub enum ReviewRanking {
     Excellent,
@@ -48,28 +68,37 @@ impl ReviewRanking {
     }
 }
 
-impl AdvisorReviewRow {
+impl VeteranRankingRow {
     pub fn score(&self) -> ReviewRanking {
-        match (self.excellent, self.good, self.filtered_out) {
-            (true, false, false) => ReviewRanking::Excellent,
-            (false, true, false) => ReviewRanking::Good,
-            (false, false, true) => ReviewRanking::FilteredOut,
-            (false, false, false) => ReviewRanking::NA,
-            _ => {
-                // This should never happen, from the source of information a review could be either
-                // Excellent or Good or not assessed. It cannot be both and it is considered
-                // a malformed information input.
-                panic!(
-                    "Invalid combination of scores from assessor {} for proposal {}",
-                    self.assessor, self.proposal_id
-                )
-            }
-        }
+        ranking_from_bools(self.excellent, self.good, self.filtered_out)
     }
 
-    /// Returns a unique identifier of this review
-    pub fn id(&self) -> AdvisorReviewId {
+    pub fn review_id(&self) -> AdvisorReviewId {
         (self.proposal_id.clone(), self.assessor.clone())
+    }
+}
+
+impl AdvisorReviewRow {
+    pub fn score(&self) -> ReviewRanking {
+        ranking_from_bools(self.excellent, self.good, self.filtered_out)
+    }
+}
+
+fn ranking_from_bools(excellent: bool, good: bool, filtered_out: bool) -> ReviewRanking {
+    match (excellent, good, filtered_out) {
+        (true, false, false) => ReviewRanking::Excellent,
+        (false, true, false) => ReviewRanking::Good,
+        (false, false, true) => ReviewRanking::FilteredOut,
+        (false, false, false) => ReviewRanking::NA,
+        _ => {
+            // This should never happen, from the source of information a review could be either
+            // Excellent or Good or not assessed. It cannot be both and it is considered
+            // a malformed information input.
+            panic!(
+                "Invalid combination of scores {} {} {}",
+                excellent, good, filtered_out
+            )
+        }
     }
 }
 

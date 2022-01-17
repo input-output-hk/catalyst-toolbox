@@ -1,7 +1,9 @@
 use super::Error;
-use catalyst_toolbox::rewards::veterans;
+use catalyst_toolbox::community_advisors::models::VeteranRankingRow;
+use catalyst_toolbox::rewards::veterans::{self, VcaRewards, VeteranAdvisorIncentive};
 use catalyst_toolbox::rewards::Rewards;
 use catalyst_toolbox::utils::csv;
+use serde::Serialize;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -42,15 +44,42 @@ impl VeteransRewards {
             max_rankings_reputation,
             max_rankings_rewards,
         } = self;
-        let reviews: Vec<veterans::VeteranRankingRow> = csv::load_data_from_csv::<_, b','>(&from)?;
+        let reviews: Vec<VeteranRankingRow> = csv::load_data_from_csv::<_, b','>(&from)?;
         let results = veterans::calculate_veteran_advisors_incentives(
             &reviews,
             total_rewards,
             min_rankings..=max_rankings_rewards,
             min_rankings..=max_rankings_reputation,
         );
-        csv::dump_data_to_csv(&results.into_iter().collect::<Vec<_>>(), &to)?;
+
+        csv::dump_data_to_csv(&rewards_to_csv_data(results), &to).unwrap();
 
         Ok(())
     }
+}
+
+fn rewards_to_csv_data(rewards: VcaRewards) -> Vec<impl Serialize> {
+    #[derive(Serialize)]
+    struct Entry {
+        id: String,
+        rewards: Rewards,
+        reputation: u64,
+    }
+
+    rewards
+        .into_iter()
+        .map(
+            |(
+                id,
+                VeteranAdvisorIncentive {
+                    rewards,
+                    reputation,
+                },
+            )| Entry {
+                id,
+                rewards,
+                reputation,
+            },
+        )
+        .collect()
 }

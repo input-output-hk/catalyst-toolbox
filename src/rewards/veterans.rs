@@ -1,6 +1,6 @@
 use crate::community_advisors::models::{
-    AdvisorReviewId, AdvisorReviewRow,
     ReviewRanking::{self, *},
+    VeteranAdvisorId, VeteranRankingRow,
 };
 use crate::rewards::Rewards;
 use itertools::Itertools;
@@ -8,9 +8,7 @@ use rust_decimal::{prelude::ToPrimitive, Decimal};
 use std::borrow::Borrow;
 use std::collections::{BTreeMap, HashMap};
 
-use serde::{Deserialize, Serialize};
-
-pub type VeteranAdvisorId = String;
+use serde::Serialize;
 
 #[derive(Serialize)]
 pub struct VeteranAdvisorIncentive {
@@ -18,6 +16,7 @@ pub struct VeteranAdvisorIncentive {
     pub reputation: u64,
 }
 
+pub type VcaRewards = HashMap<VeteranAdvisorId, VeteranAdvisorIncentive>;
 pub type EligibilityThresholds = std::ops::RangeInclusive<usize>;
 
 // TODO: for the sake of clarity, introduce a different naming between ca reviews and vca ranking
@@ -25,30 +24,18 @@ pub type EligibilityThresholds = std::ops::RangeInclusive<usize>;
 // Supposing to have a file with all the rankings for each review
 // e.g. something like an expanded version of a AdvisorReviewRow
 // [proposal_id, advisor, ratings, ..(other fields from AdvisorReviewRow).., ranking (good/excellent/filtered out), vca]
-#[derive(Deserialize)]
-pub struct VeteranRankingRow {
-    #[serde(flatten)]
-    advisor_review_row: AdvisorReviewRow,
-    vca: VeteranAdvisorId,
-}
-
-impl VeteranRankingRow {
-    fn score(&self) -> ReviewRanking {
-        self.advisor_review_row.score()
-    }
-
-    fn review_id(&self) -> AdvisorReviewId {
-        self.advisor_review_row.id()
-    }
-}
 
 fn calc_final_ranking_per_review(rankings: &[impl Borrow<VeteranRankingRow>]) -> ReviewRanking {
-    let rankings_majority = rankings.len() / 2;
+    let rankings_majority = Decimal::from(rankings.len()) / Decimal::from(2);
     let ranks = rankings.iter().counts_by(|r| r.borrow().score());
 
     match (ranks.get(&FilteredOut), ranks.get(&Excellent)) {
-        (Some(filtered_out), _) if filtered_out > &rankings_majority => ReviewRanking::FilteredOut,
-        (_, Some(excellent)) if excellent > &rankings_majority => ReviewRanking::Excellent,
+        (Some(filtered_out), _) if Decimal::from(*filtered_out) >= rankings_majority => {
+            ReviewRanking::FilteredOut
+        }
+        (_, Some(excellent)) if Decimal::from(*excellent) > rankings_majority => {
+            ReviewRanking::Excellent
+        }
         _ => ReviewRanking::Good,
     }
 }
@@ -69,7 +56,6 @@ fn rewards_disagreement_discount(agreement_rate: Decimal) -> Decimal {
 }
 
 fn reputation_disagreement_discount(agreement_rate: Decimal) -> Decimal {
-    println!("discount rate {}", agreement_rate);
     if agreement_rate >= Decimal::new(6, 1) {
         Decimal::ONE
     } else {
