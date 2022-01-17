@@ -177,20 +177,11 @@ mod tests {
         vca: impl Iterator<Item = String>,
     ) -> Vec<VeteranRankingRow> {
         (0..n_excellent)
-            .map(|_| AdvisorReviewRow::with_assessor(assessor.clone(), ReviewRanking::Excellent))
-            .chain(
-                (0..n_good).map(|_| {
-                    AdvisorReviewRow::with_assessor(assessor.clone(), ReviewRanking::Good)
-                }),
-            )
-            .chain((0..n_filtered_out).map(|_| {
-                AdvisorReviewRow::with_assessor(assessor.clone(), ReviewRanking::FilteredOut)
-            }))
+            .map(|_| ReviewRanking::Excellent)
+            .chain((0..n_good).map(|_| ReviewRanking::Good))
+            .chain((0..n_filtered_out).map(|_| ReviewRanking::FilteredOut))
             .zip(vca)
-            .map(|(advisor_review_row, vca)| VeteranRankingRow {
-                advisor_review_row,
-                vca,
-            })
+            .map(|(ranking, vca)| VeteranRankingRow::dummy(ranking, assessor.clone(), vca))
             .collect()
     }
 
@@ -202,12 +193,12 @@ mod tests {
         ));
 
         assert!(matches!(
-            calc_final_ranking_per_review(&gen_dummy_rankings("".into(), 4, 1, 5, RandomIterator)),
+            calc_final_ranking_per_review(&gen_dummy_rankings("".into(), 4, 2, 5, RandomIterator)),
             ReviewRanking::Good
         ));
 
         assert!(matches!(
-            calc_final_ranking_per_review(&gen_dummy_rankings("".into(), 3, 1, 5, RandomIterator)),
+            calc_final_ranking_per_review(&gen_dummy_rankings("".into(), 4, 1, 5, RandomIterator)),
             ReviewRanking::FilteredOut
         ));
 

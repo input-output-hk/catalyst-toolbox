@@ -70,7 +70,7 @@ impl ReviewRanking {
 
 impl VeteranRankingRow {
     pub fn score(&self) -> ReviewRanking {
-        ranking_from_bools(self.excellent, self.good, self.filtered_out)
+        ranking_mux(self.excellent, self.good, self.filtered_out)
     }
 
     pub fn review_id(&self) -> AdvisorReviewId {
@@ -80,11 +80,11 @@ impl VeteranRankingRow {
 
 impl AdvisorReviewRow {
     pub fn score(&self) -> ReviewRanking {
-        ranking_from_bools(self.excellent, self.good, self.filtered_out)
+        ranking_mux(self.excellent, self.good, self.filtered_out)
     }
 }
 
-fn ranking_from_bools(excellent: bool, good: bool, filtered_out: bool) -> ReviewRanking {
+fn ranking_mux(excellent: bool, good: bool, filtered_out: bool) -> ReviewRanking {
     match (excellent, good, filtered_out) {
         (true, false, false) => ReviewRanking::Excellent,
         (false, true, false) => ReviewRanking::Good,
@@ -104,7 +104,7 @@ fn ranking_from_bools(excellent: bool, good: bool, filtered_out: bool) -> Review
 
 #[cfg(test)]
 mod tests {
-    use super::ReviewRanking;
+    use super::{ReviewRanking, VeteranRankingRow};
     use crate::community_advisors::models::AdvisorReviewRow;
     use crate::utils::csv as csv_utils;
     use rand::{distributions::Alphanumeric, Rng};
@@ -118,28 +118,38 @@ mod tests {
         assert_eq!(data.len(), 1);
     }
 
+    fn ranking_demux(ranking: ReviewRanking) -> (bool, bool, bool) {
+        match ranking {
+            ReviewRanking::Good => (false, true, false),
+            ReviewRanking::Excellent => (true, false, false),
+            ReviewRanking::FilteredOut => (false, false, true),
+            ReviewRanking::NA => (false, false, false),
+        }
+    }
+
+    impl VeteranRankingRow {
+        pub fn dummy(score: ReviewRanking, assessor: String, vca: String) -> Self {
+            let (excellent, good, filtered_out) = ranking_demux(score);
+            Self {
+                proposal_id: String::new(),
+                assessor,
+                excellent,
+                good,
+                filtered_out,
+                vca,
+            }
+        }
+    }
+
     impl AdvisorReviewRow {
         pub fn dummy(score: ReviewRanking) -> Self {
-            Self::with_assessor(
-                (0..10)
-                    .map(|_| rand::thread_rng().sample(Alphanumeric) as char)
-                    .collect(),
-                score,
-            )
-        }
-
-        pub fn with_assessor(assessor: String, score: ReviewRanking) -> Self {
-            let (excellent, good, filtered_out) = match score {
-                ReviewRanking::Good => (false, true, false),
-                ReviewRanking::Excellent => (true, false, false),
-                ReviewRanking::FilteredOut => (false, false, true),
-                ReviewRanking::NA => (false, false, false),
-            };
-
+            let (excellent, good, filtered_out) = ranking_demux(score);
             AdvisorReviewRow {
                 proposal_id: String::new(),
                 idea_url: String::new(),
-                assessor,
+                assessor: (0..10)
+                    .map(|_| rand::thread_rng().sample(Alphanumeric) as char)
+                    .collect(),
                 impact_alignment_note: String::new(),
                 impact_alignment_rating: 0,
                 feasibility_note: String::new(),
