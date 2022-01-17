@@ -113,7 +113,6 @@ pub fn calculate_veteran_advisors_incentives(
         .into_iter()
         .map(|(review, rankings)| (review, calc_final_ranking_per_review(&rankings)))
         .collect::<BTreeMap<_, _>>();
-    dbg!(&final_rankings_per_review);
 
     let rankings_per_vca = veteran_rankings
         .iter()
@@ -129,9 +128,6 @@ pub fn calculate_veteran_advisors_incentives(
                 == ranking.score().is_positive()
         })
         .counts_by(|ranking| ranking.vca.clone());
-
-    dbg!(&rankings_per_vca);
-    dbg!(&eligible_rankings_per_vca);
 
     let reputation_eligible_rankings = calc_final_eligible_rankings(
         &rankings_per_vca,
