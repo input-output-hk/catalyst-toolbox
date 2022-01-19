@@ -17,7 +17,6 @@ pub type ProposalId = String;
 // Lets match to the same type as the funds, but naming it funds would be confusing
 pub type Rewards = Funds;
 
-pub type CaRewards = BTreeMap<CommunityAdvisor, Rewards>;
 pub type ProposalsReviews = BTreeMap<ProposalId, Vec<AdvisorReviewRow>>;
 pub type ApprovedProposals = BTreeMap<ProposalId, Funds>;
 
@@ -81,26 +80,15 @@ fn get_tickets_per_proposal(
 }
 
 fn calculate_rewards_per_proposal(
-    proposal_reviews: ProposalsReviews,
-    approved_proposals: &ApprovedProposals,
-    funding: &FundSetting,
+    proposals_tickets: BTreeMap<ProposalId, ProposalTickets>,
+    bonus_rewards: &BTreeMap<ProposalId, Rewards>,
+    base_ticket_reward: Rewards,
     rewards_slots: &ProposalRewardSlots,
 ) -> Vec<ProposalRewards> {
-    let bonus_funds = funding.bonus_funds();
-
-    let total_approved_budget = approved_proposals.values().sum::<Funds>();
-    let (total_tickets, proposals_tickets) =
-        get_tickets_per_proposal(proposal_reviews, rewards_slots);
-
-    let base_ticket_reward = funding.proposal_funds() / Rewards::from(total_tickets);
-
     proposals_tickets
         .into_iter()
         .map(|(id, tickets)| {
-            let bonus_reward = approved_proposals
-                .get(&id)
-                .map(|budget| bonus_funds * budget / total_approved_budget)
-                .unwrap_or_default();
+            let bonus_reward = bonus_rewards.get(&id).copied().unwrap_or_default();
             let per_ticket_reward = match tickets {
                 ProposalTickets::Legacy { winning_tkts, .. } => {
                     base_ticket_reward * Rewards::from(rewards_slots.max_winning_tickets())
@@ -195,7 +183,7 @@ fn double_lottery<R: Rng>(
 fn calculate_ca_rewards_for_proposal<R: Rng>(
     proposal_reward: ProposalRewards,
     rng: &mut R,
-) -> CaRewards {
+) -> BTreeMap<CommunityAdvisor, Rewards> {
     let ProposalRewards {
         tickets,
         per_ticket_reward,
@@ -233,31 +221,53 @@ fn calculate_ca_rewards_for_proposal<R: Rng>(
         .collect()
 }
 
+pub struct CaRewards {
+    pub rewards: BTreeMap<CommunityAdvisor, Rewards>,
+    pub base_ticket_reward: Rewards,
+    pub bonus_rewards: BTreeMap<ProposalId, Rewards>,
+}
+
 pub fn calculate_ca_rewards(
     proposal_reviews: ProposalsReviews,
-    approved_proposals: &ApprovedProposals,
+    approved_proposals: ApprovedProposals,
     funding: &FundSetting,
     rewards_slots: &ProposalRewardSlots,
     seed: Seed,
 ) -> CaRewards {
+    let bonus_funds = funding.bonus_funds();
+    let total_approved_budget = approved_proposals.values().sum::<Funds>();
+    let (total_tickets, proposals_tickets) =
+        get_tickets_per_proposal(proposal_reviews, rewards_slots);
+
+    let base_ticket_reward = funding.proposal_funds() / Rewards::from(total_tickets);
+
+    let bonus_rewards = approved_proposals
+        .into_iter()
+        .map(|(proposal, budget)| (proposal, bonus_funds * budget / total_approved_budget))
+        .collect::<BTreeMap<_, _>>();
+
     let proposal_rewards = calculate_rewards_per_proposal(
-        proposal_reviews,
-        approved_proposals,
-        funding,
+        proposals_tickets,
+        &bonus_rewards,
+        base_ticket_reward,
         rewards_slots,
     );
-    let mut ca_rewards = CaRewards::new();
+    let mut rewards = BTreeMap::new();
     let mut rng = ChaCha8Rng::from_seed(seed);
 
     for proposal_reward in proposal_rewards {
-        let rewards = calculate_ca_rewards_for_proposal(proposal_reward, &mut rng);
+        let rew = calculate_ca_rewards_for_proposal(proposal_reward, &mut rng);
 
-        for (ca, rewards) in rewards {
-            *ca_rewards.entry(ca).or_insert(Rewards::ZERO) += rewards;
+        for (ca, rew) in rew {
+            *rewards.entry(ca).or_insert(Rewards::ZERO) += rew;
         }
     }
 
-    ca_rewards
+    CaRewards {
+        rewards,
+        bonus_rewards,
+        base_ticket_reward,
+    }
 }
 
 #[cfg(test)]
