@@ -320,7 +320,7 @@ mod tests {
         proposals.insert("2".into(), gen_dummy_reviews(2, 3, 0)); // winning tickets: 32
         let res = calculate_ca_rewards(
             proposals,
-            &ApprovedProposals::new(),
+            ApprovedProposals::new(),
             &FundSetting {
                 proposal_ratio: 100,
                 bonus_ratio: 0,
@@ -328,7 +328,8 @@ mod tests {
             },
             &Default::default(),
             [0; 32],
-        );
+        )
+        .rewards;
         assert!(are_close(res.values().sum::<Funds>(), Funds::from(100)));
     }
 
@@ -340,7 +341,7 @@ mod tests {
         proposals.insert("3".into(), gen_dummy_reviews(2, 3, 0)); // winning tickets: 32
         let res = calculate_ca_rewards(
             proposals,
-            &vec![("1".into(), Funds::from(2)), ("2".into(), Funds::from(1))]
+            vec![("1".into(), Funds::from(2)), ("2".into(), Funds::from(1))]
                 .into_iter()
                 .collect(),
             &FundSetting {
@@ -350,7 +351,8 @@ mod tests {
             },
             &Default::default(),
             [0; 32],
-        );
+        )
+        .rewards;
         assert!(are_close(res.values().sum::<Funds>(), Funds::from(100)));
     }
 
@@ -372,7 +374,7 @@ mod tests {
         }
         let res = calculate_ca_rewards(
             proposals,
-            &approved_proposals,
+            approved_proposals,
             &FundSetting {
                 proposal_ratio: 80,
                 bonus_ratio: 20,
@@ -380,7 +382,8 @@ mod tests {
             },
             &Default::default(),
             [0; 32],
-        );
+        )
+        .rewards;
         assert!(are_close(res.values().sum::<Funds>(), Funds::from(100)));
     }
 
@@ -392,7 +395,7 @@ mod tests {
         proposals.insert("1".into(), reviews);
         let res = calculate_ca_rewards(
             proposals,
-            &vec![("1".into(), Funds::from(2))].into_iter().collect(),
+            vec![("1".into(), Funds::from(2))].into_iter().collect(),
             &FundSetting {
                 proposal_ratio: 80,
                 bonus_ratio: 20,
@@ -400,7 +403,8 @@ mod tests {
             },
             &Default::default(),
             [0; 32],
-        );
+        )
+        .rewards;
         assert!(are_close(res.values().sum::<Funds>(), Funds::from(240)));
         assert!(are_close(
             *res.get(&excellent_assessor).unwrap(),
