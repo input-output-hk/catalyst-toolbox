@@ -1,18 +1,13 @@
 use super::Error;
-use catalyst_toolbox::rewards::voters::{
-    active_addresses, calculate_active_stake, calculate_reward_share, reward_from_share,
-    ActiveAddresses, Rewards, VoteCount, ADA_TO_LOVELACE_FACTOR,
-};
+use catalyst_toolbox::rewards::voters::{calc_voter_rewards, Rewards, VoteCount};
+use catalyst_toolbox::snapshot::{MainnetRewardAddress, Snapshot};
 
-use chain_addr::{Discrimination, Kind};
-use chain_impl_mockchain::vote::CommitteeId;
 use jcli_lib::jcli_lib::block::Common;
-use jormungandr_lib::interfaces::{Address, Block0Configuration};
+use jormungandr_lib::interfaces::Block0Configuration;
 
 use structopt::StructOpt;
 
-use std::collections::{HashMap, HashSet};
-use std::ops::Div;
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 #[derive(StructOpt)]
@@ -23,6 +18,10 @@ pub struct VotersRewards {
     /// Reward (in LOVELACE) to be distributed
     #[structopt(long)]
     total_rewards: u64,
+
+    /// Path to raw snapshot
+    #[structopt(long)]
+    snapshot_path: PathBuf,
 
     /// Stake threshold to be able to participate in a Catalyst sidechain
     /// Registrations with less than the threshold associated to the stake address
@@ -40,29 +39,15 @@ pub struct VotersRewards {
 
 fn write_rewards_results(
     common: Common,
-    stake_per_voter: &HashMap<&Address, u64>,
-    share_results: &HashMap<&Address, Rewards>,
-    total_rewards: u64,
+    rewards: &HashMap<MainnetRewardAddress, Rewards>,
 ) -> Result<(), Error> {
     let writer = common.open_output()?;
-    let header = [
-        "Address",
-        "Stake of the voter (ADA)",
-        "Reward for the voter (ADA)",
-        "Reward for the voter (lovelace)",
-    ];
+    let header = ["Address", "Reward for the voter (lovelace)"];
     let mut csv_writer = csv::Writer::from_writer(writer);
     csv_writer.write_record(&header).map_err(Error::Csv)?;
 
-    for (address, share) in share_results.iter() {
-        let stake = stake_per_voter.get(*address).unwrap();
-        let voter_reward = reward_from_share(*share, total_rewards);
-        let record = [
-            address.to_string(),
-            stake.to_string(),
-            voter_reward / Rewards::from(ADA_TO_LOVELACE_FACTOR).to_string(),
-            voter_reward.trunc().to_string(),
-        ];
+    for (address, rewards) in rewards.iter() {
+        let record = [address.to_string(), rewards.trunc().to_string()];
         csv_writer.write_record(&record).map_err(Error::Csv)?;
     }
     Ok(())
@@ -73,6 +58,7 @@ impl VotersRewards {
         let VotersRewards {
             common,
             total_rewards,
+            snapshot_path,
             registration_threshold,
             votes_count_path,
             vote_threshold,
@@ -85,26 +71,20 @@ impl VotersRewards {
             &Some(votes_count_path),
         )?)?;
 
-        let active_addresses = active_addresses(vote_count, &block0, vote_threshold);
+        let snapshot = Snapshot::from_raw_snapshot(
+            serde_json::from_reader(jcli_lib::utils::io::open_file_read(&Some(snapshot_path))?)?,
+            registration_threshold.into(),
+        );
 
-        let committee_keys: HashSet<Address> = block0
-            .blockchain_configuration
-            .committees
-            .iter()
-            .cloned()
-            .map(|id| {
-                let id = CommitteeId::from(id);
-                let pk = id.public_key();
+        let results = calc_voter_rewards(
+            vote_count,
+            vote_threshold,
+            &block0,
+            snapshot,
+            Rewards::from(total_rewards),
+        );
 
-                chain_addr::Address(Discrimination::Production, Kind::Account(pk)).into()
-            })
-            .collect();
-
-        let (total_active_stake, stake_per_voter) =
-            calculate_active_stake(&committee_keys, &block0, &active_addresses);
-        let rewards =
-            calculate_reward_share(total_active_stake, &stake_per_voter, &active_addresses);
-        write_rewards_results(common, &stake_per_voter, &rewards, total_rewards)?;
+        write_rewards_results(common, &results)?;
         Ok(())
     }
 }
