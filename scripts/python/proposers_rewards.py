@@ -7,6 +7,7 @@ import csv
 import itertools
 import enum
 import os
+import re
 from collections import namedtuple
 from io import StringIO
 
@@ -413,11 +414,18 @@ def filter_excluded_proposals(
     }
 
 
-def calculate_total_stake_from_block0_configuration(block0_config: Dict[str, Dict]):
+def calculate_total_stake_from_block0_configuration(
+    block0_config: Dict[str, Dict],
+    committee_keys: List[Dict[str, str]]
+):
     funds = (
         initial["fund"] for initial in block0_config["initial"] if "fund" in initial
     )
-    return sum(fund["value"] for fund in itertools.chain.from_iterable(funds))
+    return sum(
+        fund["value"]
+        for fund in itertools.chain.from_iterable(funds)
+        if fund["address"] not in [key["address"] for key in committee_keys]
+    )
 
 
 # Output results
@@ -458,6 +466,7 @@ def calculate_rewards(
     active_voteplan_path: Optional[str] = typer.Option(None),
     challenges_path: Optional[str] = typer.Option(None),
     vit_station_url: str = typer.Option("https://servicing-station.vit.iohk.io"),
+    committee_keys_path: Optional[str] = typer.Option(None),
 ):
     """
     Calculate catalyst rewards after tallying process.
@@ -497,7 +506,15 @@ def calculate_rewards(
 
     proposals = filter_excluded_proposals(proposals, excluded_proposals)
     block0_config = load_block0_data(block0_path)
-    total_stake = calculate_total_stake_from_block0_configuration(block0_config)
+    committee_keys = (
+        load_json_from_file(committee_keys_path)
+        if committee_keys_path
+        else []
+    )
+    total_stake = calculate_total_stake_from_block0_configuration(
+        block0_config,
+        committee_keys
+    )
     # minimum amount of stake needed for a proposal to be accepted
     total_stake_approval_threshold = float(total_stake_threshold) * float(total_stake)
 
@@ -514,7 +531,12 @@ def calculate_rewards(
         )
 
         challenge_output_file_path = build_path_for_challenge(
-            output_file, challenge.title.replace(" ", "_").replace(":", "_")
+            output_file,
+            re.sub(
+                r'(?u)[^-\w.]',
+                '',
+                challenge.title.replace(" ", "_").replace(":", "_")
+            )
         )
 
         with open(
