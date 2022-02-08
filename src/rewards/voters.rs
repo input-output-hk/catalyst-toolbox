@@ -2,16 +2,18 @@ use fixed::types::U64F64;
 
 use chain_addr::{Discrimination, Kind};
 use chain_impl_mockchain::transaction::UnspecifiedAccountIdentifier;
+use rust_decimal::Decimal;
 use std::collections::{HashMap, HashSet};
 
 use jormungandr_lib::interfaces::{Address, Block0Configuration, Initial};
 
 pub const ADA_TO_LOVELACE_FACTOR: u64 = 1_000_000;
-pub type Rewards = U64F64;
+pub type Rewards = Decimal;
 
-pub fn calculate_stake<'address>(
+pub fn calculate_active_stake<'address>(
     committee_keys: &HashSet<Address>,
     block0: &'address Block0Configuration,
+    active_addresses: &ActiveAddresses,
 ) -> (u64, HashMap<&'address Address, u64>) {
     let mut total_stake: u64 = 0;
     let mut stake_per_voter: HashMap<&'address Address, u64> = HashMap::new();
@@ -20,7 +22,12 @@ pub fn calculate_stake<'address>(
         match fund {
             Initial::Fund(fund) => {
                 for utxo in fund {
-                    if !committee_keys.contains(&utxo.address) {
+                    // Exclude committee addresses (managed by IOG) and
+                    // non active voters from total active stake for the purpose of calculating
+                    // voter rewards
+                    if !committee_keys.contains(&utxo.address)
+                        && active_addresses.contains(&utxo.address)
+                    {
                         let value: u64 = utxo.value.into();
                         total_stake += value;
                         let entry = stake_per_voter.entry(&utxo.address).or_default();
@@ -38,15 +45,14 @@ pub fn calculate_stake<'address>(
 pub fn calculate_reward_share<'address>(
     total_stake: u64,
     stake_per_voter: &HashMap<&'address Address, u64>,
-    threshold_addresses: &AddressesVoteCount,
-    threshold: u64,
+    active_addresses: &ActiveAddresses,
 ) -> HashMap<&'address Address, Rewards> {
     stake_per_voter
         .iter()
         .map(|(k, v)| {
             // if it doesnt appear in the votes count, it means it did not vote
-            let reward = if *threshold_addresses.get(k).unwrap_or(&0u64) >= threshold {
-                Rewards::from_num(*v) / total_stake as u128
+            let reward = if active_addresses.contains(k) {
+                Rewards::from(*v) / Rewards::from(total_stake)
             } else {
                 Rewards::ZERO
             };
@@ -57,25 +63,29 @@ pub fn calculate_reward_share<'address>(
 
 /// get the proportional reward from a share and total rewards amount
 pub fn reward_from_share(share: Rewards, total_reward: u64) -> Rewards {
-    Rewards::from_num(total_reward) * share
+    Rewards::from(total_reward) * share
 }
 
 pub type VoteCount = HashMap<String, u64>;
-pub type AddressesVoteCount = HashMap<Address, u64>;
+pub type ActiveAddresses = HashSet<Address>;
 
-pub fn vote_count_with_addresses(
+pub fn active_addresses(
     vote_count: VoteCount,
     block0: &Block0Configuration,
-) -> AddressesVoteCount {
+    threshold: u64,
+) -> ActiveAddresses {
     let discrimination = block0.blockchain_configuration.discrimination;
     vote_count
         .into_iter()
-        .map(|(account_hex, count)| {
-            (
-                account_hex_to_address(account_hex, discrimination)
-                    .expect("Valid hex encoded UnspecifiedAccountIdentifier"),
-                count,
-            )
+        .filter_map(|(account_hex, count)| {
+            if count >= threshold {
+                Some(
+                    account_hex_to_address(account_hex, discrimination)
+                        .expect("Valid hex encoded UnspecifiedAccountIdentifier"),
+                )
+            } else {
+                None
+            }
         })
         .collect()
 }

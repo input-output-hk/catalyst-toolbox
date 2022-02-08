@@ -1,7 +1,7 @@
 use super::Error;
 use catalyst_toolbox::rewards::voters::{
-    calculate_reward_share, calculate_stake, reward_from_share, vote_count_with_addresses,
-    AddressesVoteCount, Rewards, VoteCount, ADA_TO_LOVELACE_FACTOR,
+    active_addresses, calculate_active_stake, calculate_reward_share, reward_from_share,
+    ActiveAddresses, Rewards, VoteCount, ADA_TO_LOVELACE_FACTOR,
 };
 
 use chain_addr::{Discrimination, Kind};
@@ -24,9 +24,16 @@ pub struct VotersRewards {
     #[structopt(long)]
     total_rewards: u64,
 
+    /// Stake threshold to be able to participate in a Catalyst sidechain
+    /// Registrations with less than the threshold associated to the stake address
+    /// will be ignored
+    #[structopt(long)]
+    registration_threshold: u64,
+
     #[structopt(long)]
     votes_count_path: PathBuf,
 
+    /// Number of votes required to be able to receive voter rewards
     #[structopt(long, default_value)]
     vote_threshold: u64,
 }
@@ -53,10 +60,8 @@ fn write_rewards_results(
         let record = [
             address.to_string(),
             stake.to_string(),
-            voter_reward
-                .div(&(ADA_TO_LOVELACE_FACTOR as u128))
-                .to_string(),
-            voter_reward.int().to_string(),
+            voter_reward / Rewards::from(ADA_TO_LOVELACE_FACTOR).to_string(),
+            voter_reward.trunc().to_string(),
         ];
         csv_writer.write_record(&record).map_err(Error::Csv)?;
     }
@@ -68,6 +73,7 @@ impl VotersRewards {
         let VotersRewards {
             common,
             total_rewards,
+            registration_threshold,
             votes_count_path,
             vote_threshold,
         } = self;
@@ -79,8 +85,7 @@ impl VotersRewards {
             &Some(votes_count_path),
         )?)?;
 
-        let addresses_vote_count: AddressesVoteCount =
-            vote_count_with_addresses(vote_count, &block0);
+        let active_addresses = active_addresses(vote_count, &block0, vote_threshold);
 
         let committee_keys: HashSet<Address> = block0
             .blockchain_configuration
@@ -95,13 +100,10 @@ impl VotersRewards {
             })
             .collect();
 
-        let (total_stake, stake_per_voter) = calculate_stake(&committee_keys, &block0);
-        let rewards = calculate_reward_share(
-            total_stake,
-            &stake_per_voter,
-            &addresses_vote_count,
-            vote_threshold,
-        );
+        let (total_active_stake, stake_per_voter) =
+            calculate_active_stake(&committee_keys, &block0, &active_addresses);
+        let rewards =
+            calculate_reward_share(total_active_stake, &stake_per_voter, &active_addresses);
         write_rewards_results(common, &stake_per_voter, &rewards, total_rewards)?;
         Ok(())
     }
