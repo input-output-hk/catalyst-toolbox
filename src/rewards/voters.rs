@@ -155,13 +155,96 @@ pub fn calc_voter_rewards(
         .collect();
     let (total_active_stake, stake_per_voter) =
         calculate_active_stake(&committee_keys, block0, &active_addresses);
-    rewards_to_mainnet_addresses(
-        calculate_reward(
-            total_active_stake,
-            &stake_per_voter,
-            &active_addresses,
-            total_rewards,
-        ),
-        snapshot,
-    )
+    dbg!(total_active_stake);
+    dbg!(&stake_per_voter);
+    let rewards = calculate_reward(
+        total_active_stake,
+        &stake_per_voter,
+        &active_addresses,
+        total_rewards,
+    );
+    dbg!(&rewards);
+    rewards_to_mainnet_addresses(rewards, snapshot)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::snapshot::*;
+    use chain_impl_mockchain::chaintypes::ConsensusVersion;
+    use chain_impl_mockchain::fee::LinearFee;
+    use jormungandr_lib::crypto::account::Identifier;
+    use jormungandr_lib::interfaces::{BlockchainConfiguration, Stake};
+    use quickcheck::{Arbitrary, Gen};
+    use quickcheck_macros::*;
+
+    #[quickcheck]
+    fn test_all_active(snapshot: Snapshot) {
+        let votes_count = snapshot
+            .voting_keys()
+            .into_iter()
+            .map(|key| (key.to_hex(), 1))
+            .collect::<VoteCount>();
+    }
+
+    #[quickcheck]
+    fn test_all_inactive(snapshot: Snapshot) {
+        let votes_count = VoteCount::new();
+    }
+
+    #[quickcheck]
+    fn test_small(snapshot: Snapshot) {}
+
+    #[test]
+    fn test_mapping() {
+        let mut raw_snapshot = HashMap::new();
+        let voting_pub_key = Identifier::from_hex(&hex::encode([0; 32])).unwrap();
+
+        let mut total_stake = 0u64;
+        for i in 1..10u64 {
+            let stake_key = i.to_string();
+            let reward_addr = i.to_string();
+            let stake: Stake = i.into();
+            raw_snapshot.insert(
+                stake_key,
+                CatalystRegistration {
+                    stake,
+                    reward_addr,
+                    voting_pub_key: voting_pub_key.clone(),
+                },
+            );
+            total_stake += i;
+        }
+
+        let snapshot = Snapshot::from_raw_snapshot(raw_snapshot.into(), 0.into());
+
+        let votes_count = snapshot
+            .voting_keys()
+            .into_iter()
+            .map(|key| (key.to_hex(), 1))
+            .collect::<VoteCount>();
+
+        let initial = vec![snapshot.to_block0_initials(Discrimination::Test)];
+        let block0 = Block0Configuration {
+            blockchain_configuration: BlockchainConfiguration::new(
+                Discrimination::Test,
+                ConsensusVersion::Bft,
+                LinearFee::new(1, 1, 1),
+            ),
+            initial,
+        };
+
+        dbg!(&snapshot);
+        dbg!(&block0);
+
+        let rewards = calc_voter_rewards(votes_count, 1, &block0, snapshot, Rewards::ONE);
+        dbg!(&rewards);
+        assert_eq!(rewards.values().sum::<Rewards>(), Rewards::ONE);
+        for (addr, reward) in rewards {
+            assert_eq!(
+                reward,
+                addr.parse::<Rewards>().unwrap() / Rewards::from(total_stake)
+            );
+        }
+    }
 }
