@@ -411,6 +411,7 @@ Options:
   --vit-station-url TEXT          [default: https://servicing-
                                   station.vit.iohk.io]
 
+  --committee-keys-path TEXT
   --install-completion [bash|zsh|fish|powershell|pwsh]
                                   Install completion for the specified shell.
   --show-completion [bash|zsh|fish|powershell|pwsh]
