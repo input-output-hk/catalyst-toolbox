@@ -155,8 +155,6 @@ pub fn calc_voter_rewards(
         .collect();
     let (total_active_stake, stake_per_voter) =
         calculate_active_stake(&committee_keys, block0, &active_addresses);
-    dbg!(total_active_stake);
-    dbg!(&stake_per_voter);
     let rewards = calculate_reward(
         total_active_stake,
         &stake_per_voter,
