@@ -118,14 +118,12 @@ fn rewards_to_mainnet_addresses(
         );
         let total_stake = registrations
             .iter()
-            .map(|reg| Rewards::from(u64::from(reg.stake)))
+            .map(|reg| Rewards::from(u64::from(reg.voting_power)))
             .sum::<Rewards>();
-        dbg!(total_stake);
-        dbg!(&registrations);
 
         for reg in registrations {
-            *res.entry(reg.reward_addr).or_default() +=
-                reward * Rewards::from(u64::from(reg.stake)) / total_stake;
+            *res.entry(reg.reward_address).or_default() +=
+                reward * Rewards::from(u64::from(reg.voting_power)) / total_stake;
         }
     }
 
@@ -161,7 +159,6 @@ pub fn calc_voter_rewards(
         &active_addresses,
         total_rewards,
     );
-    dbg!(&rewards);
     rewards_to_mainnet_addresses(rewards, snapshot)
 }
 
@@ -238,22 +235,20 @@ mod tests {
 
     #[test]
     fn test_mapping() {
-        let mut raw_snapshot = HashMap::new();
+        let mut raw_snapshot = Vec::new();
         let voting_pub_key = Identifier::from_hex(&hex::encode([0; 32])).unwrap();
 
         let mut total_stake = 0u64;
         for i in 1..10u64 {
-            let stake_key = i.to_string();
-            let reward_addr = i.to_string();
-            let stake: Stake = i.into();
-            raw_snapshot.insert(
-                stake_key,
-                CatalystRegistration {
-                    stake,
-                    reward_addr,
-                    voting_pub_key: voting_pub_key.clone(),
-                },
-            );
+            let stake_public_key = i.to_string();
+            let reward_address = i.to_string();
+            let voting_power: Stake = i.into();
+            raw_snapshot.push(CatalystRegistration {
+                stake_public_key,
+                voting_power,
+                reward_address,
+                voting_public_key: voting_pub_key.clone(),
+            });
             total_stake += i;
         }
 

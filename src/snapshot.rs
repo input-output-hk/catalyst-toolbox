@@ -3,26 +3,28 @@ use std::collections::HashMap;
 use chain_addr::{Discrimination, Kind};
 use jormungandr_lib::crypto::account::Identifier;
 use jormungandr_lib::interfaces::{Address, Initial, InitialUTxO, Stake, Value};
-use serde::Deserialize;
+use serde::{de::Error, Deserialize, Deserializer};
 
 pub type MainnetRewardAddress = String;
 pub type MainnetStakeAddress = String;
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct CatalystRegistration {
-    pub stake: Stake,
-    pub reward_addr: MainnetRewardAddress,
-    pub voting_pub_key: Identifier,
+    pub stake_public_key: MainnetStakeAddress,
+    pub voting_power: Stake,
+    pub reward_address: MainnetRewardAddress,
+    #[serde(deserialize_with = "identifier_from_hex")]
+    pub voting_public_key: Identifier,
 }
 
 #[derive(Deserialize, Clone, Debug)]
-pub struct RawSnapshot(HashMap<MainnetStakeAddress, CatalystRegistration>);
+pub struct RawSnapshot(Vec<CatalystRegistration>);
 
 #[derive(Clone, Debug)]
 pub struct Snapshot {
     // a raw public key is preferred so that we don't have to worry about discrimination when deserializing from
     // a CIP-15 compatible encoding
-    inner: HashMap<Identifier, Vec<(MainnetRewardAddress, Stake)>>,
+    inner: HashMap<Identifier, Vec<CatalystRegistration>>,
     stake_threshold: Stake,
 }
 
@@ -32,24 +34,13 @@ impl Snapshot {
             inner: raw_snapshot
                 .0
                 .into_iter()
-                .filter(|(_stake_key, reg)| reg.stake > stake_threshold)
-                .fold(
-                    HashMap::new(),
-                    |mut acc,
-                     (
-                        _stake,
-                        CatalystRegistration {
-                            stake,
-                            reward_addr,
-                            voting_pub_key,
-                        },
-                    )| {
-                        acc.entry(voting_pub_key)
-                            .or_default()
-                            .push((reward_addr, stake));
-                        acc
-                    },
-                ),
+                .filter(|reg| reg.voting_power > stake_threshold)
+                .fold(HashMap::new(), |mut acc, reg| {
+                    acc.entry(reg.voting_public_key.clone())
+                        .or_default()
+                        .push(reg);
+                    acc
+                }),
             stake_threshold,
         }
     }
@@ -65,7 +56,7 @@ impl Snapshot {
                 .map(|(vk, regs)| {
                     let value: Value = regs
                         .iter()
-                        .map(|(_, stake)| u64::from(*stake))
+                        .map(|reg| u64::from(reg.voting_power))
                         .sum::<u64>()
                         .into();
                     let address: Address =
@@ -83,21 +74,23 @@ impl Snapshot {
 
     pub fn registrations_for_voting_key<I: Into<Identifier>>(
         &self,
-        voting_pub_key: I,
+        voting_public_key: I,
     ) -> Vec<CatalystRegistration> {
-        let voting_pub_key: Identifier = voting_pub_key.into();
+        let voting_public_key: Identifier = voting_public_key.into();
         self.inner
-            .get(&voting_pub_key)
+            .get(&voting_public_key)
             .cloned()
             .unwrap_or_default()
-            .into_iter()
-            .map(|(reward_addr, stake)| CatalystRegistration {
-                reward_addr,
-                stake,
-                voting_pub_key: voting_pub_key.clone(),
-            })
-            .collect()
     }
+}
+
+fn identifier_from_hex<'de, D>(deserializer: D) -> Result<Identifier, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let hex = String::deserialize(deserializer)?;
+    Identifier::from_hex(hex.trim_start_matches("0x"))
+        .map_err(|e| D::Error::custom(format!("invalid public key {}", e)))
 }
 
 #[cfg(test)]
@@ -111,21 +104,19 @@ mod tests {
         fn arbitrary<G: Gen>(g: &mut G) -> Self {
             let n_registrations = usize::arbitrary(g);
 
-            let mut raw_snapshot = HashMap::new();
+            let mut raw_snapshot = Vec::new();
 
             for _ in 0..n_registrations {
-                let stake_key = String::arbitrary(g);
-                let reward_addr = String::arbitrary(g);
-                let voting_pub_key = <SecretKey<Ed25519>>::arbitrary(g).to_public().into();
-                let stake: Stake = u64::arbitrary(g).into();
-                raw_snapshot.insert(
-                    stake_key,
-                    CatalystRegistration {
-                        stake,
-                        reward_addr,
-                        voting_pub_key,
-                    },
-                );
+                let stake_public_key = String::arbitrary(g);
+                let reward_address = String::arbitrary(g);
+                let voting_public_key = <SecretKey<Ed25519>>::arbitrary(g).to_public().into();
+                let voting_power: Stake = u64::arbitrary(g).into();
+                raw_snapshot.push(CatalystRegistration {
+                    stake_public_key,
+                    voting_power,
+                    reward_address,
+                    voting_public_key,
+                });
             }
 
             Self(raw_snapshot)
@@ -138,8 +129,8 @@ mod tests {
         assert!(!snapshot
             .inner
             .values()
-            .flat_map(|regs| regs.iter().map(|(_, stake)| u64::from(*stake)))
-            .any(|stake| stake < stake_threshold));
+            .flat_map(|regs| regs.iter().map(|reg| u64::from(reg.voting_power)))
+            .any(|voting_power| voting_power < stake_threshold));
     }
 
     impl Arbitrary for Snapshot {
@@ -148,9 +139,36 @@ mod tests {
         }
     }
 
-    impl From<HashMap<MainnetStakeAddress, CatalystRegistration>> for RawSnapshot {
-        fn from(from: HashMap<MainnetStakeAddress, CatalystRegistration>) -> Self {
+    impl From<Vec<CatalystRegistration>> for RawSnapshot {
+        fn from(from: Vec<CatalystRegistration>) -> Self {
             Self(from)
         }
+    }
+
+    #[test]
+    fn test_parsing() {
+        let raw: RawSnapshot = serde_json::from_str(
+            r#"[
+            {
+                "reward_address": "0xe1ffff2912572257b59dca84c965e4638a09f1524af7a15787eb0d8a46",
+                "stake_public_key": "0xe7d6616840734686855ec80ee9658f5ead9e29e494ec6889a5d1988b50eb8d0f",
+                "voting_power": 177689370111,
+                "voting_public_key": "0xc21ddb4abb04bd5ce21091eef1676e44889d806e6e1a6a9a7dc25c0eba54cc33"
+            },
+            {
+                "reward_address": "0xe1fffc8bcb1578a15413bf11413639fa270a9ffa36d9a0c4d2c93536fe",
+                "stake_public_key": "0x2f9a90d87321a255efd038fea5df2a2349ea2c32fa584b73f2a46f655f235919",
+                "voting_power": 9420156337,
+                "voting_public_key": "0x3f656a1ba4ea8b33c81961fee6f15f09600f024435b1a7ada1e5b77b03a41a6d"
+            },
+            {
+                "reward_address": "0xe1fff825e1bf009d35d9160f6340250b581f5d37c17538e960c0410b20",
+                "stake_public_key": "0x66ae1553036548b99b93c783811bb281be5a196a12d950bda4ac9b83630afbd1",
+                "voting_power": 82168168290,
+                "voting_public_key": "0x125860fc4870bb480d1d2a97f101e1c5c845c0222400fdaba7bcca93e79bd66e"
+            }
+        ]"#,
+        ).unwrap();
+        Snapshot::from_raw_snapshot(raw, 0.into());
     }
 }
