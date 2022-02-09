@@ -69,10 +69,16 @@ fn active_addresses(
     vote_count: VoteCount,
     block0: &Block0Configuration,
     threshold: u64,
+    snapshot: &Snapshot,
 ) -> ActiveAddresses {
     let discrimination = block0.blockchain_configuration.discrimination;
-    vote_count
-        .into_iter()
+    snapshot
+        .voting_keys()
+        // Add all keys from snapshot so that they are accounted for
+        // even if they didn't vote and the threshold is 0.
+        // Active accounts are overwritten with the correct count.
+        .map(|key| (key.to_hex(), 0))
+        .chain(vote_count.into_iter())
         .filter_map(|(account_hex, count)| {
             if count >= threshold {
                 Some(
@@ -137,7 +143,7 @@ pub fn calc_voter_rewards(
     snapshot: Snapshot,
     total_rewards: Rewards,
 ) -> HashMap<MainnetRewardAddress, Rewards> {
-    let active_addresses = active_addresses(vote_count, block0, vote_threshold);
+    let active_addresses = active_addresses(vote_count, block0, vote_threshold, &snapshot);
 
     let committee_keys: HashSet<Address> = block0
         .blockchain_configuration

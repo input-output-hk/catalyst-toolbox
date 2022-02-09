@@ -4,6 +4,7 @@ use chain_addr::{Discrimination, Kind};
 use jormungandr_lib::crypto::account::Identifier;
 use jormungandr_lib::interfaces::{Address, Initial, InitialUTxO, Stake, Value};
 use serde::{de::Error, Deserialize, Deserializer};
+use std::iter::Iterator;
 
 pub type MainnetRewardAddress = String;
 pub type MainnetStakeAddress = String;
@@ -68,8 +69,8 @@ impl Snapshot {
         )
     }
 
-    pub fn voting_keys(&self) -> Vec<Identifier> {
-        self.inner.keys().cloned().collect()
+    pub fn voting_keys(&self) -> impl Iterator<Item = &Identifier> {
+        self.inner.keys()
     }
 
     pub fn registrations_for_voting_key<I: Into<Identifier>>(
