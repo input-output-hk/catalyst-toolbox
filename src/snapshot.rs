@@ -15,7 +15,7 @@ pub struct CatalystRegistration {
     pub voting_pub_key: Identifier,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct RawSnapshot(HashMap<MainnetStakeAddress, CatalystRegistration>);
 
 #[derive(Clone, Debug)]
@@ -105,6 +105,7 @@ mod tests {
     use super::*;
     use chain_crypto::{Ed25519, SecretKey};
     use quickcheck::{Arbitrary, Gen};
+    use quickcheck_macros::*;
 
     impl Arbitrary for RawSnapshot {
         fn arbitrary<G: Gen>(g: &mut G) -> Self {
@@ -112,7 +113,7 @@ mod tests {
 
             let mut raw_snapshot = HashMap::new();
 
-            for i in 0..n_registrations {
+            for _ in 0..n_registrations {
                 let stake_key = String::arbitrary(g);
                 let reward_addr = String::arbitrary(g);
                 let voting_pub_key = <SecretKey<Ed25519>>::arbitrary(g).to_public().into();
@@ -129,6 +130,16 @@ mod tests {
 
             Self(raw_snapshot)
         }
+    }
+
+    #[quickcheck]
+    fn test_threshold(raw: RawSnapshot, stake_threshold: u64) {
+        let snapshot = Snapshot::from_raw_snapshot(raw, stake_threshold.into());
+        assert!(!snapshot
+            .inner
+            .values()
+            .flat_map(|regs| regs.iter().map(|(_, stake)| u64::from(*stake)))
+            .any(|stake| stake < stake_threshold));
     }
 
     impl Arbitrary for Snapshot {

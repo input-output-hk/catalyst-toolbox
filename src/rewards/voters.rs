@@ -175,8 +175,23 @@ mod tests {
     use chain_impl_mockchain::fee::LinearFee;
     use jormungandr_lib::crypto::account::Identifier;
     use jormungandr_lib::interfaces::{BlockchainConfiguration, Stake};
-    use quickcheck::{Arbitrary, Gen};
     use quickcheck_macros::*;
+
+    fn blockchain_configuration(initial_funds: Initial) -> Block0Configuration {
+        Block0Configuration {
+            blockchain_configuration: BlockchainConfiguration::new(
+                Discrimination::Test,
+                ConsensusVersion::Bft,
+                LinearFee::new(1, 1, 1),
+            ),
+            initial: vec![initial_funds],
+        }
+    }
+
+    #[track_caller]
+    fn is_close(a: Rewards, b: Rewards) {
+        assert_eq!(a.round_dp(10), b.round_dp(10));
+    }
 
     #[quickcheck]
     fn test_all_active(snapshot: Snapshot) {
@@ -185,15 +200,43 @@ mod tests {
             .into_iter()
             .map(|key| (key.to_hex(), 1))
             .collect::<VoteCount>();
+        let n_voters = votes_count.len();
+        let initial = snapshot.to_block0_initials(Discrimination::Test);
+        let block0 = blockchain_configuration(initial);
+        let rewards = calc_voter_rewards(votes_count, 1, &block0, snapshot, Rewards::ONE);
+        if n_voters > 0 {
+            is_close(rewards.values().sum::<Rewards>(), Rewards::ONE)
+        } else {
+            assert_eq!(rewards.len(), 0);
+        }
     }
 
     #[quickcheck]
     fn test_all_inactive(snapshot: Snapshot) {
         let votes_count = VoteCount::new();
+        let initial = snapshot.to_block0_initials(Discrimination::Test);
+        let block0 = blockchain_configuration(initial);
+        let rewards = calc_voter_rewards(votes_count, 1, &block0, snapshot, Rewards::ONE);
+        assert_eq!(rewards.len(), 0);
     }
 
     #[quickcheck]
-    fn test_small(snapshot: Snapshot) {}
+    fn test_small(snapshot: Snapshot) {
+        let votes_count = snapshot
+            .voting_keys()
+            .into_iter()
+            .map(|key| (key.to_hex(), (key.as_ref().as_ref()[0] % 4 == 0) as u64))
+            .collect::<VoteCount>();
+        let n_voters = votes_count.iter().filter(|(_, votes)| **votes > 0).count();
+        let initial = snapshot.to_block0_initials(Discrimination::Test);
+        let block0 = blockchain_configuration(initial);
+        let rewards = calc_voter_rewards(votes_count, 1, &block0, snapshot, Rewards::ONE);
+        if n_voters > 0 {
+            is_close(rewards.values().sum::<Rewards>(), Rewards::ONE);
+        } else {
+            assert_eq!(rewards.len(), 0);
+        }
+    }
 
     #[test]
     fn test_mapping() {
@@ -224,21 +267,10 @@ mod tests {
             .map(|key| (key.to_hex(), 1))
             .collect::<VoteCount>();
 
-        let initial = vec![snapshot.to_block0_initials(Discrimination::Test)];
-        let block0 = Block0Configuration {
-            blockchain_configuration: BlockchainConfiguration::new(
-                Discrimination::Test,
-                ConsensusVersion::Bft,
-                LinearFee::new(1, 1, 1),
-            ),
-            initial,
-        };
-
-        dbg!(&snapshot);
-        dbg!(&block0);
+        let initial = snapshot.to_block0_initials(Discrimination::Test);
+        let block0 = blockchain_configuration(initial);
 
         let rewards = calc_voter_rewards(votes_count, 1, &block0, snapshot, Rewards::ONE);
-        dbg!(&rewards);
         assert_eq!(rewards.values().sum::<Rewards>(), Rewards::ONE);
         for (addr, reward) in rewards {
             assert_eq!(
