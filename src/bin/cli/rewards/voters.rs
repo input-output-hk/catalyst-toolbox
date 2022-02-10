@@ -1,13 +1,14 @@
 use super::Error;
 use catalyst_toolbox::rewards::voters::{calc_voter_rewards, Rewards, VoteCount};
 use catalyst_toolbox::snapshot::{MainnetRewardAddress, Snapshot};
+use catalyst_toolbox::utils::assert_are_close;
 
 use jcli_lib::jcli_lib::block::Common;
 use jormungandr_lib::interfaces::Block0Configuration;
 
 use structopt::StructOpt;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 #[derive(StructOpt)]
@@ -39,7 +40,7 @@ pub struct VotersRewards {
 
 fn write_rewards_results(
     common: Common,
-    rewards: &HashMap<MainnetRewardAddress, Rewards>,
+    rewards: &BTreeMap<MainnetRewardAddress, Rewards>,
 ) -> Result<(), Error> {
     let writer = common.open_output()?;
     let header = ["Address", "Reward for the voter (lovelace)"];
@@ -83,6 +84,9 @@ impl VotersRewards {
             snapshot,
             Rewards::from(total_rewards),
         );
+
+        let actual_rewards = results.values().sum::<Rewards>();
+        assert_are_close(actual_rewards, Rewards::from(total_rewards));
 
         write_rewards_results(common, &results)?;
         Ok(())

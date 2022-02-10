@@ -13,6 +13,7 @@ pub type MainnetStakeAddress = String;
 pub struct CatalystRegistration {
     pub stake_public_key: MainnetStakeAddress,
     pub voting_power: Stake,
+    #[serde(deserialize_with = "reward_addr_from_hex")]
     pub reward_address: MainnetRewardAddress,
     #[serde(deserialize_with = "identifier_from_hex")]
     pub voting_public_key: Identifier,
@@ -35,7 +36,7 @@ impl Snapshot {
             inner: raw_snapshot
                 .0
                 .into_iter()
-                .filter(|reg| reg.voting_power > stake_threshold)
+                .filter(|reg| reg.voting_power >= stake_threshold)
                 .fold(HashMap::new(), |mut acc, reg| {
                     acc.entry(reg.voting_public_key.clone())
                         .or_default()
@@ -92,6 +93,17 @@ where
     let hex = String::deserialize(deserializer)?;
     Identifier::from_hex(hex.trim_start_matches("0x"))
         .map_err(|e| D::Error::custom(format!("invalid public key {}", e)))
+}
+
+fn reward_addr_from_hex<'de, D>(deserializer: D) -> Result<MainnetRewardAddress, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use bech32::ToBase32;
+    let bytes = hex::decode(String::deserialize(deserializer)?.trim_start_matches("0x"))
+        .map_err(|e| D::Error::custom(format!("invalid hex string: {}", e)))?;
+    bech32::encode("stake", &bytes.to_base32(), bech32::Variant::Bech32)
+        .map_err(|e| D::Error::custom(format!("bech32 encoding failed: {}", e)))
 }
 
 #[cfg(test)]

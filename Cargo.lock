@@ -366,6 +366,7 @@ version = "0.3.0"
 dependencies = [
  "assert_cmd 0.10.2",
  "assert_fs",
+ "bech32 0.8.1",
  "chain-addr",
  "chain-core",
  "chain-crypto",

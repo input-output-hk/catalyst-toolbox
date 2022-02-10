@@ -3,7 +3,7 @@ use chain_addr::{Discrimination, Kind};
 use chain_impl_mockchain::transaction::UnspecifiedAccountIdentifier;
 use chain_impl_mockchain::vote::CommitteeId;
 use rust_decimal::Decimal;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use jormungandr_lib::interfaces::{Address, Block0Configuration, Initial};
 
@@ -51,7 +51,6 @@ fn calculate_reward<'address>(
     stake_per_voter
         .iter()
         .map(|(k, v)| {
-            // if it doesnt appear in the votes count, it means it did not vote
             let reward = if active_addresses.contains(k) {
                 Rewards::from(*v) / Rewards::from(total_stake) * total_rewards
             } else {
@@ -113,8 +112,8 @@ fn account_hex_to_address(
 fn rewards_to_mainnet_addresses(
     rewards: HashMap<&'_ Address, Rewards>,
     snapshot: Snapshot,
-) -> HashMap<MainnetRewardAddress, Rewards> {
-    let mut res = HashMap::new();
+) -> BTreeMap<MainnetRewardAddress, Rewards> {
+    let mut res = BTreeMap::new();
     for (addr, reward) in rewards {
         let registrations = snapshot.registrations_for_voting_key(
             addr.as_ref()
@@ -128,7 +127,7 @@ fn rewards_to_mainnet_addresses(
             .sum::<Rewards>();
 
         for reg in registrations {
-            *res.entry(reg.reward_address).or_default() +=
+            *res.entry(reg.reward_address.clone()).or_default() +=
                 reward * Rewards::from(u64::from(reg.voting_power)) / total_stake;
         }
     }
@@ -142,7 +141,7 @@ pub fn calc_voter_rewards(
     block0: &Block0Configuration,
     snapshot: Snapshot,
     total_rewards: Rewards,
-) -> HashMap<MainnetRewardAddress, Rewards> {
+) -> BTreeMap<MainnetRewardAddress, Rewards> {
     let active_addresses = active_addresses(vote_count, block0, vote_threshold, &snapshot);
 
     let committee_keys: HashSet<Address> = block0
@@ -172,6 +171,7 @@ pub fn calc_voter_rewards(
 mod tests {
     use super::*;
     use crate::snapshot::*;
+    use crate::utils::assert_are_close;
     use chain_impl_mockchain::chaintypes::ConsensusVersion;
     use chain_impl_mockchain::fee::LinearFee;
     use jormungandr_lib::crypto::account::Identifier;
@@ -189,11 +189,6 @@ mod tests {
         }
     }
 
-    #[track_caller]
-    fn is_close(a: Rewards, b: Rewards) {
-        assert_eq!(a.round_dp(10), b.round_dp(10));
-    }
-
     #[quickcheck]
     fn test_all_active(snapshot: Snapshot) {
         let votes_count = snapshot
@@ -206,7 +201,7 @@ mod tests {
         let block0 = blockchain_configuration(initial);
         let rewards = calc_voter_rewards(votes_count, 1, &block0, snapshot, Rewards::ONE);
         if n_voters > 0 {
-            is_close(rewards.values().sum::<Rewards>(), Rewards::ONE)
+            assert_are_close(rewards.values().sum::<Rewards>(), Rewards::ONE)
         } else {
             assert_eq!(rewards.len(), 0);
         }
@@ -233,7 +228,7 @@ mod tests {
         let block0 = blockchain_configuration(initial);
         let rewards = calc_voter_rewards(votes_count, 1, &block0, snapshot, Rewards::ONE);
         if n_voters > 0 {
-            is_close(rewards.values().sum::<Rewards>(), Rewards::ONE);
+            assert_are_close(rewards.values().sum::<Rewards>(), Rewards::ONE);
         } else {
             assert_eq!(rewards.len(), 0);
         }
