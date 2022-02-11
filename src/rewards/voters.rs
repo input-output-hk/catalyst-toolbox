@@ -218,19 +218,35 @@ mod tests {
 
     #[quickcheck]
     fn test_small(snapshot: Snapshot) {
-        let votes_count = snapshot
-            .voting_keys()
-            .into_iter()
-            .map(|key| (key.to_hex(), (key.as_ref().as_ref()[0] % 4 == 0) as u64))
+        let voting_keys = snapshot.voting_keys().collect::<Vec<_>>();
+
+        let votes_count = voting_keys
+            .iter()
+            .enumerate()
+            .map(|(i, key)| (key.to_hex(), (i % 2 == 0) as u64))
             .collect::<VoteCount>();
         let n_voters = votes_count.iter().filter(|(_, votes)| **votes > 0).count();
         let initial = snapshot.to_block0_initials(Discrimination::Test);
         let block0 = blockchain_configuration(initial);
-        let rewards = calc_voter_rewards(votes_count, 1, &block0, snapshot, Rewards::ONE);
+        let mut rewards =
+            calc_voter_rewards(votes_count, 1, &block0, snapshot.clone(), Rewards::ONE);
         if n_voters > 0 {
             assert_are_close(rewards.values().sum::<Rewards>(), Rewards::ONE);
         } else {
             assert_eq!(rewards.len(), 0);
+        }
+
+        for (i, vk) in voting_keys.into_iter().enumerate() {
+            for reg in snapshot.registrations_for_voting_key(vk.clone()) {
+                if i % 2 == 0 {
+                    assert!(*rewards.get(&reg.reward_address).unwrap() > Rewards::ZERO);
+                } else {
+                    assert_eq!(
+                        rewards.remove(&reg.reward_address).unwrap_or_default(),
+                        Rewards::ZERO
+                    );
+                }
+            }
         }
     }
 

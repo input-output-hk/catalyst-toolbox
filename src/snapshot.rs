@@ -109,9 +109,19 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bech32::ToBase32;
     use chain_crypto::{Ed25519, SecretKey};
     use quickcheck::{Arbitrary, Gen};
     use quickcheck_macros::*;
+    use std::num::NonZeroU64;
+
+    fn arbitrary_key<G: Gen>(g: &mut G) -> [u8; 32] {
+        let mut res = [0; 32];
+        for i in 0..32 {
+            res[i] = u8::arbitrary(g);
+        }
+        return res;
+    }
 
     impl Arbitrary for RawSnapshot {
         fn arbitrary<G: Gen>(g: &mut G) -> Self {
@@ -120,8 +130,13 @@ mod tests {
             let mut raw_snapshot = Vec::new();
 
             for _ in 0..n_registrations {
-                let stake_public_key = String::arbitrary(g);
-                let reward_address = String::arbitrary(g);
+                let stake_public_key = hex::encode(arbitrary_key(g));
+                let reward_address = bech32::encode(
+                    "stake",
+                    &arbitrary_key(g).to_base32(),
+                    bech32::Variant::Bech32,
+                )
+                .unwrap();
                 let voting_public_key = <SecretKey<Ed25519>>::arbitrary(g).to_public().into();
                 let voting_power: Stake = u64::arbitrary(g).into();
                 raw_snapshot.push(CatalystRegistration {
@@ -148,7 +163,10 @@ mod tests {
 
     impl Arbitrary for Snapshot {
         fn arbitrary<G: Gen>(g: &mut G) -> Self {
-            Self::from_raw_snapshot(<_>::arbitrary(g), (u64::arbitrary(g)).into())
+            Self::from_raw_snapshot(
+                <_>::arbitrary(g),
+                (u64::from(NonZeroU64::arbitrary(g))).into(),
+            )
         }
     }
 
