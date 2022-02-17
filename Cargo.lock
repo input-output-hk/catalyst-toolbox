@@ -175,12 +175,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
-name = "az"
-version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f771a5d1f5503f7f4279a30f3643d3421ba149848b89ecaaec0ea2acf04a5ac4"
-
-[[package]]
 name = "backtrace"
 version = "0.3.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -372,6 +366,7 @@ version = "0.3.0"
 dependencies = [
  "assert_cmd 0.10.2",
  "assert_fs",
+ "bech32 0.8.1",
  "chain-addr",
  "chain-core",
  "chain-crypto",
@@ -382,7 +377,6 @@ dependencies = [
  "chain-vote",
  "chrono",
  "csv",
- "fixed",
  "futures",
  "gag",
  "graphql_client",
@@ -397,6 +391,8 @@ dependencies = [
  "once_cell",
  "predicates 1.0.8",
  "qrcode",
+ "quickcheck",
+ "quickcheck_macros",
  "quircs",
  "rand 0.8.4",
  "rand_chacha 0.3.1",
@@ -1120,19 +1116,6 @@ dependencies = [
  "libc",
  "redox_syscall",
  "winapi",
-]
-
-[[package]]
-name = "fixed"
-version = "1.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80a9a8cb2e34880a498f09367089339bda5e12d6f871640f947850f7113058c0"
-dependencies = [
- "az",
- "bytemuck",
- "half",
- "serde",
- "typenum",
 ]
 
 [[package]]
