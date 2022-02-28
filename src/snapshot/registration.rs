@@ -141,43 +141,73 @@ mod deser {
 mod tests {
     use super::deser::IdentifierDef;
     use super::*;
-    use chain_crypto::{bech32::Bech32, Ed25519, SecretKey};
-    use quickcheck::{Arbitrary, Gen};
-    use quickcheck_macros::*;
+    use bech32::ToBase32;
+    use chain_crypto::{Ed25519, SecretKey};
+    use proptest::collection::vec;
+    use proptest::prelude::*;
     use serde::{Serialize, Serializer};
     use serde_test::{assert_de_tokens, Configure, Token};
+    use test_strategy::proptest;
 
     impl Arbitrary for Delegations {
-        fn arbitrary<G: Gen>(g: &mut G) -> Self {
-            if <bool>::arbitrary(g) {
-                let size = std::cmp::max(1, usize::arbitrary(g));
-                Delegations::New(
-                    (0..size)
-                        .map(|_| {
-                            (
-                                <SecretKey<Ed25519>>::arbitrary(g).to_public().into(),
-                                <u32>::arbitrary(g),
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Delegations>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            vec(any::<([u8; 32], u32)>(), 1..10) // Default is 0..100
+                .prop_map(|vec| {
+                    Delegations::New(
+                        vec.into_iter()
+                            .map(|(key, weight)| {
+                                (
+                                    <SecretKey<Ed25519>>::from_binary(&key)
+                                        .unwrap()
+                                        .to_public()
+                                        .into(),
+                                    weight,
+                                )
+                            })
+                            .collect(),
+                    )
+                })
+                .boxed()
+                .prop_union(
+                    any::<[u8; 32]>()
+                        .prop_map(|key| {
+                            Delegations::Legacy(
+                                <SecretKey<Ed25519>>::from_binary(&key)
+                                    .unwrap()
+                                    .to_public()
+                                    .into(),
                             )
                         })
-                        .collect::<Vec<_>>(),
+                        .boxed(),
                 )
-            } else {
-                Delegations::Legacy(<SecretKey<Ed25519>>::arbitrary(g).to_public().into())
-            }
+                .boxed()
         }
     }
 
     impl Arbitrary for VotingRegistration {
-        fn arbitrary<G: Gen>(g: &mut G) -> Self {
-            VotingRegistration {
-                stake_public_key: <SecretKey<Ed25519>>::arbitrary(g).to_public().to_string(),
-                reward_address: <SecretKey<Ed25519>>::arbitrary(g)
-                    .to_public()
-                    .to_bech32_str(),
-                voting_power: <u64>::arbitrary(g).into(),
-                delegations: Arbitrary::arbitrary(g),
-                voting_purpose: 0,
-            }
+        type Parameters = ();
+        type Strategy = BoxedStrategy<VotingRegistration>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            (any::<([u8; 32], [u8; 32], Delegations)>(), 0..45_000_000u64)
+                .prop_map(|((stake_key, rewards_addr, delegations), vp)| {
+                    let stake_public_key = hex::encode(stake_key);
+                    let reward_address =
+                        bech32::encode("stake", &rewards_addr.to_base32(), bech32::Variant::Bech32)
+                            .unwrap();
+                    let voting_power: Value = vp.into();
+                    VotingRegistration {
+                        stake_public_key,
+                        voting_power,
+                        reward_address,
+                        delegations,
+                        voting_purpose: 0,
+                    }
+                })
+                .boxed()
         }
     }
 
@@ -247,7 +277,7 @@ mod tests {
         }
     }
 
-    #[quickcheck]
+    #[proptest]
     fn serde_json(d: Delegations) {
         assert_eq!(
             serde_json::from_str::<Delegations>(&serde_json::to_string(&d).unwrap()).unwrap(),
@@ -255,7 +285,7 @@ mod tests {
         )
     }
 
-    #[quickcheck]
+    #[proptest]
     fn serde_yaml(d: Delegations) {
         assert_eq!(
             serde_yaml::from_str::<Delegations>(&serde_yaml::to_string(&d).unwrap()).unwrap(),
