@@ -276,9 +276,7 @@ def calc_approval_threshold(
     threshold: float,
     total_stake_threshold: float,
 ) -> Tuple[int, bool]:
-    yes_result, no_result = extract_yes_no_votes(
-        proposal, voteplan_proposal
-    )
+    yes_result, no_result = extract_yes_no_votes(proposal, voteplan_proposal)
     total_stake = yes_result + no_result
     pass_total_threshold = total_stake >= total_stake_threshold
     diff = yes_result - no_result
@@ -517,7 +515,10 @@ def calculate_rewards(
         )
 
         with open(
-            challenge_output_file_path.replace("/","-"), "w", encoding="utf-8", newline=""
+            challenge_output_file_path.replace("/", "-"),
+            "w",
+            encoding="utf-8",
+            newline="",
         ) as out_file:
             if output_format == OutputFormat.JSON:
                 output_json(results, out_file)
