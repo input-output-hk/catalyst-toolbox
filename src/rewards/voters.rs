@@ -135,6 +135,7 @@ fn rewards_to_mainnet_addresses(
             .iter()
             .map(|c| Rewards::from(c.value))
             .sum::<Rewards>();
+        assert!(total_value > Decimal::ZERO);
 
         for c in contributions {
             *res.entry(c.reward_address.clone()).or_default() +=
