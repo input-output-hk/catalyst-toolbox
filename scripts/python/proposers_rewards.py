@@ -263,8 +263,8 @@ def sanity_check_data(
 
 
 def extract_yes_no_votes(proposal: Proposal, voteplan_proposal: ProposalStatus):
-    yes_index = proposal.chain_vote_options["yes"]
-    no_index = proposal.chain_vote_options["no"]
+    yes_index = int(proposal.chain_vote_options["yes"])
+    no_index = int(proposal.chain_vote_options["no"])
     # we check before if tally is available, so it should be safe to direct access the data
     yes_result = int(voteplan_proposal.tally.results[yes_index])
     no_result = int(voteplan_proposal.tally.results[no_index])
