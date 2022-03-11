@@ -254,16 +254,16 @@ mod tests {
             .collect::<VoteCount>();
         let n_voters = votes_count.iter().filter(|(_, votes)| **votes > 0).count();
         let initial = snapshot.to_block0_initials(Discrimination::Test);
-        let initial_actv = snapshot
-            .to_block0_initials(Discrimination::Test)
-            .into_iter()
+        let initial_active = initial
+            .iter()
+            .cloned()
             .enumerate()
             .filter(|(i, _utxo)| i % 2 == 0)
             .map(|(_, utxo)| utxo)
             .collect::<Vec<_>>();
 
         let block0 = blockchain_configuration(initial);
-        let block0_actv = blockchain_configuration(initial_actv);
+        let block0_active = blockchain_configuration(initial_active);
         let mut rewards = calc_voter_rewards(
             votes_count.clone(),
             1,
@@ -272,9 +272,14 @@ mod tests {
             Rewards::ONE,
         )
         .unwrap();
-        let rewards_no_inactive =
-            calc_voter_rewards(votes_count, 1, &block0_actv, snapshot.clone(), Rewards::ONE)
-                .unwrap();
+        let rewards_no_inactive = calc_voter_rewards(
+            votes_count,
+            1,
+            &block0_active,
+            snapshot.clone(),
+            Rewards::ONE,
+        )
+        .unwrap();
         // Rewards should ignore inactive voters
         assert_eq!(rewards, rewards_no_inactive);
         if n_voters > 0 {
