@@ -56,23 +56,26 @@ impl Snapshot {
                         Delegations::New(mut vks) => {
                             let voting_power = u64::from(voting_power);
                             let total_weights =
-                                vks.iter().map(|(_vk, weight)| *weight as u64).sum::<u64>();
+                                NonZeroU64::new(vks.iter().map(|(_, weight)| *weight as u64).sum());
 
                             let last = vks.pop().expect("CIP36 requires at least 1 delegation");
-                            let others_total_vp = vks
-                                .into_iter()
-                                .filter_map(|(vk, weight)| {
-                                    NonZeroU64::new((voting_power * weight as u64) / total_weights)
+                            let others_total_vp = total_weights.map_or(0, |non_zero_total| {
+                                vks.into_iter()
+                                    .filter_map(|(vk, weight)| {
+                                        NonZeroU64::new(
+                                            (voting_power * weight as u64) / non_zero_total,
+                                        )
                                         .map(|value| (vk, value))
-                                })
-                                .map(|(vk, value)| {
-                                    acc.entry(vk).or_default().push(KeyContribution {
-                                        reward_address: reward_address.clone(),
-                                        value: value.get(),
-                                    });
-                                    value.get()
-                                })
-                                .sum::<u64>();
+                                    })
+                                    .map(|(vk, value)| {
+                                        acc.entry(vk).or_default().push(KeyContribution {
+                                            reward_address: reward_address.clone(),
+                                            value: value.get(),
+                                        });
+                                        value.get()
+                                    })
+                                    .sum::<u64>()
+                            });
                             if others_total_vp != voting_power {
                                 acc.entry(last.0).or_default().push(KeyContribution {
                                     reward_address,
