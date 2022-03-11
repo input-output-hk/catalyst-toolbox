@@ -411,7 +411,7 @@ def filter_excluded_proposals(
 
 
 def calculate_total_stake_from_block0_configuration(
-    block0_config: Dict[str, Dict], committee_keys: List[Dict[str, str]]
+    block0_config: Dict[str, Dict], committee_keys: List[str]
 ):
     funds = (
         initial["fund"] for initial in block0_config["initial"] if "fund" in initial
@@ -419,7 +419,7 @@ def calculate_total_stake_from_block0_configuration(
     return sum(
         fund["value"]
         for fund in itertools.chain.from_iterable(funds)
-        if fund["address"] not in [key["address"] for key in committee_keys]
+        if fund["address"] not in [key for key in committee_keys]
     )
 
 
