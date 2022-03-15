@@ -1,13 +1,94 @@
-use fixed::types::U64F64;
-
 use chain_addr::{Discrimination, Kind};
 use chain_impl_mockchain::transaction::UnspecifiedAccountIdentifier;
+use chain_impl_mockchain::vote::CommitteeId;
+use fixed::types::U64F64;
+use serde::Serialize;
 use std::collections::{HashMap, HashSet};
+use std::ops::Div;
+use thiserror::Error;
 
 use jormungandr_lib::interfaces::{Address, Block0Configuration, Initial};
 
 pub const ADA_TO_LOVELACE_FACTOR: u64 = 1_000_000;
 pub type Rewards = U64F64;
+
+#[allow(clippy::large_enum_variant)]
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("error while writing to csv")]
+    Csv(#[from] csv::Error),
+
+    #[error("requested funds cannot be parsed: {0}")]
+    InvalidRequestedFunds(String),
+
+    #[error(transparent)]
+    Other(#[from] jcli_lib::jcli_lib::block::Error),
+
+    #[error("{0}")]
+    InvalidInput(String),
+
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+
+    #[error(transparent)]
+    Json(#[from] serde_json::Error),
+}
+
+#[derive(Debug, Serialize)]
+pub struct Record {
+    #[serde(alias = "Address")]
+    address: Address,
+    #[serde(alias = "Stake of the voter (ADA)")]
+    stake: u64,
+    #[serde(alias = "Reward for the voter (ADA)")]
+    voter_reward_ada: String,
+    #[serde(alias = "Reward for the voter (lovelace)")]
+    voter_reward_lovelace: String,
+}
+
+pub fn calculate_rewards(
+    addresses_vote_count: AddressesVoteCount,
+    block0: &Block0Configuration,
+    vote_threshold: u64,
+    total_rewards: u64,
+) -> Result<Vec<Record>, Error> {
+    let committee_keys: HashSet<Address> = block0
+        .blockchain_configuration
+        .committees
+        .iter()
+        .cloned()
+        .map(|id| {
+            let id = CommitteeId::from(id);
+            let pk = id.public_key();
+
+            chain_addr::Address(Discrimination::Production, Kind::Account(pk)).into()
+        })
+        .collect();
+
+    let (total_stake, stake_per_voter) = calculate_stake(&committee_keys, block0);
+    let rewards = calculate_reward_share(
+        total_stake,
+        &stake_per_voter,
+        &addresses_vote_count,
+        vote_threshold,
+    );
+
+    Ok(rewards
+        .into_iter()
+        .map(|(address, share)| {
+            let stake = stake_per_voter.get(address).unwrap();
+            let voter_reward = reward_from_share(share, total_rewards);
+            Record {
+                address: address.clone(),
+                stake: *stake,
+                voter_reward_ada: voter_reward
+                    .div(&(ADA_TO_LOVELACE_FACTOR as u128))
+                    .to_string(),
+                voter_reward_lovelace: voter_reward.int().to_string(),
+            }
+        })
+        .collect())
+}
 
 pub fn calculate_stake<'address>(
     committee_keys: &HashSet<Address>,
