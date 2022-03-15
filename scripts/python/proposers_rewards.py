@@ -1,3 +1,4 @@
+# coding: utf-8
 from typing import Dict, Optional, List, Tuple, Generator, TextIO, Union, Any, Set
 
 import sys
