@@ -6,6 +6,7 @@ use thiserror::Error;
 
 #[derive(Debug)]
 pub struct ProposerRewardsCommand {
+    python_exec: String,
     output_file: PathBuf,
     block0_path: PathBuf,
     total_stake_threshold: f64,
@@ -28,6 +29,7 @@ pub enum Error {
 impl Default for ProposerRewardsCommand {
     fn default() -> Self {
         Self {
+            python_exec: "python3".to_string(),
             output_file: PathBuf::from_str("./output").unwrap(),
             block0_path: PathBuf::from_str("./block0.bin").unwrap(),
             total_stake_threshold: 0.01,
@@ -97,7 +99,7 @@ impl ProposerRewardsCommand {
 
         std::fs::write(script_file.path(), script_content)?;
 
-        let mut command = Command::new("python");
+        let mut command = Command::new(self.python_exec);
 
         command
             .arg(script_file.path())
