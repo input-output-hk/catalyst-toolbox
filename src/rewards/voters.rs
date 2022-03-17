@@ -27,8 +27,11 @@ fn calculate_active_stake<'address>(
 
     for fund in &block0.initial {
         match fund {
-            Initial::Fund(fund) => {
-                for utxo in fund {
+            Initial::Fund(_) => {}
+            Initial::Cert(_) => {}
+            Initial::LegacyFund(_) => {}
+            Initial::Token(token) => {
+                for utxo in &token.to {
                     // Exclude committee addresses (managed by IOG) and
                     // non active voters from total active stake for the purpose of calculating
                     // voter rewards
@@ -42,9 +45,6 @@ fn calculate_active_stake<'address>(
                     }
                 }
             }
-            Initial::Cert(_) => {}
-            Initial::LegacyFund(_) => {}
-            Initial::Token(_) => todo!("use the tokens for the initial stake?"),
         }
     }
     Ok((total_stake, stake_per_voter))
