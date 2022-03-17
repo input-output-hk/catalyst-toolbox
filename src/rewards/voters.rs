@@ -37,13 +37,13 @@ pub enum Error {
 #[derive(Debug, Serialize)]
 pub struct Record {
     #[serde(alias = "Address")]
-    address: Address,
+    pub address: Address,
     #[serde(alias = "Stake of the voter (ADA)")]
-    stake: u64,
+    pub stake: u64,
     #[serde(alias = "Reward for the voter (ADA)")]
-    voter_reward_ada: String,
+    pub voter_reward_ada: String,
     #[serde(alias = "Reward for the voter (lovelace)")]
-    voter_reward_lovelace: String,
+    pub voter_reward_lovelace: String,
 }
 
 pub fn calculate_rewards(
