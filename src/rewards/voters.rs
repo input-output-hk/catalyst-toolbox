@@ -18,8 +18,11 @@ pub fn calculate_stake<'address>(
 
     for fund in &block0.initial {
         match fund {
-            Initial::Fund(fund) => {
-                for utxo in fund {
+            Initial::Fund(_) => {}
+            Initial::Cert(_) => {}
+            Initial::LegacyFund(_) => {}
+            Initial::Token(token) => {
+                for utxo in &token.to {
                     if !committee_keys.contains(&utxo.address) {
                         let value: u64 = utxo.value.into();
                         total_stake += value;
@@ -28,9 +31,6 @@ pub fn calculate_stake<'address>(
                     }
                 }
             }
-            Initial::Cert(_) => {}
-            Initial::LegacyFund(_) => {}
-            Initial::Token(_) => todo!("use the tokens for the initial stake?"),
         }
     }
     (total_stake, stake_per_voter)
