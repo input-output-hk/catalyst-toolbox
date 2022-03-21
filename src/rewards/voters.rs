@@ -183,7 +183,10 @@ fn account_hex_to_address(
 #[cfg(test)]
 mod test {
     use super::*;
+    use chain_impl_mockchain::testing::TestGen;
+    use chain_impl_mockchain::tokens::minting_policy::MintingPolicy;
     use jormungandr_automation::jormungandr::ConfigurationBuilder;
+    use jormungandr_lib::interfaces::InitialToken;
     use quickcheck::TestResult;
     use quickcheck_macros::quickcheck;
     use thor::Wallet;
@@ -200,12 +203,14 @@ mod test {
         let wallet_initial_funds = 10;
 
         let block0 = ConfigurationBuilder::new()
-            .with_funds(
-                wallets
+            .with_token(InitialToken {
+                token_id: TestGen::token_id().into(),
+                policy: MintingPolicy::new().into(),
+                to: wallets
                     .iter()
-                    .map(|x| x.to_initial_fund(wallet_initial_funds))
+                    .map(|x| x.to_initial_token(wallet_initial_funds))
                     .collect(),
-            )
+            })
             .build_block0();
 
         let committees = wallets
