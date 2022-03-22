@@ -83,7 +83,7 @@ impl VotersRewards {
             &block0,
             snapshot,
             Rewards::from(total_rewards),
-        );
+        )?;
 
         let actual_rewards = results.values().sum::<Rewards>();
         assert_are_close(actual_rewards, Rewards::from(total_rewards));
