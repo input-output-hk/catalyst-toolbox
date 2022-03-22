@@ -517,10 +517,9 @@ dependencies = [
  "log",
  "once_cell",
  "predicates 1.0.8",
+ "proptest 1.0.0 (git+https://github.com/input-output-hk/proptest?branch=master)",
  "pyo3",
  "qrcode",
- "quickcheck",
- "quickcheck_macros",
  "quircs",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
@@ -534,6 +533,7 @@ dependencies = [
  "stderrlog",
  "structopt",
  "symmetric-cipher",
+ "test-strategy",
  "thiserror",
  "thor",
  "time 0.3.7",
@@ -601,7 +601,7 @@ dependencies = [
  "chain-core",
  "chain-crypto",
  "cryptoxide 0.4.2",
- "proptest",
+ "proptest 1.0.0 (git+https://github.com/input-output-hk/proptest.git)",
  "quickcheck",
  "test-strategy",
 ]
@@ -626,7 +626,7 @@ dependencies = [
  "ed25519-dalek",
  "generic-array 0.14.5",
  "hex",
- "proptest",
+ "proptest 1.0.0 (git+https://github.com/input-output-hk/proptest.git)",
  "quickcheck",
  "rand 0.8.5",
  "rand_core 0.6.3",
@@ -726,7 +726,7 @@ source = "git+https://github.com/input-output-hk/chain-libs.git?branch=master#e9
 dependencies = [
  "chain-core",
  "chain-ser",
- "proptest",
+ "proptest 1.0.0 (git+https://github.com/input-output-hk/proptest.git)",
  "quickcheck",
  "test-strategy",
 ]
@@ -3658,6 +3658,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7342d5883fbccae1cc37a2353b09c87c9b0f3afd73f5fb9bba687a1f733b029"
 dependencies = [
  "unicode-xid 0.2.2",
+]
+
+[[package]]
+name = "proptest"
+version = "1.0.0"
+source = "git+https://github.com/input-output-hk/proptest?branch=master#dff1e6b410121989ea5aa076e5d3d6ae21b1bd81"
+dependencies = [
+ "bit-set",
+ "bitflags",
+ "byteorder",
+ "lazy_static",
+ "num-traits",
+ "quick-error 2.0.1",
+ "rand 0.8.5",
+ "rand_chacha 0.3.1",
+ "rand_xorshift",
+ "rand_xoshiro",
+ "regex-syntax",
+ "rusty-fork",
+ "tempfile",
 ]
 
 [[package]]

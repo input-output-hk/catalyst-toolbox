@@ -111,47 +111,48 @@ mod tests {
     use super::*;
     use bech32::ToBase32;
     use chain_crypto::{Ed25519, SecretKey};
-    use quickcheck::{Arbitrary, Gen};
-    use quickcheck_macros::*;
-    use std::num::NonZeroU64;
+    use proptest::prelude::*;
+    use test_strategy::proptest;
 
-    fn arbitrary_key<G: Gen>(g: &mut G) -> [u8; 32] {
-        let mut res = [0; 32];
-        for i in 0..32 {
-            res[i] = u8::arbitrary(g);
+    impl Arbitrary for CatalystRegistration {
+        type Parameters = ();
+        type Strategy = BoxedStrategy<CatalystRegistration>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            (any::<([u8; 32], [u8; 32], [u8; 32])>(), 0..45_000_000u64)
+                .prop_map(|((stake_key, rewards_addr, voting_key), vp)| {
+                    let stake_public_key = hex::encode(stake_key);
+                    let reward_address =
+                        bech32::encode("stake", &rewards_addr.to_base32(), bech32::Variant::Bech32)
+                            .unwrap();
+                    let voting_public_key = <SecretKey<Ed25519>>::from_binary(&voting_key)
+                        .expect("every binary sequence is a valid secret key")
+                        .to_public()
+                        .into();
+                    let voting_power: Stake = vp.into();
+                    CatalystRegistration {
+                        stake_public_key,
+                        voting_power,
+                        reward_address,
+                        voting_public_key,
+                    }
+                })
+                .boxed()
         }
-        return res;
     }
 
     impl Arbitrary for RawSnapshot {
-        fn arbitrary<G: Gen>(g: &mut G) -> Self {
-            let n_registrations = usize::arbitrary(g);
+        type Parameters = ();
+        type Strategy = BoxedStrategy<RawSnapshot>;
 
-            let mut raw_snapshot = Vec::new();
-
-            for _ in 0..n_registrations {
-                let stake_public_key = hex::encode(arbitrary_key(g));
-                let reward_address = bech32::encode(
-                    "stake",
-                    &arbitrary_key(g).to_base32(),
-                    bech32::Variant::Bech32,
-                )
-                .unwrap();
-                let voting_public_key = <SecretKey<Ed25519>>::arbitrary(g).to_public().into();
-                let voting_power: Stake = u64::arbitrary(g).into();
-                raw_snapshot.push(CatalystRegistration {
-                    stake_public_key,
-                    voting_power,
-                    reward_address,
-                    voting_public_key,
-                });
-            }
-
-            Self(raw_snapshot)
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            any::<Vec<CatalystRegistration>>()
+                .prop_map(|regs| Self(regs))
+                .boxed()
         }
     }
 
-    #[quickcheck]
+    #[proptest]
     fn test_threshold(raw: RawSnapshot, stake_threshold: u64) {
         let snapshot = Snapshot::from_raw_snapshot(raw, stake_threshold.into());
         assert!(!snapshot
@@ -162,11 +163,15 @@ mod tests {
     }
 
     impl Arbitrary for Snapshot {
-        fn arbitrary<G: Gen>(g: &mut G) -> Self {
-            Self::from_raw_snapshot(
-                <_>::arbitrary(g),
-                (u64::from(NonZeroU64::arbitrary(g))).into(),
-            )
+        type Parameters = ();
+        type Strategy = BoxedStrategy<Snapshot>;
+
+        fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
+            (any::<RawSnapshot>(), 1..u64::MAX)
+                .prop_map(|(raw_snapshot, threshold)| {
+                    Self::from_raw_snapshot(raw_snapshot, threshold.into())
+                })
+                .boxed()
         }
     }
 
