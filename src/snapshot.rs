@@ -146,9 +146,7 @@ mod tests {
         type Strategy = BoxedStrategy<RawSnapshot>;
 
         fn arbitrary_with(_args: Self::Parameters) -> Self::Strategy {
-            any::<Vec<CatalystRegistration>>()
-                .prop_map(|regs| Self(regs))
-                .boxed()
+            any::<Vec<CatalystRegistration>>().prop_map(Self).boxed()
         }
     }
 

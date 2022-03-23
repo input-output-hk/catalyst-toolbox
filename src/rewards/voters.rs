@@ -31,16 +31,16 @@ fn calculate_active_stake<'address>(
             Initial::Cert(_) => {}
             Initial::LegacyFund(_) => {}
             Initial::Token(token) => {
-                for utxo in &token.to {
+                for destination in &token.to {
                     // Exclude committee addresses (managed by IOG) and
                     // non active voters from total active stake for the purpose of calculating
                     // voter rewards
-                    if !committee_keys.contains(&utxo.address)
-                        && active_addresses.contains(&utxo.address)
+                    if !committee_keys.contains(&destination.address)
+                        && active_addresses.contains(&destination.address)
                     {
-                        let value: u64 = utxo.value.into();
+                        let value: u64 = destination.value.into();
                         total_stake = total_stake.checked_add(value).ok_or(Error::Overflow)?;
-                        let entry = stake_per_voter.entry(&utxo.address).or_default();
+                        let entry = stake_per_voter.entry(&destination.address).or_default();
                         *entry += value;
                     }
                 }
