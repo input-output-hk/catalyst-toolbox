@@ -40,23 +40,25 @@ fn calc_final_ranking_per_review(rankings: &[impl Borrow<VeteranRankingRow>]) ->
     }
 }
 
-fn rewards_disagreement_discount(agreement_rate: Decimal) -> Decimal {
+fn rewards_disagreement_modifier(agreement_rate: Decimal) -> Decimal {
     // Cannot use decimal range pattern in matches, and don't want to complicate
     // stuff by using exact integer arithmetic since it's not really needed at this point
-    // Thresholds at 0.9 - 0.75 - 0.6
+    // Thresholds at 0.9 - 0.8 - 0.7
+    // A [1.25, 1, 0.75] modifer is equivalent to a [1, 0.8, 0.6] slashing, but keep the
+    // former to adhere precisely to gov specifications.
     if agreement_rate >= Decimal::new(9, 1) {
+        Decimal::new(125, 2)
+    } else if agreement_rate >= Decimal::new(8, 1) {
         Decimal::ONE
-    } else if agreement_rate >= Decimal::new(75, 2) {
-        Decimal::from(5) / Decimal::from(6)
-    } else if agreement_rate >= Decimal::new(6, 1) {
-        Decimal::from(2) / Decimal::from(3)
+    } else if agreement_rate >= Decimal::new(7, 1) {
+        Decimal::new(75, 2)
     } else {
         Decimal::ZERO
     }
 }
 
-fn reputation_disagreement_discount(agreement_rate: Decimal) -> Decimal {
-    if agreement_rate >= Decimal::new(6, 1) {
+fn reputation_disagreement_modifier(agreement_rate: Decimal) -> Decimal {
+    if agreement_rate >= Decimal::new(7, 1) {
         Decimal::ONE
     } else {
         Decimal::ZERO
@@ -67,7 +69,7 @@ fn calc_final_eligible_rankings(
     all_rankings: &HashMap<VeteranAdvisorId, usize>,
     eligible_rankings: HashMap<VeteranAdvisorId, usize>,
     thresholds: EligibilityThresholds,
-    discount_rate: impl Fn(Decimal) -> Decimal,
+    modifier_rate: impl Fn(Decimal) -> Decimal,
 ) -> BTreeMap<VeteranAdvisorId, Rewards> {
     eligible_rankings
         .into_iter()
@@ -76,11 +78,11 @@ fn calc_final_eligible_rankings(
                 return None;
             }
 
-            let to_discount = discount_rate(
+            let to_modifier = modifier_rate(
                 Decimal::from(n_rankings) / Decimal::from(*all_rankings.get(&vca).unwrap()),
             );
 
-            let n_rankings = Rewards::from(n_rankings.min(*thresholds.end())) * to_discount;
+            let n_rankings = Rewards::from(n_rankings.min(*thresholds.end())) * to_modifier;
 
             Some((vca, n_rankings))
         })
@@ -119,14 +121,14 @@ pub fn calculate_veteran_advisors_incentives(
         &rankings_per_vca,
         eligible_rankings_per_vca.clone(),
         reputation_thresholds,
-        reputation_disagreement_discount,
+        reputation_disagreement_modifier,
     );
 
     let rewards_eligible_rankings = calc_final_eligible_rankings(
         &rankings_per_vca,
         eligible_rankings_per_vca,
         rewards_thresholds,
-        rewards_disagreement_discount,
+        rewards_disagreement_modifier,
     );
 
     let tot_rewards_eligible_rankings = rewards_eligible_rankings.values().sum::<Rewards>();
@@ -249,23 +251,15 @@ mod tests {
     }
 
     #[test]
-    fn disagreement_discount_rate() {
+    fn disagreement_modifier_rate() {
         let total_rewards = Rewards::ONE;
         let inputs = [
-            (Rewards::new(4, 1), Rewards::ZERO, Rewards::ZERO),
-            (
-                Rewards::new(6, 1),
-                Rewards::from(2) / Rewards::from(3),
-                Rewards::ONE,
-            ),
-            (
-                Rewards::new(75, 2),
-                Rewards::from(5) / Rewards::from(6),
-                Rewards::ONE,
-            ),
-            (Rewards::new(9, 1), Rewards::ONE, Rewards::ONE),
+            (Rewards::new(6, 1), Rewards::ZERO, Rewards::ZERO),
+            (Rewards::new(7, 1), Rewards::new(75, 2), Rewards::ONE),
+            (Rewards::new(8, 1), Rewards::ONE, Rewards::ONE),
+            (Rewards::new(9, 1), Rewards::new(125, 2), Rewards::ONE),
         ];
-        for (agreement, reward_discount, reputation_discount) in inputs {
+        for (agreement, reward_modifier, reputation_modifier) in inputs {
             let rankings = (0..100)
                 .flat_map(|i| {
                     let vcas =
@@ -281,15 +275,16 @@ mod tests {
                 .collect::<Vec<_>>();
             let results =
                 calculate_veteran_advisors_incentives(&rankings, total_rewards, 1..=200, 1..=200);
-            let expected_reward_portion = agreement * Rewards::from(100) * reward_discount;
+            let expected_reward_portion = agreement * Rewards::from(100) * reward_modifier;
             dbg!(expected_reward_portion);
+            dbg!(agreement, reward_modifier, reputation_modifier);
             let expected_rewards = total_rewards
-                / (Rewards::from(100 * 2) + expected_reward_portion)
+                / (Rewards::from(125 * 2) + expected_reward_portion)
                 * expected_reward_portion;
             let res = results.get(VCA_3).unwrap();
             assert_eq!(
                 res.reputation,
-                (Rewards::from(100) * agreement * reputation_discount)
+                (Rewards::from(100) * agreement * reputation_modifier)
                     .to_u64()
                     .unwrap()
             );
