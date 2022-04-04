@@ -117,18 +117,14 @@ pub fn calculate_veteran_advisors_incentives(
         &rankings_per_vca,
         eligible_rankings_per_vca.clone(),
         reputation_thresholds,
-        |disagreement| {
-            disagreement_modifier(disagreement, THRESHOLDS, REPUTATION_DISAGREEMENT_MODIFIERS)
-        },
+        |agreement| disagreement_modifier(agreement, THRESHOLDS, REPUTATION_DISAGREEMENT_MODIFIERS),
     );
 
     let rewards_eligible_rankings = calc_final_eligible_rankings(
         &rankings_per_vca,
         eligible_rankings_per_vca,
         rewards_thresholds,
-        |disagreement| {
-            disagreement_modifier(disagreement, THRESHOLDS, REWARDS_DISAGREEMENT_MODIFIERS)
-        },
+        |agreement| disagreement_modifier(agreement, THRESHOLDS, REWARDS_DISAGREEMENT_MODIFIERS),
     );
 
     let tot_rewards_eligible_rankings = rewards_eligible_rankings.values().sum::<Rewards>();
