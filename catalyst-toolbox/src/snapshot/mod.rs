@@ -1,4 +1,3 @@
-pub mod hir;
 pub mod registration;
 
 use registration::{Delegations, MainnetRewardAddress, VotingRegistration};
