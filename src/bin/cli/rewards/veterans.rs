@@ -3,6 +3,7 @@ use catalyst_toolbox::community_advisors::models::VeteranRankingRow;
 use catalyst_toolbox::rewards::veterans::{self, VcaRewards, VeteranAdvisorIncentive};
 use catalyst_toolbox::rewards::Rewards;
 use catalyst_toolbox::utils::csv;
+use rust_decimal::Decimal;
 use serde::Serialize;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -32,6 +33,14 @@ pub struct VeteransRewards {
     /// Cutoff for reputation: ranking more reviews than this limit will not result in more reputation awarded
     #[structopt(long)]
     max_rankings_reputation: usize,
+
+    /// Cutoff for reputation: ranking more reviews than this limit will not result in more reputation awarded
+    #[structopt(long)]
+    agreement_rate_cutoff: Vec<Decimal>,
+
+    /// Cutoff for reputation: ranking more reviews than this limit will not result in more reputation awarded
+    #[structopt(long)]
+    agreement_rate_modifier: Vec<Decimal>,
 }
 
 impl VeteransRewards {
@@ -43,6 +52,8 @@ impl VeteransRewards {
             min_rankings,
             max_rankings_reputation,
             max_rankings_rewards,
+            agreement_rate_cutoff,
+            agreement_rate_modifier,
         } = self;
         let reviews: Vec<VeteranRankingRow> = csv::load_data_from_csv::<_, b','>(&from)?;
         let results = veterans::calculate_veteran_advisors_incentives(
@@ -50,6 +61,16 @@ impl VeteransRewards {
             total_rewards,
             min_rankings..=max_rankings_rewards,
             min_rankings..=max_rankings_reputation,
+            agreement_rate_cutoff.try_into().map_err(|_| {
+                Error::InvalidInput(
+                    "Expected exactly 3 values for agreement_rate_cutoff".to_string(),
+                )
+            })?,
+            agreement_rate_modifier.try_into().map_err(|_| {
+                Error::InvalidInput(
+                    "Expected exactly 3 values for agreement_rate_modifier".to_string(),
+                )
+            })?,
         );
 
         csv::dump_data_to_csv(&rewards_to_csv_data(results), &to).unwrap();
