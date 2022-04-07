@@ -34,11 +34,13 @@ pub struct VeteransRewards {
     #[structopt(long)]
     max_rankings_reputation: usize,
 
-    /// Cutoff for reputation: ranking more reviews than this limit will not result in more reputation awarded
+    /// Agreement rate cutoff list. For each one of this, an agreement_rate_modifier argument is
+    /// expected, which determines how are the rewards affected for vca's with this or more than
+    /// this level of agreement.
     #[structopt(long)]
     agreement_rate_cutoff: Vec<Decimal>,
 
-    /// Cutoff for reputation: ranking more reviews than this limit will not result in more reputation awarded
+    /// Cutoff multipliers: Expected one per agreement_rate_cutoff.
     #[structopt(long)]
     agreement_rate_modifier: Vec<Decimal>,
 }
