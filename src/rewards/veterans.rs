@@ -85,8 +85,8 @@ pub fn calculate_veteran_advisors_incentives(
     total_rewards: Rewards,
     rewards_thresholds: EligibilityThresholds,
     reputation_thresholds: EligibilityThresholds,
-    agreement_rate_thresholds: [Decimal; 3],
-    agreement_rate_modifiers: [Decimal; 3],
+    agreement_rate_thresholds: impl IntoIterator<Item = Decimal> + Clone,
+    agreement_rate_modifiers: impl IntoIterator<Item = Decimal> + Clone,
 ) -> HashMap<VeteranAdvisorId, VeteranAdvisorIncentive> {
     let final_rankings_per_review = veteran_rankings
         .iter()
@@ -117,8 +117,8 @@ pub fn calculate_veteran_advisors_incentives(
         |agreement| {
             disagreement_modifier(
                 agreement,
-                agreement_rate_thresholds,
-                REPUTATION_DISAGREEMENT_MODIFIERS,
+                agreement_rate_thresholds.clone(),
+                REPUTATION_DISAGREEMENT_MODIFIERS.clone(),
             )
         },
     );
@@ -130,8 +130,8 @@ pub fn calculate_veteran_advisors_incentives(
         |agreement| {
             disagreement_modifier(
                 agreement,
-                agreement_rate_thresholds,
-                agreement_rate_modifiers,
+                agreement_rate_thresholds.clone(),
+                agreement_rate_modifiers.clone(),
             )
         },
     );

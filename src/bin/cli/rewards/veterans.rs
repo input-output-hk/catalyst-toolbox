@@ -21,7 +21,7 @@ pub struct VeteransRewards {
     #[structopt(long = "total-rewards")]
     total_rewards: Rewards,
 
-    /// Minimum number of rankings for each vca to be considered for reputatin and rewards
+    /// Minimum number of rankings for each vca to be considered for reputation and rewards
     /// distribution
     #[structopt(long)]
     min_rankings: usize,
@@ -56,21 +56,33 @@ impl VeteransRewards {
             agreement_rate_modifier,
         } = self;
         let reviews: Vec<VeteranRankingRow> = csv::load_data_from_csv::<_, b','>(&from)?;
+
+        if agreement_rate_cutoff.len() != agreement_rate_modifier.len() {
+            return Err(Error::InvalidInput(
+                "Expected same number of agreement_rate_modifier and agreement_rate_cutoff"
+                    .to_string(),
+            ));
+        }
+
+        let sorted_agreement_rate_cutoff = {
+            let mut clone = agreement_rate_cutoff.clone();
+            clone.sort_by(|a, b| b.cmp(a));
+            clone
+        };
+
+        if agreement_rate_cutoff != sorted_agreement_rate_cutoff {
+            return Err(Error::InvalidInput(
+                "Expected agreement_rate_cutoff to be descending".to_string(),
+            ));
+        }
+
         let results = veterans::calculate_veteran_advisors_incentives(
             &reviews,
             total_rewards,
             min_rankings..=max_rankings_rewards,
             min_rankings..=max_rankings_reputation,
-            agreement_rate_cutoff.try_into().map_err(|_| {
-                Error::InvalidInput(
-                    "Expected exactly 3 values for agreement_rate_cutoff".to_string(),
-                )
-            })?,
-            agreement_rate_modifier.try_into().map_err(|_| {
-                Error::InvalidInput(
-                    "Expected exactly 3 values for agreement_rate_modifier".to_string(),
-                )
-            })?,
+            agreement_rate_cutoff,
+            agreement_rate_modifier,
         );
 
         csv::dump_data_to_csv(&rewards_to_csv_data(results), &to).unwrap();
