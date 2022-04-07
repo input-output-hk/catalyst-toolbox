@@ -118,7 +118,7 @@ pub fn calculate_veteran_advisors_incentives(
             disagreement_modifier(
                 agreement,
                 agreement_rate_thresholds.clone(),
-                REPUTATION_DISAGREEMENT_MODIFIERS.clone(),
+                REPUTATION_DISAGREEMENT_MODIFIERS,
             )
         },
     );
