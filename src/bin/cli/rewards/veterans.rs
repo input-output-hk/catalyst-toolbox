@@ -37,12 +37,12 @@ pub struct VeteransRewards {
     /// Agreement rate cutoff list. For each one of this, an agreement_rate_modifier argument is
     /// expected, which determines how are the rewards affected for vca's with this or more than
     /// this level of agreement.
-    #[structopt(long)]
-    agreement_rate_cutoff: Vec<Decimal>,
+    #[structopt(long, required = true)]
+    agreement_rate_cutoffs: Vec<Decimal>,
 
     /// Cutoff multipliers: Expected one per agreement_rate_cutoff.
-    #[structopt(long)]
-    agreement_rate_modifier: Vec<Decimal>,
+    #[structopt(long, required = true)]
+    agreement_rate_modifiers: Vec<Decimal>,
 }
 
 impl VeteransRewards {
@@ -54,12 +54,12 @@ impl VeteransRewards {
             min_rankings,
             max_rankings_reputation,
             max_rankings_rewards,
-            agreement_rate_cutoff,
-            agreement_rate_modifier,
+            agreement_rate_cutoffs,
+            agreement_rate_modifiers,
         } = self;
         let reviews: Vec<VeteranRankingRow> = csv::load_data_from_csv::<_, b','>(&from)?;
 
-        if agreement_rate_cutoff.len() != agreement_rate_modifier.len() {
+        if agreement_rate_cutoffs.len() != agreement_rate_modifiers.len() {
             return Err(Error::InvalidInput(
                 "Expected same number of agreement_rate_modifier and agreement_rate_cutoff"
                     .to_string(),
@@ -67,12 +67,12 @@ impl VeteransRewards {
         }
 
         let sorted_agreement_rate_cutoff = {
-            let mut clone = agreement_rate_cutoff.clone();
+            let mut clone = agreement_rate_cutoffs.clone();
             clone.sort_by(|a, b| b.cmp(a));
             clone
         };
 
-        if agreement_rate_cutoff != sorted_agreement_rate_cutoff {
+        if agreement_rate_cutoffs != sorted_agreement_rate_cutoff {
             return Err(Error::InvalidInput(
                 "Expected agreement_rate_cutoff to be descending".to_string(),
             ));
@@ -83,8 +83,8 @@ impl VeteransRewards {
             total_rewards,
             min_rankings..=max_rankings_rewards,
             min_rankings..=max_rankings_reputation,
-            agreement_rate_cutoff,
-            agreement_rate_modifier,
+            agreement_rate_cutoffs,
+            agreement_rate_modifiers,
         );
 
         csv::dump_data_to_csv(&rewards_to_csv_data(results), &to).unwrap();
