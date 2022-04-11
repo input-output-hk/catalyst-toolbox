@@ -38,11 +38,21 @@ pub struct VeteransRewards {
     /// expected, which determines how are the rewards affected for vca's with this or more than
     /// this level of agreement.
     #[structopt(long, required = true)]
-    agreement_rate_cutoffs: Vec<Decimal>,
+    rewards_agreement_rate_cutoffs: Vec<Decimal>,
 
     /// Cutoff multipliers: Expected one per agreement_rate_cutoff.
     #[structopt(long, required = true)]
-    agreement_rate_modifiers: Vec<Decimal>,
+    rewards_agreement_rate_modifiers: Vec<Decimal>,
+
+    /// Agreement rate cutoff list. For each one of this, an agreement_rate_modifier argument is
+    /// expected, which determines how are the rewards affected for vca's with this or more than
+    /// this level of agreement.
+    #[structopt(long, required = true)]
+    reputation_agreement_rate_cutoffs: Vec<Decimal>,
+
+    /// Cutoff multipliers: Expected one per agreement_rate_cutoff.
+    #[structopt(long, required = true)]
+    reputation_agreement_rate_modifiers: Vec<Decimal>,
 }
 
 impl VeteransRewards {
@@ -54,27 +64,36 @@ impl VeteransRewards {
             min_rankings,
             max_rankings_reputation,
             max_rankings_rewards,
-            agreement_rate_cutoffs,
-            agreement_rate_modifiers,
+            rewards_agreement_rate_cutoffs,
+            rewards_agreement_rate_modifiers,
+            reputation_agreement_rate_cutoffs,
+            reputation_agreement_rate_modifiers,
         } = self;
         let reviews: Vec<VeteranRankingRow> = csv::load_data_from_csv::<_, b','>(&from)?;
 
-        if agreement_rate_cutoffs.len() != agreement_rate_modifiers.len() {
+        if rewards_agreement_rate_cutoffs.len() != rewards_agreement_rate_modifiers.len() {
             return Err(Error::InvalidInput(
-                "Expected same number of agreement_rate_modifier and agreement_rate_cutoff"
+                "Expected same number of rewards_agreement_rate_cutoffs and rewards_agreement_rate_modifiers"
                     .to_string(),
             ));
         }
 
-        let sorted_agreement_rate_cutoff = {
-            let mut clone = agreement_rate_cutoffs.clone();
-            clone.sort_by(|a, b| b.cmp(a));
-            clone
-        };
-
-        if agreement_rate_cutoffs != sorted_agreement_rate_cutoff {
+        if reputation_agreement_rate_cutoffs.len() != reputation_agreement_rate_modifiers.len() {
             return Err(Error::InvalidInput(
-                "Expected agreement_rate_cutoff to be descending".to_string(),
+                "Expected same number of reputation_agreement_rate_cutoffs and reputation_agreement_rate_modifiers"
+                    .to_string(),
+            ));
+        }
+
+        if !is_sorted(&rewards_agreement_rate_cutoffs) {
+            return Err(Error::InvalidInput(
+                "Expected rewards_agreement_rate_cutoffs to be descending".to_string(),
+            ));
+        }
+
+        if !is_sorted(&reputation_agreement_rate_cutoffs) {
+            return Err(Error::InvalidInput(
+                "Expected rewards_agreement_rate_cutoffs to be descending".to_string(),
             ));
         }
 
@@ -83,8 +102,10 @@ impl VeteransRewards {
             total_rewards,
             min_rankings..=max_rankings_rewards,
             min_rankings..=max_rankings_reputation,
-            agreement_rate_cutoffs,
-            agreement_rate_modifiers,
+            rewards_agreement_rate_cutoffs,
+            rewards_agreement_rate_modifiers,
+            reputation_agreement_rate_cutoffs,
+            reputation_agreement_rate_modifiers,
         );
 
         csv::dump_data_to_csv(&rewards_to_csv_data(results), &to).unwrap();
@@ -117,4 +138,11 @@ fn rewards_to_csv_data(rewards: VcaRewards) -> Vec<impl Serialize> {
             },
         )
         .collect()
+}
+
+fn is_sorted(v: &Vec<Decimal>) -> bool {
+    let mut clone = v.clone();
+    clone.sort_by(|a, b| b.cmp(a));
+
+    v == &clone
 }
