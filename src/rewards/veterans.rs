@@ -42,10 +42,9 @@ fn calc_final_ranking_per_review(rankings: &[impl Borrow<VeteranRankingRow>]) ->
 
 fn disagreement_modifier<'a>(
     agreement_rate: Decimal,
-    thresholds: impl Iterator<Item = &'a Decimal>,
-    modifiers: impl Iterator<Item = &'a Decimal>,
+    modifiers: impl Iterator<Item = &'a (Decimal, Decimal)>,
 ) -> Decimal {
-    for (threshold, modifier) in thresholds.into_iter().zip(modifiers) {
+    for (threshold, modifier) in modifiers {
         if &agreement_rate >= threshold {
             return *modifier;
         }
@@ -83,10 +82,8 @@ pub fn calculate_veteran_advisors_incentives(
     total_rewards: Rewards,
     rewards_thresholds: EligibilityThresholds,
     reputation_thresholds: EligibilityThresholds,
-    rewards_agreement_rate_thresholds: Vec<Decimal>,
-    rewards_agreement_rate_modifiers: Vec<Decimal>,
-    reputation_agreement_rate_thresholds: Vec<Decimal>,
-    reputation_agreement_rate_modifiers: Vec<Decimal>,
+    rewards_mod_args: Vec<(Decimal, Decimal)>,
+    reputation_mod_args: Vec<(Decimal, Decimal)>,
 ) -> HashMap<VeteranAdvisorId, VeteranAdvisorIncentive> {
     let final_rankings_per_review = veteran_rankings
         .iter()
@@ -114,26 +111,14 @@ pub fn calculate_veteran_advisors_incentives(
         &rankings_per_vca,
         eligible_rankings_per_vca.clone(),
         reputation_thresholds,
-        |agreement| {
-            disagreement_modifier(
-                agreement,
-                reputation_agreement_rate_thresholds.iter(),
-                reputation_agreement_rate_modifiers.iter(),
-            )
-        },
+        |agreement| disagreement_modifier(agreement, reputation_mod_args.iter()),
     );
 
     let rewards_eligible_rankings = calc_final_eligible_rankings(
         &rankings_per_vca,
         eligible_rankings_per_vca,
         rewards_thresholds,
-        |agreement| {
-            disagreement_modifier(
-                agreement,
-                rewards_agreement_rate_thresholds.iter(),
-                rewards_agreement_rate_modifiers.iter(),
-            )
-        },
+        |agreement| disagreement_modifier(agreement, rewards_mod_args.iter()),
     );
 
     let tot_rewards_eligible_rankings = rewards_eligible_rankings.values().sum::<Rewards>();
@@ -238,10 +223,14 @@ mod tests {
             total_rewards,
             2..=2,
             2..=2,
-            THRESHOLDS.to_vec(),
-            REWARDS_DISAGREEMENT_MODIFIERS.to_vec(),
-            THRESHOLDS.to_vec(),
-            REPUTATION_DISAGREEMENT_MODIFIERS.to_vec(),
+            THRESHOLDS
+                .into_iter()
+                .zip(REWARDS_DISAGREEMENT_MODIFIERS.into_iter())
+                .collect(),
+            THRESHOLDS
+                .into_iter()
+                .zip(REPUTATION_DISAGREEMENT_MODIFIERS.into_iter())
+                .collect(),
         );
         assert!(results.get(VCA_1).is_none());
         let res = results.get(VCA_2).unwrap();
@@ -263,10 +252,14 @@ mod tests {
             total_rewards,
             1..=1,
             1..=1,
-            THRESHOLDS.to_vec(),
-            REWARDS_DISAGREEMENT_MODIFIERS.to_vec(),
-            THRESHOLDS.to_vec(),
-            REPUTATION_DISAGREEMENT_MODIFIERS.to_vec(),
+            THRESHOLDS
+                .into_iter()
+                .zip(REWARDS_DISAGREEMENT_MODIFIERS.into_iter())
+                .collect(),
+            THRESHOLDS
+                .into_iter()
+                .zip(REPUTATION_DISAGREEMENT_MODIFIERS.into_iter())
+                .collect(),
         );
         let res1 = results.get(VCA_1).unwrap();
         assert_eq!(res1.reputation, 1);
@@ -309,10 +302,14 @@ mod tests {
                 total_rewards,
                 1..=200,
                 1..=200,
-                THRESHOLDS.to_vec(),
-                REWARDS_DISAGREEMENT_MODIFIERS.to_vec(),
-                THRESHOLDS.to_vec(),
-                REPUTATION_DISAGREEMENT_MODIFIERS.to_vec(),
+                THRESHOLDS
+                    .into_iter()
+                    .zip(REWARDS_DISAGREEMENT_MODIFIERS.into_iter())
+                    .collect(),
+                THRESHOLDS
+                    .into_iter()
+                    .zip(REPUTATION_DISAGREEMENT_MODIFIERS.into_iter())
+                    .collect(),
             );
             let expected_reward_portion = agreement * Rewards::from(100) * reward_modifier;
             dbg!(expected_reward_portion);

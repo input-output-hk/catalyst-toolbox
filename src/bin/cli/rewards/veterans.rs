@@ -85,13 +85,13 @@ impl VeteransRewards {
             ));
         }
 
-        if !is_sorted(&rewards_agreement_rate_cutoffs) {
+        if !is_descending(&rewards_agreement_rate_cutoffs) {
             return Err(Error::InvalidInput(
                 "Expected rewards_agreement_rate_cutoffs to be descending".to_string(),
             ));
         }
 
-        if !is_sorted(&reputation_agreement_rate_cutoffs) {
+        if !is_descending(&reputation_agreement_rate_cutoffs) {
             return Err(Error::InvalidInput(
                 "Expected rewards_agreement_rate_cutoffs to be descending".to_string(),
             ));
@@ -102,10 +102,14 @@ impl VeteransRewards {
             total_rewards,
             min_rankings..=max_rankings_rewards,
             min_rankings..=max_rankings_reputation,
-            rewards_agreement_rate_cutoffs,
-            rewards_agreement_rate_modifiers,
-            reputation_agreement_rate_cutoffs,
-            reputation_agreement_rate_modifiers,
+            rewards_agreement_rate_cutoffs
+                .into_iter()
+                .zip(rewards_agreement_rate_modifiers.into_iter())
+                .collect(),
+            reputation_agreement_rate_cutoffs
+                .into_iter()
+                .zip(reputation_agreement_rate_modifiers.into_iter())
+                .collect(),
         );
 
         csv::dump_data_to_csv(&rewards_to_csv_data(results), &to).unwrap();
@@ -140,7 +144,7 @@ fn rewards_to_csv_data(rewards: VcaRewards) -> Vec<impl Serialize> {
         .collect()
 }
 
-fn is_sorted(v: &Vec<Decimal>) -> bool {
+fn is_descending(v: &Vec<Decimal>) -> bool {
     let mut clone = v.clone();
     clone.sort_by(|a, b| b.cmp(a));
 
