@@ -34,23 +34,31 @@ pub struct VeteransRewards {
     #[structopt(long)]
     max_rankings_reputation: usize,
 
-    /// Agreement rate cutoff list. For each one of this, an agreement_rate_modifier argument is
-    /// expected, which determines how are the rewards affected for vca's with this or more than
-    /// this level of agreement.
+    /// Agreement rate cutoff list for rewards. These are expected to be provided in descending
+    /// order (numerically speaking). The first cutoff that is lower or equal than the computed
+    /// agreement rate for each vca is used to select the corresponding modifier (the one that is
+    /// in the same position).
     #[structopt(long, required = true)]
     rewards_agreement_rate_cutoffs: Vec<Decimal>,
 
-    /// Cutoff multipliers: Expected one per agreement_rate_cutoff.
+    /// Cutoff multipliers for rewards: Expected the same number of values than
+    /// rewards_agreement_rate_cutoff. The order of these matters, and is expected to be in a 1 to
+    /// 1 correspondence with the ones provided in rewards_agreement_rate_cutoffs, meaning than if
+    /// the first cutoff is selected then the first modifier is used.
     #[structopt(long, required = true)]
     rewards_agreement_rate_modifiers: Vec<Decimal>,
 
-    /// Agreement rate cutoff list. For each one of this, an agreement_rate_modifier argument is
-    /// expected, which determines how are the rewards affected for vca's with this or more than
-    /// this level of agreement.
+    /// Agreement rate cutoff list for reputation. These are expected to be provided in descending
+    /// order (numerically speaking). The first cutoff that is lower or equal than the computed
+    /// agreement rate for each vca is used to select the corresponding modifier (the one that is in
+    /// the same position).
     #[structopt(long, required = true)]
     reputation_agreement_rate_cutoffs: Vec<Decimal>,
 
-    /// Cutoff multipliers: Expected one per agreement_rate_cutoff.
+    /// Cutoff multipliers for reputation: Expected the same number of values than
+    /// rewards_agreement_rate_cutoff. The order of these matters, and is expected to be in a 1 to
+    /// 1 correspondence with the ones provided in reputation_agreement_rate_cutoffs, meaning than
+    /// if the first cutoff is selected then the first modifier is used.
     #[structopt(long, required = true)]
     reputation_agreement_rate_modifiers: Vec<Decimal>,
 }
