@@ -227,7 +227,6 @@ mod tests {
         }
     }
 
-    // Does not pass as it's unclear why delegations are a map and not a sequence
     #[test]
     fn test_parsing() {
         let raw: RawSnapshot = serde_json::from_str(
@@ -235,13 +234,34 @@ mod tests {
             {
                 "reward_address": "0xe1ffff2912572257b59dca84c965e4638a09f1524af7a15787eb0d8a46",
                 "stake_public_key": "0xe7d6616840734686855ec80ee9658f5ead9e29e494ec6889a5d1988b50eb8d0f",
-                "total_voting_power": 177689370111,
-                "delegations": {
-                    "0xa6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663": 3,
-                    "0x00588e8e1d18cba576a4d35758069fe94e53f638b6faf7c07b8abd2bc5c5cdee": 1}
-                }
+                "voting_power": 177689370111,
+                "delegations": [
+                    ["0xa6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663", 3],
+                    ["0x00588e8e1d18cba576a4d35758069fe94e53f638b6faf7c07b8abd2bc5c5cdee", 1]
+                ]
+            }
         ]"#,
         ).unwrap();
-        Snapshot::from_raw_snapshot(raw, 0.into());
+        let snapshot = Snapshot::from_raw_snapshot(raw, 0.into());
+        assert_eq!(
+            snapshot.contributions_for_voting_key(
+                Identifier::from_hex(
+                    "a6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663"
+                )
+                .unwrap()
+            )[0]
+            .value,
+            133267027583
+        );
+        assert_eq!(
+            snapshot.contributions_for_voting_key(
+                Identifier::from_hex(
+                    "00588e8e1d18cba576a4d35758069fe94e53f638b6faf7c07b8abd2bc5c5cdee"
+                )
+                .unwrap()
+            )[0]
+            .value,
+            44422342528
+        );
     }
 }
