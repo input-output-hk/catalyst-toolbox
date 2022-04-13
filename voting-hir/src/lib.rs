@@ -11,7 +11,7 @@ pub type VotingGroup = String;
 ///
 /// You can roughly read this as
 /// "voting_key will participate in this voting round with role voting_group and will have voting_power influence"
-pub struct VotingHIR {
+pub struct VoterHIR {
     pub voting_key: Identifier,
     /// Voting group this key belongs to.
     /// If this key belong to multiple voting groups, multiple records for the same
