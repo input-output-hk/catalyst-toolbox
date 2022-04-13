@@ -6,7 +6,7 @@ use chain_addr::{Discrimination, Kind};
 use jormungandr_lib::crypto::account::Identifier;
 use jormungandr_lib::interfaces::{Address, InitialUTxO, Value};
 use serde::Deserialize;
-use std::{collections::BTreeMap, iter::Iterator, num::NonZeroU64};
+use std::{borrow::Borrow, collections::BTreeMap, iter::Iterator, num::NonZeroU64};
 
 pub const CATALYST_VOTING_PURPOSE_TAG: u64 = 0;
 
@@ -114,13 +114,12 @@ impl Snapshot {
         self.inner.keys()
     }
 
-    pub fn contributions_for_voting_key<I: Into<Identifier>>(
+    pub fn contributions_for_voting_key<I: Borrow<Identifier>>(
         &self,
         voting_public_key: I,
     ) -> Vec<KeyContribution> {
-        let voting_public_key: Identifier = voting_public_key.into();
         self.inner
-            .get(&voting_public_key)
+            .get(voting_public_key.borrow())
             .cloned()
             .unwrap_or_default()
     }

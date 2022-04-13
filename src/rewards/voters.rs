@@ -2,6 +2,7 @@ use crate::snapshot::{registration::MainnetRewardAddress, Snapshot};
 use chain_addr::{Discrimination, Kind};
 use chain_impl_mockchain::transaction::UnspecifiedAccountIdentifier;
 use chain_impl_mockchain::vote::CommitteeId;
+use jormungandr_lib::crypto::account::Identifier;
 use rust_decimal::Decimal;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use thiserror::Error;
@@ -123,11 +124,12 @@ fn rewards_to_mainnet_addresses(
 ) -> BTreeMap<MainnetRewardAddress, Rewards> {
     let mut res = BTreeMap::new();
     for (addr, reward) in rewards {
-        let contributions = snapshot.contributions_for_voting_key(
-            addr.as_ref()
+        let contributions = snapshot.contributions_for_voting_key::<Identifier>(
+            addr.1
                 .public_key()
                 .expect("non account address")
-                .clone(),
+                .clone()
+                .into(),
         );
         let total_value = contributions
             .iter()
