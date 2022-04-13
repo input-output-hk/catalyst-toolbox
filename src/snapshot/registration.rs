@@ -105,9 +105,8 @@ mod deser {
                     V: SeqAccess<'de>,
                 {
                     let mut vks = Vec::with_capacity(seq.size_hint().unwrap_or(1));
-                    while let Some((vk, weight)) = seq.next_element::<(IdentifierDef, u64)>()? {
-                        let capped_weight = std::cmp::min(weight, u32::MAX as u64) as u32;
-                        vks.push((vk.0, capped_weight));
+                    while let Some((vk, weight)) = seq.next_element::<(IdentifierDef, u32)>()? {
+                        vks.push((vk.0, weight));
                     }
                     if vks.is_empty() {
                         return Err(V::Error::custom("expected at least one delegation"));
