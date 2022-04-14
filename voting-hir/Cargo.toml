@@ -10,3 +10,4 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 jormungandr-lib = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "master" }
+serde = { version = "1", features = ["derive"], optional = true }
