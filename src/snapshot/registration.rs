@@ -50,7 +50,7 @@ mod deser {
 
         fn visit_str<E: de::Error>(self, v: &str) -> Result<Self::Value, E> {
             Identifier::from_hex(v.trim_start_matches("0x"))
-                .map_err(|e| E::custom(format!("invalid voting key: {}", e)))
+                .map_err(|e| E::custom(format!("invalid voting key {}: {}", v, e)))
         }
 
         fn visit_bytes<E: de::Error>(self, v: &[u8]) -> Result<Self::Value, E> {
@@ -294,16 +294,27 @@ mod tests {
 
     #[test]
     fn test_empty_delegations_are_rejected() {
-        assert!(serde_json::from_str::<Delegations>(r#""delegations": []"#,).is_err());
+        assert!(serde_json::from_str::<Delegations>(r#"[]"#,).is_err());
     }
 
     #[test]
     fn test_u64_weight_is_rejected() {
-        assert!(serde_json::from_str::<Delegations>(r#""delegations": [["0xa6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663", 10000000000]]"#,).is_err());
+        assert!(serde_json::from_str::<Delegations>(r#"[["0xa6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663", 10000000000]]"#,).is_err());
+    }
+
+    #[test]
+    fn test_legacy_delegation_is_ok() {
+        assert!(serde_json::from_str::<Delegations>(
+            r#"0xa6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663"#,
+        )
+        .is_ok());
     }
 
     #[test]
     fn test_u32_weight_is_ok() {
-        assert!(serde_json::from_str::<Delegations>(r#""delegations": [["0xa6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663", 10000]]"#,).is_err());
+        assert!(serde_json::from_str::<Delegations>(
+            r#"[["0xa6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663", 10000]]"#,
+        )
+        .is_ok());
     }
 }
