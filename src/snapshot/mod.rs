@@ -76,6 +76,7 @@ impl Snapshot {
                                     })
                                     .sum::<u64>()
                             });
+                            // this will always happen unless voting_power is 0
                             if others_total_vp != voting_power {
                                 acc.entry(last.0).or_default().push(KeyContribution {
                                     reward_address,
