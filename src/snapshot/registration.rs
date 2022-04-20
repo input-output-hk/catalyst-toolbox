@@ -299,22 +299,22 @@ mod tests {
 
     #[test]
     fn test_u64_weight_is_rejected() {
-        assert!(serde_json::from_str::<Delegations>(r#"[["0xa6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663", 10000000000]]"#,).is_err());
+        assert!(serde_json::from_str::<Delegations>(r#"[["0xa6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663", 4294967296]]"#,).is_err());
     }
 
     #[test]
     fn test_legacy_delegation_is_ok() {
         assert!(serde_json::from_str::<Delegations>(
-            r#"0xa6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663"#,
+            r#""0xa6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663""#,
         )
         .is_ok());
     }
 
     #[test]
     fn test_u32_weight_is_ok() {
-        assert!(serde_json::from_str::<Delegations>(
-            r#"[["0xa6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663", 10000]]"#,
+        serde_json::from_str::<Delegations>(
+            r#"[["0xa6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663", 4294967295]]"#,
         )
-        .is_ok());
+        .unwrap();
     }
 }

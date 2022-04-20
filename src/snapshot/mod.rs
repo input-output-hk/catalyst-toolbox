@@ -34,7 +34,9 @@ impl Snapshot {
             inner: raw_snapshot
                 .0
                 .into_iter()
-                .filter(|reg| reg.voting_power >= stake_threshold)
+                // Discard registrations with 0 voting power since they don't influence
+                // snapshot anyway
+                .filter(|reg| reg.voting_power >= std::cmp::max(stake_threshold, 1.into()))
                 // TODO: add capability to select voting purpose for a snapshot.
                 // At the moment Catalyst is the only one in use
                 .filter(|reg| reg.voting_purpose == CATALYST_VOTING_PURPOSE_TAG)
@@ -76,13 +78,10 @@ impl Snapshot {
                                     })
                                     .sum::<u64>()
                             });
-                            // this will always happen unless voting_power is 0
-                            if others_total_vp != voting_power {
-                                acc.entry(last.0).or_default().push(KeyContribution {
-                                    reward_address,
-                                    value: voting_power - others_total_vp,
-                                });
-                            }
+                            acc.entry(last.0).or_default().push(KeyContribution {
+                                reward_address,
+                                value: voting_power - others_total_vp,
+                            });
                         }
                     };
                     acc
@@ -192,7 +191,8 @@ mod tests {
         let voting_pub_key_1 = Identifier::from_hex(&hex::encode([0; 32])).unwrap();
         let voting_pub_key_2 = Identifier::from_hex(&hex::encode([1; 32])).unwrap();
 
-        for i in 1..=10u64 {
+        let n = 10;
+        for i in 1..=n {
             let delegations = Delegations::New(vec![
                 (voting_pub_key_1.clone(), 1),
                 (voting_pub_key_2.clone(), 1),
@@ -217,8 +217,8 @@ mod tests {
             .into_iter()
             .map(|c| c.value)
             .sum();
-        assert_eq!(vp_2, 30); // last key get the remainder during distributiong
-        assert_eq!(vp_1, 25);
+        assert_eq!(vp_2 + vp_1, n * (n + 1) / 2);
+        assert_eq!(vp_2 - vp_1, n / 2); // last key get the remainder during distribution
     }
 
     impl From<Vec<VotingRegistration>> for RawSnapshot {
