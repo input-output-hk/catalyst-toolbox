@@ -514,6 +514,7 @@ dependencies = [
  "url",
  "versionisator",
  "vit-servicing-station-lib",
+ "voting-hir",
  "wallet",
 ]
 
