@@ -2,12 +2,13 @@ use catalyst_toolbox::snapshot::{voting_group::RepsVotersAssigner, RawSnapshot, 
 use color_eyre::Report;
 use jcli_lib::utils::{output_file::OutputFile, output_format::OutputFormat};
 use jormungandr_lib::interfaces::Value;
+use rust_decimal::Decimal;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-const DEFAULT_DIRECT_VOTER_GROUP: &str = "voter";
+const DEFAULT_DIRECT_VOTER_GROUP: &str = "direct";
 const DEFAULT_REPRESENTATIVE_GROUP: &str = "rep";
 
 /// Process raw registrations into blockchain initials
@@ -19,7 +20,10 @@ pub struct SnapshotCmd {
     snapshot: PathBuf,
     /// Registrations voting power threshold for eligibility
     #[structopt(short, long)]
-    threshold: Value,
+    min_stake_threshold: Value,
+    /// Maximum stake in percent that could be controlled by a single entity
+    /// in the resulting HIR
+    max_stake_percent: Option<Decimal>,
 
     /// Voter group to assign direct voters to.
     /// If empty, defaults to "voter"
