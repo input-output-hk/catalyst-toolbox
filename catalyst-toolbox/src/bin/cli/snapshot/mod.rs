@@ -20,10 +20,7 @@ pub struct SnapshotCmd {
     snapshot: PathBuf,
     /// Registrations voting power threshold for eligibility
     #[structopt(short, long)]
-    min_stake_threshold: Value,
-    /// Maximum stake in percent that could be controlled by a single entity
-    /// in the resulting HIR
-    max_stake_percent: Option<Decimal>,
+    threshold: Value,
 
     /// Voter group to assign direct voters to.
     /// If empty, defaults to "voter"
