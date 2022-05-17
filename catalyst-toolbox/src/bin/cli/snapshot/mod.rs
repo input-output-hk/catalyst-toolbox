@@ -1,12 +1,15 @@
-use catalyst_toolbox::snapshot::{RawSnapshot, Snapshot};
-use chain_addr::Discrimination;
+use catalyst_toolbox::snapshot::{voting_group::RepsVotersAssigner, RawSnapshot, Snapshot};
 use color_eyre::Report;
 use jcli_lib::utils::{output_file::OutputFile, output_format::OutputFormat};
 use jormungandr_lib::interfaces::Value;
+use rust_decimal::Decimal;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use structopt::StructOpt;
+
+const DEFAULT_DIRECT_VOTER_GROUP: &str = "voter";
+const DEFAULT_REPRESENTATIVE_GROUP: &str = "rep";
 
 /// Process raw registrations into blockchain initials
 #[derive(StructOpt)]
@@ -17,11 +20,24 @@ pub struct SnapshotCmd {
     snapshot: PathBuf,
     /// Registrations voting power threshold for eligibility
     #[structopt(short, long)]
-    threshold: Value,
+    min_stake_threshold: Value,
+    /// Maximum stake in percent that could be controlled by a single entity
+    /// in the resulting HIR
+    max_stake_percent: Option<Decimal>,
 
-    /// Discrimination to use for initial addresses
+    /// Voter group to assign direct voters to.
+    /// If empty, defaults to "voter"
     #[structopt(short, long)]
-    discrimination: Discrimination,
+    direct_voters_group: Option<String>,
+
+    /// Voter group to assign representatives to.
+    /// If empty, defaults to "rep"
+    #[structopt(short, long)]
+    representatives_group: Option<String>,
+
+    /// Url of the representative db api server
+    #[structopt(short, long)]
+    reps_db_api_url: String,
 
     #[structopt(flatten)]
     output: OutputFile,
@@ -33,8 +49,15 @@ pub struct SnapshotCmd {
 impl SnapshotCmd {
     pub fn exec(self) -> Result<(), Report> {
         let raw_snapshot: RawSnapshot = serde_json::from_reader(File::open(&self.snapshot)?)?;
-        let initials = Snapshot::from_raw_snapshot(raw_snapshot, self.threshold)
-            .to_block0_initials(self.discrimination);
+        let direct_voter = self
+            .direct_voters_group
+            .unwrap_or_else(|| DEFAULT_DIRECT_VOTER_GROUP.into());
+        let representative = self
+            .representatives_group
+            .unwrap_or_else(|| DEFAULT_REPRESENTATIVE_GROUP.into());
+        let assigner = RepsVotersAssigner::new(direct_voter, representative, self.reps_db_api_url)?;
+        let initials =
+            Snapshot::from_raw_snapshot(raw_snapshot, self.threshold).to_voter_hir(&assigner);
         let mut out_writer = self.output.open()?;
         let content = self
             .output_format
