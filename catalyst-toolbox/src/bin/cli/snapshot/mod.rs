@@ -3,6 +3,7 @@ use color_eyre::Report;
 use fraction::Fraction;
 use jcli_lib::utils::{output_file::OutputFile, output_format::OutputFormat};
 use jormungandr_lib::interfaces::Value;
+use rust_decimal::Decimal;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
@@ -20,7 +21,7 @@ pub struct SnapshotCmd {
     snapshot: PathBuf,
     /// Registrations voting power threshold for eligibility
     #[structopt(short, long)]
-    threshold: Value,
+    min_stake_threshold: Value,
 
     /// Voter group to assign direct voters to.
     /// If empty, defaults to "voter"
@@ -59,7 +60,7 @@ impl SnapshotCmd {
         let assigner = RepsVotersAssigner::new(direct_voter, representative, self.reps_db_api_url)?;
         let initials = Snapshot::from_raw_snapshot(
             raw_snapshot,
-            self.threshold,
+            self.min_stake_threshold,
             self.voting_power_cap,
             &assigner,
         )?

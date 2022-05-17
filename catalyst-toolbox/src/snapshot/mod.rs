@@ -176,14 +176,6 @@ mod tests {
     use proptest::prelude::*;
     use test_strategy::proptest;
 
-    struct DummyAssigner;
-
-    impl VotingGroupAssigner for DummyAssigner {
-        fn assign(&self, _vk: &Identifier) -> String {
-            String::new()
-        }
-    }
-
     impl Snapshot {
         pub fn to_block0_initials(&self, discrimination: Discrimination) -> Vec<InitialUTxO> {
             self.inner
