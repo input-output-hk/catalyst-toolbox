@@ -34,7 +34,7 @@ pub struct SnapshotCmd {
 
     /// Url of the representative db api server
     #[structopt(short, long)]
-    reps_db_api_url: String,
+    reps_db_api_url: reqwest::Url,
 
     #[structopt(flatten)]
     output: OutputFile,

@@ -28,7 +28,7 @@ pub enum Error {
 )]
 pub struct AllReps;
 
-fn get_all_reps(url: String) -> Result<HashSet<Identifier>, Error> {
+fn get_all_reps(url: impl reqwest::IntoUrl) -> Result<HashSet<Identifier>, Error> {
     let response: all_reps::ResponseData = reqwest::blocking::Client::new()
         .post(url)
         .json(&AllReps::build_query(all_reps::Variables))
@@ -49,7 +49,7 @@ impl RepsVotersAssigner {
     pub fn new(
         direct_voters: VotingGroup,
         reps: VotingGroup,
-        repsdb_url: String,
+        repsdb_url: impl reqwest::IntoUrl,
     ) -> Result<Self, Error> {
         Ok(Self {
             direct_voters,
