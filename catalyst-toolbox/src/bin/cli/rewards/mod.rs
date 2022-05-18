@@ -28,6 +28,9 @@ pub enum Error {
 
     #[error(transparent)]
     Rewards(#[from] catalyst_toolbox::rewards::voters::Error),
+
+    #[error(transparent)]
+    Snapshot(#[from] catalyst_toolbox::snapshot::Error),
 }
 
 #[derive(StructOpt)]
