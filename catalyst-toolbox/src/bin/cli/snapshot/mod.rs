@@ -32,7 +32,7 @@ pub struct SnapshotCmd {
     representatives_group: Option<String>,
 
     /// Url of the representative db api server
-    #[structopt(short, long)]
+    #[structopt(long)]
     reps_db_api_url: reqwest::Url,
 
     #[structopt(flatten)]
