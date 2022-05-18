@@ -2,7 +2,6 @@ use catalyst_toolbox::snapshot::{voting_group::RepsVotersAssigner, RawSnapshot, 
 use color_eyre::Report;
 use jcli_lib::utils::{output_file::OutputFile, output_format::OutputFormat};
 use jormungandr_lib::interfaces::Value;
-use rust_decimal::Decimal;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
