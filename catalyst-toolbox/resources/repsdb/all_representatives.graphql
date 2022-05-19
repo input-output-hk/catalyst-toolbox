@@ -1,9 +1,9 @@
-  query AllReps {
-    representatives {
-    	data {
-        attributes {
-          address
-        }
+query AllReps {
+  representatives {
+    data {
+      attributes {
+        address
       }
     }
   }
+}
