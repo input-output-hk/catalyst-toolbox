@@ -15,7 +15,7 @@ fn int_ceil(a: u64, b: u64) -> u64 {
 /// The solution to this equation is therefore Y <= (X - T*TOT) / (1 - T).
 /// Since we work with integer numbers, we will use Y' = ceil(Y).
 ///
-/// Panics if threshold is >= 1 or x/tot <= threshold
+/// Panics if threshold is > 1 or x/tot <= threshold
 fn calc_vp_to_remove(x: u64, tot: u64, threshold: Fraction) -> u64 {
     assert!(threshold <= Fraction::from(1u64));
     assert!(threshold < Fraction::new(x, tot));
