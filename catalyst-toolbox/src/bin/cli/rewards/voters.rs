@@ -30,8 +30,12 @@ pub struct VotersRewards {
     #[structopt(long, default_value)]
     vote_threshold: u64,
 
+    /// Voting group used for direct voters
+    #[structopt(long)]
     direct_voter_group: VotingGroup,
 
+    /// Voting group used for representatives
+    #[structopt(long)]
     representative_group: VotingGroup,
 }
 
