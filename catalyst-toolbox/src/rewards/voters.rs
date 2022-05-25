@@ -3,7 +3,6 @@ use jormungandr_lib::crypto::account::Identifier;
 use rust_decimal::Decimal;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use thiserror::Error;
-use voting_hir::VotingGroup;
 
 pub const ADA_TO_LOVELACE_FACTOR: u64 = 1_000_000;
 pub type Rewards = Decimal;
@@ -16,42 +15,6 @@ pub enum Error {
     MultipleEntries,
     #[error("Unknown voter group {0}")]
     UnknownVoterGroup(String),
-}
-
-// Get the voting power used in rewards calculation:
-// * actual voting power for representatives
-// * voting power without cap for direct voters
-fn get_rewards_voting_power(
-    account: &SnapshotInfo,
-    representative_group: &str,
-    direct_voter_group: &str,
-) -> Result<u64, Error> {
-    match &account.hir.voting_group {
-        group if representative_group == group => Ok(account.hir.voting_power.into()),
-        group if direct_voter_group == group => {
-            Ok(account.contributions.iter().map(|c| c.value).sum::<u64>())
-        }
-        other => Err(Error::UnknownVoterGroup(other.into())),
-    }
-}
-
-fn calculate_active_stake(
-    snapshot_info: &[SnapshotInfo],
-    representative_group: VotingGroup,
-    direct_voter_group: VotingGroup,
-) -> Result<(u64, HashMap<Identifier, u64>), Error> {
-    let mut total_stake: u64 = 0;
-    let mut stake_per_voter: HashMap<Identifier, u64> = HashMap::new();
-
-    for voter in snapshot_info {
-        let vp = get_rewards_voting_power(voter, &representative_group, &direct_voter_group)?;
-        total_stake = total_stake.checked_add(vp).ok_or(Error::Overflow)?;
-        let entry = stake_per_voter
-            .entry(voter.hir.voting_key.clone())
-            .or_default();
-        *entry += vp;
-    }
-    Ok((total_stake, stake_per_voter))
 }
 
 fn calculate_reward(
@@ -119,8 +82,6 @@ pub fn calc_voter_rewards(
     vote_threshold: u64,
     voters: Vec<SnapshotInfo>,
     total_rewards: Rewards,
-    representative_group: VotingGroup,
-    direct_voter_group: VotingGroup,
 ) -> Result<BTreeMap<MainnetRewardAddress, Rewards>, Error> {
     let unique_voters = voters
         .iter()
@@ -131,8 +92,15 @@ pub fn calc_voter_rewards(
     }
     let active_addresses = filter_active_addresses(vote_count, vote_threshold, voters);
 
-    let (total_active_stake, stake_per_voter) =
-        calculate_active_stake(&active_addresses, representative_group, direct_voter_group)?;
+    let mut total_active_stake = 0u64;
+    let mut stake_per_voter = HashMap::new();
+    // iterative as Iterator::sum() panic on overflows
+    for voter in &active_addresses {
+        total_active_stake = total_active_stake
+            .checked_add(voter.hir.voting_power.into())
+            .ok_or(Error::Overflow)?;
+        stake_per_voter.insert(voter.hir.voting_key.clone(), voter.hir.voting_power.into());
+    }
     let rewards = calculate_reward(total_active_stake, stake_per_voter, total_rewards);
     Ok(rewards_to_mainnet_addresses(rewards, active_addresses))
 }
@@ -156,15 +124,7 @@ mod tests {
             .collect::<VoteCount>();
         let n_voters = votes_count.len();
         let voters = snapshot.to_full_snapshot_info();
-        let rewards = calc_voter_rewards(
-            votes_count,
-            1,
-            voters,
-            Rewards::ONE,
-            String::new(),
-            String::new(),
-        )
-        .unwrap();
+        let rewards = calc_voter_rewards(votes_count, 1, voters, Rewards::ONE).unwrap();
         if n_voters > 0 {
             assert_are_close(rewards.values().sum::<Rewards>(), Rewards::ONE)
         } else {
@@ -176,15 +136,7 @@ mod tests {
     fn test_all_inactive(snapshot: Snapshot) {
         let votes_count = VoteCount::new();
         let voters = snapshot.to_full_snapshot_info();
-        let rewards = calc_voter_rewards(
-            votes_count,
-            1,
-            voters,
-            Rewards::ONE,
-            String::new(),
-            String::new(),
-        )
-        .unwrap();
+        let rewards = calc_voter_rewards(votes_count, 1, voters, Rewards::ONE).unwrap();
         assert_eq!(rewards.len(), 0);
     }
 
@@ -207,24 +159,9 @@ mod tests {
             .map(|(_, utxo)| utxo)
             .collect::<Vec<_>>();
 
-        let mut rewards = calc_voter_rewards(
-            votes_count.clone(),
-            1,
-            voters,
-            Rewards::ONE,
-            String::new(),
-            String::new(),
-        )
-        .unwrap();
-        let rewards_no_inactive = calc_voter_rewards(
-            votes_count,
-            1,
-            voters_active,
-            Rewards::ONE,
-            String::new(),
-            String::new(),
-        )
-        .unwrap();
+        let mut rewards = calc_voter_rewards(votes_count.clone(), 1, voters, Rewards::ONE).unwrap();
+        let rewards_no_inactive =
+            calc_voter_rewards(votes_count, 1, voters_active, Rewards::ONE).unwrap();
         // Rewards should ignore inactive voters
         assert_eq!(rewards, rewards_no_inactive);
         if n_voters > 0 {
@@ -291,15 +228,7 @@ mod tests {
 
         let voters = snapshot.to_full_snapshot_info();
 
-        let rewards = calc_voter_rewards(
-            VoteCount::new(),
-            0,
-            voters,
-            Rewards::ONE,
-            String::from("rep"),
-            String::new(),
-        )
-        .unwrap();
+        let rewards = calc_voter_rewards(VoteCount::new(), 0, voters, Rewards::ONE).unwrap();
         assert_eq!(rewards.values().sum::<Rewards>(), Rewards::ONE);
         for (addr, reward) in rewards {
             assert_eq!(
@@ -310,55 +239,7 @@ mod tests {
     }
 
     #[test]
-    fn test_direct_voters_cap_ignored() {
-        let mut raw_snapshot = Vec::new();
-
-        let mut total_stake = 0u64;
-        for i in 1..10u64 {
-            let voting_pub_key = Identifier::from_hex(&hex::encode([i as u8; 32])).unwrap();
-            let stake_public_key = i.to_string();
-            let reward_address = i.to_string();
-            let delegations = Delegations::New(vec![(voting_pub_key.clone(), 1)]);
-            raw_snapshot.push(VotingRegistration {
-                stake_public_key,
-                voting_power: i.into(),
-                reward_address,
-                delegations,
-                voting_purpose: 0,
-            });
-            total_stake += i;
-        }
-
-        let snapshot = Snapshot::from_raw_snapshot(
-            raw_snapshot.into(),
-            0.into(),
-            Fraction::new(1u64, 9u64),
-            &|_vk: &Identifier| String::new(),
-        )
-        .unwrap();
-
-        let voters = snapshot.to_full_snapshot_info();
-
-        let rewards = calc_voter_rewards(
-            VoteCount::new(),
-            0,
-            voters,
-            Rewards::ONE,
-            String::from("rep"),
-            String::new(),
-        )
-        .unwrap();
-        assert_eq!(rewards.values().sum::<Rewards>(), Rewards::ONE);
-        for (addr, reward) in rewards {
-            assert_eq!(
-                reward,
-                addr.parse::<Rewards>().unwrap() / Rewards::from(total_stake)
-            );
-        }
-    }
-
-    #[test]
-    fn test_representatives_rewards_cap() {
+    fn test_rewards_cap() {
         let mut raw_snapshot = Vec::new();
 
         for i in 1..10u64 {
@@ -385,15 +266,7 @@ mod tests {
 
         let voters = snapshot.to_full_snapshot_info();
 
-        let rewards = calc_voter_rewards(
-            VoteCount::new(),
-            0,
-            voters,
-            Rewards::ONE,
-            String::new(),
-            String::from("direct"),
-        )
-        .unwrap();
+        let rewards = calc_voter_rewards(VoteCount::new(), 0, voters, Rewards::ONE).unwrap();
         assert_are_close(rewards.values().sum::<Rewards>(), Rewards::ONE);
         for (_, reward) in rewards {
             assert_eq!(reward, Rewards::ONE / Rewards::from(9));

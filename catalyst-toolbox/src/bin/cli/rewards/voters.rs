@@ -29,14 +29,6 @@ pub struct VotersRewards {
     /// Number of votes required to be able to receive voter rewards
     #[structopt(long, default_value)]
     vote_threshold: u64,
-
-    /// Voting group used for direct voters
-    #[structopt(long)]
-    direct_voter_group: VotingGroup,
-
-    /// Voting group used for representatives
-    #[structopt(long)]
-    representative_group: VotingGroup,
 }
 
 fn write_rewards_results(
@@ -64,8 +56,6 @@ impl VotersRewards {
             snapshot_info_path,
             votes_count_path,
             vote_threshold,
-            direct_voter_group,
-            representative_group,
         } = self;
 
         let vote_count: VoteCount = serde_json::from_reader(jcli_lib::utils::io::open_file_read(
@@ -81,8 +71,6 @@ impl VotersRewards {
             vote_threshold,
             snapshot,
             Rewards::from(total_rewards),
-            representative_group,
-            direct_voter_group,
         )?;
 
         let actual_rewards = results.values().sum::<Rewards>();
