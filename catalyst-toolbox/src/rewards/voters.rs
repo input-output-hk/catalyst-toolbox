@@ -356,4 +356,47 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn test_representatives_rewards_cap() {
+        let mut raw_snapshot = Vec::new();
+
+        for i in 1..10u64 {
+            let voting_pub_key = Identifier::from_hex(&hex::encode([i as u8; 32])).unwrap();
+            let stake_public_key = i.to_string();
+            let reward_address = i.to_string();
+            let delegations = Delegations::New(vec![(voting_pub_key.clone(), 1)]);
+            raw_snapshot.push(VotingRegistration {
+                stake_public_key,
+                voting_power: i.into(),
+                reward_address,
+                delegations,
+                voting_purpose: 0,
+            });
+        }
+
+        let snapshot = Snapshot::from_raw_snapshot(
+            raw_snapshot.into(),
+            0.into(),
+            Fraction::new(1u64, 9u64),
+            &|_vk: &Identifier| String::new(),
+        )
+        .unwrap();
+
+        let voters = snapshot.to_full_snapshot_info();
+
+        let rewards = calc_voter_rewards(
+            VoteCount::new(),
+            0,
+            voters,
+            Rewards::ONE,
+            String::new(),
+            String::from("direct"),
+        )
+        .unwrap();
+        assert_are_close(rewards.values().sum::<Rewards>(), Rewards::ONE);
+        for (_, reward) in rewards {
+            assert_eq!(reward, Rewards::ONE / Rewards::from(9));
+        }
+    }
 }
