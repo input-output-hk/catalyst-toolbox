@@ -1,10 +1,13 @@
 use catalyst_toolbox::rewards::voters::{calc_voter_rewards, Rewards, Threshold, VoteCount};
 use catalyst_toolbox::snapshot::{registration::MainnetRewardAddress, SnapshotInfo};
 use catalyst_toolbox::utils::assert_are_close;
-use jormungandr_lib::interfaces::VotePlanStatusFull;
+use jormungandr_lib::{
+    crypto::{account::Identifier, hash::Hash},
+    interfaces::AccountVotes,
+};
 use vit_servicing_station_lib::db::models::proposals::FullProposalInfo;
 
-use color_eyre::Report;
+use color_eyre::{eyre::eyre, Report};
 use jcli_lib::jcli_lib::block::Common;
 use structopt::StructOpt;
 
@@ -75,25 +78,48 @@ impl VotersRewards {
             proposals,
         } = self;
 
-        let vote_count = serde_json::from_reader::<_, Vec<VotePlanStatusFull>>(
+        let proposals_per_voteplan = serde_json::from_reader::<_, Vec<FullProposalInfo>>(
+            jcli_lib::utils::io::open_file_read(&Some(proposals))?,
+        )?
+        .into_iter()
+        .fold(<HashMap<_, Vec<_>>>::new(), |mut acc, prop| {
+            let entry = acc
+                .entry(prop.voteplan.chain_voteplan_id.clone())
+                .or_default();
+            entry.push(prop);
+            entry.sort_by_key(|p| p.voteplan.chain_proposal_index);
+            acc
+        });
+
+        let vote_count = serde_json::from_reader::<_, HashMap<Identifier, Vec<AccountVotes>>>(
             jcli_lib::utils::io::open_file_read(&Some(votes_count_path))?,
         )?
         .into_iter()
-        .flat_map(|vp| vp.proposals.into_iter())
-        .map(|p| p.votes)
-        .fold(VoteCount::new(), |mut acc, votes| {
-            for (account, votes) in votes {
-                acc.entry(account).or_default().extend(votes);
+        .try_fold(VoteCount::new(), |mut acc, (account, votes)| {
+            for vote in &votes {
+                let voteplan = vote.vote_plan_id;
+                let props = proposals_per_voteplan
+                    .get(&voteplan.to_string())
+                    .iter()
+                    .flat_map(|p| p.iter())
+                    .enumerate()
+                    .filter(|(i, _p)| vote.votes.contains(&(*i as u8)))
+                    .map(|(_, p)| {
+                        Ok::<_, Report>(Hash::from(
+                            <[u8; 32]>::try_from(p.proposal.chain_proposal_id.clone()).map_err(
+                                |v| eyre!("Invalid proposal hash length {}, expected 32", v.len()),
+                            )?,
+                        ))
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+                acc.entry(account.clone()).or_default().extend(props);
             }
-            acc
-        });
+            Ok::<_, Report>(acc)
+        })?;
 
         let snapshot: Vec<SnapshotInfo> = serde_json::from_reader(
             jcli_lib::utils::io::open_file_read(&Some(snapshot_info_path))?,
         )?;
-
-        let proposals: Vec<FullProposalInfo> =
-            serde_json::from_reader(jcli_lib::utils::io::open_file_read(&Some(proposals))?)?;
 
         let additional_thresholds: HashMap<i32, usize> = if let Some(file) = per_challenge_threshold
         {
@@ -110,7 +136,10 @@ impl VotersRewards {
                     .try_into()
                     .expect("vote threshold is too big"),
                 additional_thresholds,
-                proposals,
+                proposals_per_voteplan
+                    .into_iter()
+                    .flat_map(|(_k, v)| v.into_iter())
+                    .collect(),
             )?,
             Rewards::from(total_rewards),
         )?;

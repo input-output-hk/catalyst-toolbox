@@ -179,14 +179,14 @@ mod tests {
         let votes_count = snapshot
             .voting_keys()
             .into_iter()
-            .map(|key| (key.to_hex(), HashSet::from([Hash::from([0u8; 32])])))
+            .map(|key| (key.clone(), HashSet::from([Hash::from([0u8; 32])])))
             .collect::<VoteCount>();
         let n_voters = votes_count.len();
         let voters = snapshot.to_full_snapshot_info();
         let rewards = calc_voter_rewards(
             votes_count,
-            Threshold::new(1, HashMap::new(), Vec::new()).unwrap(),
             voters,
+            Threshold::new(1, HashMap::new(), Vec::new()).unwrap(),
             Rewards::ONE,
         )
         .unwrap();
@@ -203,8 +203,8 @@ mod tests {
         let voters = snapshot.to_full_snapshot_info();
         let rewards = calc_voter_rewards(
             votes_count,
-            Threshold::new(1, HashMap::new(), Vec::new()).unwrap(),
             voters,
+            Threshold::new(1, HashMap::new(), Vec::new()).unwrap(),
             Rewards::ONE,
         )
         .unwrap();
@@ -218,9 +218,9 @@ mod tests {
         let votes_count = voting_keys
             .iter()
             .enumerate()
-            .map(|(i, key)| {
+            .map(|(i, &key)| {
                 (
-                    key.to_hex(),
+                    key.to_owned(),
                     if i % 2 == 0 {
                         HashSet::from([Hash::from([0u8; 32])])
                     } else {
@@ -244,15 +244,15 @@ mod tests {
 
         let mut rewards = calc_voter_rewards(
             votes_count.clone(),
-            Threshold::new(1, HashMap::new(), Vec::new()).unwrap(),
             voters,
+            Threshold::new(1, HashMap::new(), Vec::new()).unwrap(),
             Rewards::ONE,
         )
         .unwrap();
         let rewards_no_inactive = calc_voter_rewards(
             votes_count,
-            Threshold::new(1, HashMap::new(), Vec::new()).unwrap(),
             voters_active,
+            Threshold::new(1, HashMap::new(), Vec::new()).unwrap(),
             Rewards::ONE,
         )
         .unwrap();
@@ -324,8 +324,8 @@ mod tests {
 
         let rewards = calc_voter_rewards(
             VoteCount::new(),
-            Threshold::new(0, HashMap::new(), Vec::new()).unwrap(),
             voters,
+            Threshold::new(0, HashMap::new(), Vec::new()).unwrap(),
             Rewards::ONE,
         )
         .unwrap();
@@ -368,8 +368,8 @@ mod tests {
 
         let rewards = calc_voter_rewards(
             VoteCount::new(),
-            Threshold::new(0, HashMap::new(), Vec::new()).unwrap(),
             voters,
+            Threshold::new(0, HashMap::new(), Vec::new()).unwrap(),
             Rewards::ONE,
         )
         .unwrap();
@@ -411,7 +411,7 @@ mod tests {
             .iter()
             .map(|v| {
                 (
-                    v.hir.voting_key.to_hex(),
+                    v.hir.voting_key.clone(),
                     proposals_by_challenge
                         .values()
                         .flat_map(|p| p.iter())
@@ -437,8 +437,6 @@ mod tests {
             voters.clone(),
             Threshold::new(1, per_challenge_threshold.clone(), proposals.clone()).unwrap(),
             Rewards::ONE,
-            String::new(),
-            String::from("direct"),
         )
         .unwrap();
 
@@ -447,8 +445,6 @@ mod tests {
             voters,
             Threshold::new(1, per_challenge_threshold, proposals).unwrap(),
             Rewards::ONE,
-            String::new(),
-            String::from("direct"),
         )
         .unwrap();
 
