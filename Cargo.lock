@@ -219,6 +219,15 @@ dependencies = [
 
 [[package]]
 name = "autocfg"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0dde43e75fd43e8a1bf86103336bc699aa8d17ad1be60c76c0bdfd4828e19b78"
+dependencies = [
+ "autocfg 1.1.0",
+]
+
+[[package]]
+name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
@@ -286,7 +295,7 @@ dependencies = [
 [[package]]
 name = "bip39"
 version = "0.1.0"
-source = "git+https://github.com/input-output-hk/chain-wallet-libs.git?branch=master#cd1d4e0a61836c50e193ee140ec74579115de056"
+source = "git+https://github.com/input-output-hk/chain-wallet-libs.git?branch=catalyst-fund9#28ccee9ebfd07e63fe780a5e361f1dd51546ad0c"
 dependencies = [
  "cryptoxide 0.4.2",
  "thiserror",
@@ -316,14 +325,26 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitvec"
+version = "0.20.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7774144344a4faa177370406a7ff5f1da24303817368584c6206c8303eb07848"
+dependencies = [
+ "funty 1.1.0",
+ "radium 0.6.2",
+ "tap",
+ "wyz 0.2.0",
+]
+
+[[package]]
+name = "bitvec"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1489fcb93a5bb47da0462ca93ad252ad6af2145cce58d10d46a83931ba9f016b"
 dependencies = [
- "funty",
- "radium",
+ "funty 2.0.0",
+ "radium 0.7.0",
  "tap",
- "wyz",
+ "wyz 0.5.0",
 ]
 
 [[package]]
@@ -442,10 +463,20 @@ dependencies = [
 [[package]]
 name = "cardano-legacy-address"
 version = "0.1.1"
+source = "git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9#1b01f0dbf9282102f394727b4f8637fe4ce1728e"
+dependencies = [
+ "cbor_event",
+ "cryptoxide 0.4.2",
+ "ed25519-bip32",
+]
+
+[[package]]
+name = "cardano-legacy-address"
+version = "0.1.1"
 source = "git+https://github.com/input-output-hk/chain-libs.git?branch=master#41325015888e0a62a3e3b1718c278d4bec9d71f8"
 dependencies = [
  "cbor_event",
- "chain-ser",
+ "chain-ser 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "cryptoxide 0.4.2",
  "ed25519-bip32",
 ]
@@ -466,14 +497,14 @@ dependencies = [
  "assert_cmd 0.10.2",
  "assert_fs",
  "bech32 0.8.1",
- "chain-addr",
- "chain-core",
- "chain-crypto",
- "chain-impl-mockchain",
- "chain-ser",
- "chain-storage",
- "chain-time",
- "chain-vote",
+ "chain-addr 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-impl-mockchain 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-ser 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-storage 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-time 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-vote 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
  "color-eyre",
  "csv",
  "env_logger 0.9.0",
@@ -486,7 +517,7 @@ dependencies = [
  "jcli",
  "jormungandr-automation",
  "jormungandr-integration-tests",
- "jormungandr-lib",
+ "jormungandr-lib 0.15.0",
  "jortestkit",
  "log",
  "once_cell",
@@ -572,11 +603,22 @@ dependencies = [
 [[package]]
 name = "chain-addr"
 version = "0.1.0"
+source = "git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9#1b01f0dbf9282102f394727b4f8637fe4ce1728e"
+dependencies = [
+ "bech32 0.8.1",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "cryptoxide 0.4.2",
+]
+
+[[package]]
+name = "chain-addr"
+version = "0.1.0"
 source = "git+https://github.com/input-output-hk/chain-libs.git?branch=master#41325015888e0a62a3e3b1718c278d4bec9d71f8"
 dependencies = [
  "bech32 0.8.1",
- "chain-core",
- "chain-crypto",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "cryptoxide 0.4.2",
  "proptest 1.0.0 (git+https://github.com/input-output-hk/proptest.git)",
  "quickcheck",
@@ -586,9 +628,35 @@ dependencies = [
 [[package]]
 name = "chain-core"
 version = "0.1.0"
+source = "git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9#1b01f0dbf9282102f394727b4f8637fe4ce1728e"
+dependencies = [
+ "chain-ser 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+]
+
+[[package]]
+name = "chain-core"
+version = "0.1.0"
 source = "git+https://github.com/input-output-hk/chain-libs.git?branch=master#41325015888e0a62a3e3b1718c278d4bec9d71f8"
 dependencies = [
- "chain-ser",
+ "chain-ser 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+]
+
+[[package]]
+name = "chain-crypto"
+version = "0.1.0"
+source = "git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9#1b01f0dbf9282102f394727b4f8637fe4ce1728e"
+dependencies = [
+ "bech32 0.8.1",
+ "cryptoxide 0.4.2",
+ "curve25519-dalek-ng",
+ "ed25519-bip32",
+ "ed25519-dalek",
+ "generic-array",
+ "hex",
+ "rand_core 0.6.3",
+ "rayon",
+ "sha2 0.10.2",
+ "typed-bytes 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
 ]
 
 [[package]]
@@ -610,7 +678,35 @@ dependencies = [
  "rayon",
  "sha2 0.10.2",
  "test-strategy 0.1.2",
- "typed-bytes",
+ "typed-bytes 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+]
+
+[[package]]
+name = "chain-evm"
+version = "0.1.0"
+source = "git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9#1b01f0dbf9282102f394727b4f8637fe4ce1728e"
+dependencies = [
+ "aurora-bn",
+ "base64 0.13.0",
+ "blake2",
+ "byte-slice-cast",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-ser 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "ethabi",
+ "ethereum",
+ "ethereum-types",
+ "evm",
+ "hex",
+ "imhamt 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "libsecp256k1",
+ "num",
+ "ripemd",
+ "rlp",
+ "secp256k1",
+ "sha2 0.10.2",
+ "sha3",
+ "thiserror",
+ "typed-bytes 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
 ]
 
 [[package]]
@@ -622,12 +718,12 @@ dependencies = [
  "base64 0.13.0",
  "blake2",
  "byte-slice-cast",
- "chain-ser",
+ "chain-ser 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "ethabi",
  "ethereum-types",
  "evm",
  "hex",
- "imhamt",
+ "imhamt 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "libsecp256k1",
  "logos",
  "num",
@@ -643,20 +739,46 @@ dependencies = [
 [[package]]
 name = "chain-impl-mockchain"
 version = "0.1.0"
+source = "git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9#1b01f0dbf9282102f394727b4f8637fe4ce1728e"
+dependencies = [
+ "cardano-legacy-address 0.1.1 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-addr 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-evm 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-ser 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-time 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-vote 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "cryptoxide 0.4.2",
+ "hex",
+ "imhamt 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "proptest 1.0.0 (git+https://github.com/input-output-hk/proptest.git)",
+ "rand 0.8.5",
+ "rand_core 0.6.3",
+ "sparse-array 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "strum 0.23.0",
+ "strum_macros 0.23.1",
+ "thiserror",
+ "typed-bytes 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+]
+
+[[package]]
+name = "chain-impl-mockchain"
+version = "0.1.0"
 source = "git+https://github.com/input-output-hk/chain-libs.git?branch=master#41325015888e0a62a3e3b1718c278d4bec9d71f8"
 dependencies = [
- "cardano-legacy-address",
- "chain-addr",
- "chain-core",
- "chain-crypto",
- "chain-evm",
- "chain-ser",
- "chain-time",
- "chain-vote",
+ "cardano-legacy-address 0.1.1 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-addr 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-evm 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-ser 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-time 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-vote 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "cryptoxide 0.4.2",
  "ed25519-bip32",
  "hex",
- "imhamt",
+ "imhamt 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "lazy_static",
  "proptest 1.0.0 (git+https://github.com/input-output-hk/proptest.git)",
  "quickcheck",
@@ -664,18 +786,26 @@ dependencies = [
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rand_core 0.6.3",
- "sparse-array",
+ "sparse-array 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "strum 0.23.0",
  "strum_macros 0.23.1",
  "test-strategy 0.1.2",
  "thiserror",
- "typed-bytes",
+ "typed-bytes 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
 ]
 
 [[package]]
 name = "chain-path-derivation"
 version = "0.1.0"
-source = "git+https://github.com/input-output-hk/chain-wallet-libs.git?branch=master#cd1d4e0a61836c50e193ee140ec74579115de056"
+source = "git+https://github.com/input-output-hk/chain-wallet-libs.git?branch=catalyst-fund9#28ccee9ebfd07e63fe780a5e361f1dd51546ad0c"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
+name = "chain-ser"
+version = "0.1.0"
+source = "git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9#1b01f0dbf9282102f394727b4f8637fe4ce1728e"
 dependencies = [
  "thiserror",
 ]
@@ -685,6 +815,16 @@ name = "chain-ser"
 version = "0.1.0"
 source = "git+https://github.com/input-output-hk/chain-libs.git?branch=master#41325015888e0a62a3e3b1718c278d4bec9d71f8"
 dependencies = [
+ "thiserror",
+]
+
+[[package]]
+name = "chain-storage"
+version = "0.1.0"
+source = "git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9#1b01f0dbf9282102f394727b4f8637fe4ce1728e"
+dependencies = [
+ "data-pile",
+ "sled",
  "thiserror",
 ]
 
@@ -704,10 +844,19 @@ dependencies = [
 [[package]]
 name = "chain-time"
 version = "0.1.0"
+source = "git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9#1b01f0dbf9282102f394727b4f8637fe4ce1728e"
+dependencies = [
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-ser 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+]
+
+[[package]]
+name = "chain-time"
+version = "0.1.0"
 source = "git+https://github.com/input-output-hk/chain-libs.git?branch=master#41325015888e0a62a3e3b1718c278d4bec9d71f8"
 dependencies = [
- "chain-core",
- "chain-ser",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-ser 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "proptest 1.0.0 (git+https://github.com/input-output-hk/proptest.git)",
  "quickcheck",
  "test-strategy 0.1.2",
@@ -716,11 +865,27 @@ dependencies = [
 [[package]]
 name = "chain-vote"
 version = "0.1.0"
+source = "git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9#1b01f0dbf9282102f394727b4f8637fe4ce1728e"
+dependencies = [
+ "cfg-if 1.0.0",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "const_format",
+ "cryptoxide 0.4.2",
+ "rand 0.8.5",
+ "rand_core 0.6.3",
+ "rayon",
+ "thiserror",
+]
+
+[[package]]
+name = "chain-vote"
+version = "0.1.0"
 source = "git+https://github.com/input-output-hk/chain-libs.git?branch=master#41325015888e0a62a3e3b1718c278d4bec9d71f8"
 dependencies = [
  "cfg-if 1.0.0",
- "chain-core",
- "chain-crypto",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "const_format",
  "cryptoxide 0.4.2",
  "rand 0.8.5",
@@ -778,10 +943,43 @@ dependencies = [
  "atty",
  "bitflags",
  "strsim 0.8.0",
- "term_size",
- "textwrap",
+ "textwrap 0.11.0",
  "unicode-width",
  "vec_map",
+]
+
+[[package]]
+name = "clap"
+version = "3.1.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2dbdf4bdacb33466e854ce889eee8dfd5729abf7ccd7664d0a2d60cd384440b"
+dependencies = [
+ "atty",
+ "bitflags",
+ "clap_lex",
+ "indexmap",
+ "strsim 0.10.0",
+ "termcolor",
+ "terminal_size",
+ "textwrap 0.15.0",
+]
+
+[[package]]
+name = "clap_lex"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a37c35f1112dad5e6e0b1adaff798507497a18fceeb30cceb3bae7d1427b9213"
+dependencies = [
+ "os_str_bytes",
+]
+
+[[package]]
+name = "cloudabi"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ddfc5b9aa5d4507acaf872de71051dfd0e309860e88966e1051e462a077aac4f"
+dependencies = [
+ "bitflags",
 ]
 
 [[package]]
@@ -927,7 +1125,7 @@ checksum = "1604dafd25fba2fe2d5895a9da139f8dc9b319a5fe5354ca137cbbce4e178d10"
 dependencies = [
  "atty",
  "cast",
- "clap",
+ "clap 2.34.0",
  "criterion-plot",
  "csv",
  "itertools 0.10.3",
@@ -982,7 +1180,7 @@ version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1145cf131a2c6ba0615079ab6a638f7e1973ac9c2634fcbeaaad6114246efe8c"
 dependencies = [
- "autocfg",
+ "autocfg 1.1.0",
  "cfg-if 1.0.0",
  "crossbeam-utils",
  "lazy_static",
@@ -1426,7 +1624,7 @@ checksum = "11da94e443c60508eb62cf256243a64da87304c2802ac2528847f79d750007ef"
 dependencies = [
  "crunchy",
  "fixed-hash",
- "impl-codec",
+ "impl-codec 0.6.0",
  "impl-rlp",
  "impl-serde",
  "scale-info",
@@ -1443,7 +1641,7 @@ dependencies = [
  "ethereum-types",
  "hash-db",
  "hash256-std-hasher",
- "parity-scale-codec",
+ "parity-scale-codec 3.1.2",
  "rlp",
  "rlp-derive",
  "scale-info",
@@ -1460,10 +1658,10 @@ checksum = "b2827b94c556145446fcce834ca86b7abf0c39a805883fe20e72c5bfdb5a0dc6"
 dependencies = [
  "ethbloom",
  "fixed-hash",
- "impl-codec",
+ "impl-codec 0.6.0",
  "impl-rlp",
  "impl-serde",
- "primitive-types",
+ "primitive-types 0.11.1",
  "scale-info",
  "uint",
 ]
@@ -1481,8 +1679,8 @@ dependencies = [
  "evm-gasometer",
  "evm-runtime",
  "log",
- "parity-scale-codec",
- "primitive-types",
+ "parity-scale-codec 3.1.2",
+ "primitive-types 0.11.1",
  "rlp",
  "scale-info",
  "serde",
@@ -1495,8 +1693,8 @@ version = "0.35.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d4537041d3a3438d59b2d01bd950ce89fb1ccb3cf21d9331193c10be12e849f"
 dependencies = [
- "parity-scale-codec",
- "primitive-types",
+ "parity-scale-codec 3.1.2",
+ "primitive-types 0.11.1",
  "scale-info",
  "serde",
 ]
@@ -1510,7 +1708,7 @@ dependencies = [
  "environmental",
  "evm-core",
  "evm-runtime",
- "primitive-types",
+ "primitive-types 0.11.1",
 ]
 
 [[package]]
@@ -1522,7 +1720,7 @@ dependencies = [
  "auto_impl",
  "environmental",
  "evm-core",
- "primitive-types",
+ "primitive-types 0.11.1",
  "sha3",
 ]
 
@@ -1686,6 +1884,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2022715d62ab30faffd124d40b76f4134a550a87792276512b18d63272333394"
 
 [[package]]
+name = "fsevent-sys"
+version = "4.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "76ee7a02da4d231650c7cea31349b889be2f45ddb3ef3032d2ec8185f6313fd2"
+dependencies = [
+ "libc",
+]
+
+[[package]]
+name = "fuchsia-cprng"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a06f77d526c1a601b7c4cdd98f54b5eaabffc14d5f2f0296febdc7f357c6d3ba"
+
+[[package]]
 name = "function_name"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1704,6 +1917,12 @@ dependencies = [
  "quote 0.6.13",
  "syn 0.15.44",
 ]
+
+[[package]]
+name = "funty"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fed34cd105917e91daa4da6b3728c47b068749d6a62c59811f06ed2ac71d9da7"
 
 [[package]]
 name = "funty"
@@ -2040,13 +2259,13 @@ dependencies = [
 [[package]]
 name = "hdkeygen"
 version = "0.2.0"
-source = "git+https://github.com/input-output-hk/chain-wallet-libs.git?branch=master#cd1d4e0a61836c50e193ee140ec74579115de056"
+source = "git+https://github.com/input-output-hk/chain-wallet-libs.git?branch=catalyst-fund9#28ccee9ebfd07e63fe780a5e361f1dd51546ad0c"
 dependencies = [
  "bip39",
- "cardano-legacy-address",
+ "cardano-legacy-address 0.1.1 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
  "cbor_event",
- "chain-addr",
- "chain-crypto",
+ "chain-addr 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
  "chain-path-derivation",
  "cryptoxide 0.4.2",
  "ed25519-bip32",
@@ -2101,19 +2320,19 @@ dependencies = [
 [[package]]
 name = "hersir"
 version = "0.1.0"
-source = "git+https://github.com/input-output-hk/jormungandr.git?branch=master#a5ce1309f5465706a9d1ec3c87e5951ad1844c31"
+source = "git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9#eda3ddf73559ea0906adfd5d27ab2572eb330ca5"
 dependencies = [
  "assert_fs",
- "chain-addr",
- "chain-core",
- "chain-crypto",
- "chain-impl-mockchain",
+ "chain-addr 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-impl-mockchain 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "ctrlc",
  "custom_debug",
  "hex",
  "indicatif",
  "jormungandr-automation",
- "jormungandr-lib",
+ "jormungandr-lib 0.15.0",
  "jortestkit",
  "parity-multiaddr",
  "rand 0.8.5",
@@ -2324,6 +2543,15 @@ dependencies = [
 [[package]]
 name = "imhamt"
 version = "0.1.0"
+source = "git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9#1b01f0dbf9282102f394727b4f8637fe4ce1728e"
+dependencies = [
+ "rustc_version",
+ "thiserror",
+]
+
+[[package]]
+name = "imhamt"
+version = "0.1.0"
 source = "git+https://github.com/input-output-hk/chain-libs.git?branch=master#41325015888e0a62a3e3b1718c278d4bec9d71f8"
 dependencies = [
  "proptest 1.0.0 (git+https://github.com/input-output-hk/proptest.git)",
@@ -2334,11 +2562,20 @@ dependencies = [
 
 [[package]]
 name = "impl-codec"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "161ebdfec3c8e3b52bf61c4f3550a1eea4f9579d10dc1b936f3171ebdcd6c443"
+dependencies = [
+ "parity-scale-codec 2.3.1",
+]
+
+[[package]]
+name = "impl-codec"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba6a270039626615617f3f36d15fc827041df3b78c439da2cadfa47455a77f2f"
 dependencies = [
- "parity-scale-codec",
+ "parity-scale-codec 3.1.2",
 ]
 
 [[package]]
@@ -2382,7 +2619,7 @@ version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "282a6247722caba404c065016bbfa522806e51714c34f5dfc3e4a3a46fcb4223"
 dependencies = [
- "autocfg",
+ "autocfg 1.1.0",
  "hashbrown",
 ]
 
@@ -2396,6 +2633,26 @@ dependencies = [
  "lazy_static",
  "number_prefix",
  "regex",
+]
+
+[[package]]
+name = "inotify"
+version = "0.9.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8069d3ec154eb856955c1c0fbffefbf5f3c40a104ec912d4797314c1801abff"
+dependencies = [
+ "bitflags",
+ "inotify-sys",
+ "libc",
+]
+
+[[package]]
+name = "inotify-sys"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e05c02b5e89bff3b946cedeca278abc628fe811e604f027c45a8aa3cf793d0eb"
+dependencies = [
+ "libc",
 ]
 
 [[package]]
@@ -2454,24 +2711,24 @@ checksum = "1aab8fc367588b89dcee83ab0fd66b72b50b72fa1904d7095045ace2b0c81c35"
 
 [[package]]
 name = "jcli"
-version = "0.13.0"
-source = "git+https://github.com/input-output-hk/jormungandr.git?branch=master#a5ce1309f5465706a9d1ec3c87e5951ad1844c31"
+version = "0.15.0"
+source = "git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9#eda3ddf73559ea0906adfd5d27ab2572eb330ca5"
 dependencies = [
  "base64 0.13.0",
  "bech32 0.8.1",
  "bincode",
  "bytes",
- "chain-addr",
- "chain-core",
- "chain-crypto",
- "chain-impl-mockchain",
- "chain-time",
- "chain-vote",
- "clap",
+ "chain-addr 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-impl-mockchain 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-time 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-vote 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "clap 3.1.18",
  "ed25519-bip32",
  "gtmpl",
  "hex",
- "jormungandr-lib",
+ "jormungandr-lib 0.15.0",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rayon",
@@ -2497,22 +2754,22 @@ dependencies = [
 
 [[package]]
 name = "jormungandr-automation"
-version = "0.13.0"
-source = "git+https://github.com/input-output-hk/jormungandr.git?branch=master#a5ce1309f5465706a9d1ec3c87e5951ad1844c31"
+version = "0.15.0"
+source = "git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9#eda3ddf73559ea0906adfd5d27ab2572eb330ca5"
 dependencies = [
  "assert_cmd 2.0.4",
  "assert_fs",
  "base64 0.13.0",
  "bech32 0.8.1",
  "bytesize",
- "cardano-legacy-address",
- "chain-addr",
- "chain-core",
- "chain-crypto",
- "chain-impl-mockchain",
- "chain-storage",
- "chain-time",
- "chain-vote",
+ "cardano-legacy-address 0.1.1 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-addr 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-impl-mockchain 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-storage 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-time 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-vote 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "custom_debug",
  "flate2",
  "fs_extra",
@@ -2520,7 +2777,7 @@ dependencies = [
  "graphql_client",
  "hex",
  "humantime",
- "jormungandr-lib",
+ "jormungandr-lib 0.15.0",
  "jortestkit",
  "json",
  "keynesis",
@@ -2553,7 +2810,7 @@ dependencies = [
  "tonic-build",
  "tracing",
  "tracing-subscriber",
- "typed-bytes",
+ "typed-bytes 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "url",
  "warp",
  "zip",
@@ -2561,19 +2818,19 @@ dependencies = [
 
 [[package]]
 name = "jormungandr-integration-tests"
-version = "0.13.0"
-source = "git+https://github.com/input-output-hk/jormungandr.git?branch=master#a5ce1309f5465706a9d1ec3c87e5951ad1844c31"
+version = "0.15.0"
+source = "git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9#eda3ddf73559ea0906adfd5d27ab2572eb330ca5"
 dependencies = [
  "assert_cmd 2.0.4",
  "assert_fs",
  "base64 0.13.0",
  "bech32 0.7.3",
- "chain-addr",
- "chain-core",
- "chain-crypto",
- "chain-impl-mockchain",
- "chain-time",
- "chain-vote",
+ "chain-addr 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-impl-mockchain 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-time 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-vote 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "fs_extra",
  "function_name",
  "futures",
@@ -2581,7 +2838,7 @@ dependencies = [
  "hex",
  "indicatif",
  "jormungandr-automation",
- "jormungandr-lib",
+ "jormungandr-lib 0.15.0",
  "jortestkit",
  "json",
  "lazy_static",
@@ -2618,13 +2875,13 @@ source = "git+https://github.com/input-output-hk/jormungandr.git?branch=master#a
 dependencies = [
  "base64 0.13.0",
  "bech32 0.8.1",
- "cardano-legacy-address",
- "chain-addr",
- "chain-core",
- "chain-crypto",
- "chain-impl-mockchain",
- "chain-time",
- "chain-vote",
+ "cardano-legacy-address 0.1.1 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-addr 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-impl-mockchain 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-time 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-vote 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "hex",
  "http",
  "humantime",
@@ -2636,7 +2893,35 @@ dependencies = [
  "serde_with",
  "thiserror",
  "time 0.3.9",
- "typed-bytes",
+ "typed-bytes 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+]
+
+[[package]]
+name = "jormungandr-lib"
+version = "0.15.0"
+source = "git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9#eda3ddf73559ea0906adfd5d27ab2572eb330ca5"
+dependencies = [
+ "base64 0.13.0",
+ "bech32 0.8.1",
+ "cardano-legacy-address 0.1.1 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-addr 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-impl-mockchain 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-time 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-vote 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "hex",
+ "http",
+ "humantime",
+ "parity-multiaddr",
+ "rand 0.8.5",
+ "rand_chacha 0.3.1",
+ "rand_core 0.6.3",
+ "serde",
+ "serde_with",
+ "thiserror",
+ "time 0.3.9",
+ "typed-bytes 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
 ]
 
 [[package]]
@@ -2722,6 +3007,26 @@ dependencies = [
  "rand_chacha 0.3.1",
  "rand_core 0.6.3",
  "thiserror",
+]
+
+[[package]]
+name = "kqueue"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4d6112e8f37b59803ac47a42d14f1f3a59bbf72fc6857ffc5be455e28a691f8e"
+dependencies = [
+ "kqueue-sys",
+ "libc",
+]
+
+[[package]]
+name = "kqueue-sys"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8367585489f01bc55dd27404dcf56b95e6da061a256a666ab23be9ba96a2e587"
+dependencies = [
+ "bitflags",
+ "libc",
 ]
 
 [[package]]
@@ -2850,15 +3155,15 @@ dependencies = [
 [[package]]
 name = "loki"
 version = "0.1.0"
-source = "git+https://github.com/input-output-hk/jormungandr.git?branch=master#a5ce1309f5465706a9d1ec3c87e5951ad1844c31"
+source = "git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9#eda3ddf73559ea0906adfd5d27ab2572eb330ca5"
 dependencies = [
- "chain-addr",
- "chain-core",
- "chain-crypto",
- "chain-impl-mockchain",
+ "chain-addr 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-impl-mockchain 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "custom_debug",
  "jormungandr-automation",
- "jormungandr-lib",
+ "jormungandr-lib 0.15.0",
  "parity-multiaddr",
  "rand 0.8.5",
  "rand_core 0.6.3",
@@ -2908,7 +3213,7 @@ version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5aa361d4faea93603064a027415f07bd8e1d5c88c9fbf68bf56a285428fd79ce"
 dependencies = [
- "autocfg",
+ "autocfg 1.1.0",
 ]
 
 [[package]]
@@ -2970,7 +3275,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a92518e98c078586bc6c934028adcca4c92a53d6a958196de835170a01d84e4b"
 dependencies = [
  "adler",
- "autocfg",
+ "autocfg 1.1.0",
+]
+
+[[package]]
+name = "mio"
+version = "0.7.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8067b404fe97c70829f082dec8bcf4f71225d7eaea1d8645349cb76fa06205cc"
+dependencies = [
+ "libc",
+ "log",
+ "miow",
+ "ntapi",
+ "winapi",
 ]
 
 [[package]]
@@ -2999,19 +3317,19 @@ dependencies = [
 [[package]]
 name = "mjolnir"
 version = "0.1.0"
-source = "git+https://github.com/input-output-hk/jormungandr.git?branch=master#a5ce1309f5465706a9d1ec3c87e5951ad1844c31"
+source = "git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9#eda3ddf73559ea0906adfd5d27ab2572eb330ca5"
 dependencies = [
  "assert_fs",
- "chain-addr",
- "chain-core",
- "chain-crypto",
- "chain-impl-mockchain",
- "chain-storage",
- "chain-time",
- "chain-vote",
+ "chain-addr 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-impl-mockchain 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-storage 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-time 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-vote 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "indicatif",
  "jormungandr-automation",
- "jormungandr-lib",
+ "jormungandr-lib 0.15.0",
  "jortestkit",
  "loki",
  "rand 0.8.5",
@@ -3124,6 +3442,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "61807f77802ff30975e01f4f071c8ba10c022052f98b3294119f3e615d13e5be"
 
 [[package]]
+name = "notify"
+version = "5.0.0-pre.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c614e7ed2b1cf82ec99aeffd8cf6225ef5021b9951148eb161393c394855032c"
+dependencies = [
+ "bitflags",
+ "crossbeam-channel",
+ "filetime",
+ "fsevent-sys",
+ "inotify",
+ "kqueue",
+ "libc",
+ "mio 0.7.14",
+ "walkdir",
+ "winapi",
+]
+
+[[package]]
 name = "ntapi"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3152,7 +3488,7 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f93ab6289c7b344a8a9f60f88d80aa20032336fe78da341afc91c8a2341fc75f"
 dependencies = [
- "autocfg",
+ "autocfg 1.1.0",
  "num-integer",
  "num-traits",
 ]
@@ -3183,7 +3519,7 @@ version = "0.1.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2cc698a63b549a70bc047073d2949cce27cd1c7b0a4a862d08a8031bc2801db"
 dependencies = [
- "autocfg",
+ "autocfg 1.1.0",
  "num-traits",
 ]
 
@@ -3193,7 +3529,7 @@ version = "0.1.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b2021c8337a54d21aca0d59a92577a029af9431cb59b909b03252b9c164fad59"
 dependencies = [
- "autocfg",
+ "autocfg 1.1.0",
  "num-integer",
  "num-traits",
 ]
@@ -3204,7 +3540,7 @@ version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "12ac428b1cb17fce6f731001d307d351ec70a6d202fc2e60f7d4c5e42d8f4f07"
 dependencies = [
- "autocfg",
+ "autocfg 1.1.0",
  "num-integer",
  "num-traits",
 ]
@@ -3215,7 +3551,7 @@ version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d41702bd167c2df5520b384281bc111a4b5efcf7fbc4c9c222c815b07e0a6a6a"
 dependencies = [
- "autocfg",
+ "autocfg 1.1.0",
  "num-bigint",
  "num-integer",
  "num-traits",
@@ -3227,7 +3563,7 @@ version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9a64b1ec5cda2586e284722486d802acf1f7dbdc623e2bfc57e65ca1cd099290"
 dependencies = [
- "autocfg",
+ "autocfg 1.1.0",
 ]
 
 [[package]]
@@ -3308,7 +3644,7 @@ version = "0.9.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7e46109c383602735fa0a2e48dd2b7c892b048e1bf69e5c3b1d804b7d9c203cb"
 dependencies = [
- "autocfg",
+ "autocfg 1.1.0",
  "cc",
  "libc",
  "pkg-config",
@@ -3317,13 +3653,19 @@ dependencies = [
 
 [[package]]
 name = "os_info"
-version = "3.2.0"
+version = "3.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "023df84d545ef479cf67fd2f4459a613585c9db4852c2fad12ab70587859d340"
+checksum = "0eca3ecae1481e12c3d9379ec541b238a16f0b75c9a409942daa8ec20dbfdb62"
 dependencies = [
  "log",
  "winapi",
 ]
+
+[[package]]
+name = "os_str_bytes"
+version = "6.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "21326818e99cfe6ce1e524c2a805c189a99b5ae555a35d19f9a284b427d86afa"
 
 [[package]]
 name = "owo-colors"
@@ -3351,16 +3693,42 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec"
+version = "2.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "373b1a4c1338d9cd3d1fa53b3a11bdab5ab6bd80a20f7f7becd76953ae2be909"
+dependencies = [
+ "arrayvec",
+ "bitvec 0.20.4",
+ "byte-slice-cast",
+ "impl-trait-for-tuples",
+ "parity-scale-codec-derive 2.3.1",
+ "serde",
+]
+
+[[package]]
+name = "parity-scale-codec"
 version = "3.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8b44461635bbb1a0300f100a841e571e7d919c81c73075ef5d152ffdb521066"
 dependencies = [
  "arrayvec",
- "bitvec",
+ "bitvec 1.0.0",
  "byte-slice-cast",
  "impl-trait-for-tuples",
- "parity-scale-codec-derive",
+ "parity-scale-codec-derive 3.1.2",
  "serde",
+]
+
+[[package]]
+name = "parity-scale-codec-derive"
+version = "2.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1557010476e0595c9b568d16dcfb81b93cdeb157612726f5170d31aa707bed27"
+dependencies = [
+ "proc-macro-crate 1.1.3",
+ "proc-macro2 1.0.36",
+ "quote 1.0.16",
+ "syn 1.0.89",
 ]
 
 [[package]]
@@ -3620,12 +3988,23 @@ dependencies = [
 
 [[package]]
 name = "primitive-types"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05e4722c697a58a99d5d06a08c30821d7c082a4632198de1eaa5a6c22ef42373"
+dependencies = [
+ "fixed-hash",
+ "impl-codec 0.5.1",
+ "uint",
+]
+
+[[package]]
+name = "primitive-types"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e28720988bff275df1f51b171e1b2a18c30d194c4d2b61defdacecd625a5d94a"
 dependencies = [
  "fixed-hash",
- "impl-codec",
+ "impl-codec 0.6.0",
  "impl-rlp",
  "impl-serde",
  "scale-info",
@@ -3706,7 +4085,7 @@ dependencies = [
  "quick-error 2.0.1",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
- "rand_xorshift",
+ "rand_xorshift 0.3.0",
  "rand_xoshiro",
  "regex-syntax",
  "rusty-fork",
@@ -3723,10 +4102,11 @@ dependencies = [
  "byteorder",
  "lazy_static",
  "num-traits",
+ "primitive-types 0.10.1",
  "quick-error 2.0.1",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
- "rand_xorshift",
+ "rand_xorshift 0.3.0",
  "rand_xoshiro",
  "regex-syntax",
  "rusty-fork",
@@ -3873,9 +4253,34 @@ dependencies = [
 
 [[package]]
 name = "radium"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "643f8f41a8ebc4c5dc4515c82bb8abd397b527fc20fd681b7c011c2aee5d44fb"
+
+[[package]]
+name = "radium"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc33ff2d4973d518d823d61aa239014831e521c75da58e3df4840d3f47749d09"
+
+[[package]]
+name = "rand"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d71dacdc3c88c1fde3885a3be3fbab9f35724e6ce99467f7d9c5026132184ca"
+dependencies = [
+ "autocfg 0.1.8",
+ "libc",
+ "rand_chacha 0.1.1",
+ "rand_core 0.4.2",
+ "rand_hc 0.1.0",
+ "rand_isaac",
+ "rand_jitter",
+ "rand_os",
+ "rand_pcg",
+ "rand_xorshift 0.1.1",
+ "winapi",
+]
 
 [[package]]
 name = "rand"
@@ -3887,7 +4292,7 @@ dependencies = [
  "libc",
  "rand_chacha 0.2.2",
  "rand_core 0.5.1",
- "rand_hc",
+ "rand_hc 0.2.0",
 ]
 
 [[package]]
@@ -3899,6 +4304,16 @@ dependencies = [
  "libc",
  "rand_chacha 0.3.1",
  "rand_core 0.6.3",
+]
+
+[[package]]
+name = "rand_chacha"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "556d3a1ca6600bfcbab7c7c91ccb085ac7fbbcd70e008a98742e7847f4f7bcef"
+dependencies = [
+ "autocfg 0.1.8",
+ "rand_core 0.3.1",
 ]
 
 [[package]]
@@ -3923,6 +4338,21 @@ dependencies = [
 
 [[package]]
 name = "rand_core"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a6fdeb83b075e8266dcc8762c22776f6877a63111121f5f8c7411e5be7eed4b"
+dependencies = [
+ "rand_core 0.4.2",
+]
+
+[[package]]
+name = "rand_core"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c33a3c44ca05fa6f1807d8e6743f3824e8509beca625669633be0acbdf509dc"
+
+[[package]]
+name = "rand_core"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90bde5296fc891b0cef12a6d03ddccc162ce7b2aff54160af9338f8d40df6d19"
@@ -3941,11 +4371,73 @@ dependencies = [
 
 [[package]]
 name = "rand_hc"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b40677c7be09ae76218dc623efbf7b18e34bced3f38883af07bb75630a21bc4"
+dependencies = [
+ "rand_core 0.3.1",
+]
+
+[[package]]
+name = "rand_hc"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca3129af7b92a17112d59ad498c6f81eaf463253766b90396d39ea7a39d6613c"
 dependencies = [
  "rand_core 0.5.1",
+]
+
+[[package]]
+name = "rand_isaac"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ded997c9d5f13925be2a6fd7e66bf1872597f759fd9dd93513dd7e92e5a5ee08"
+dependencies = [
+ "rand_core 0.3.1",
+]
+
+[[package]]
+name = "rand_jitter"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1166d5c91dc97b88d1decc3285bb0a99ed84b05cfd0bc2341bdf2d43fc41e39b"
+dependencies = [
+ "libc",
+ "rand_core 0.4.2",
+ "winapi",
+]
+
+[[package]]
+name = "rand_os"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b75f676a1e053fc562eafbb47838d67c84801e38fc1ba459e8f180deabd5071"
+dependencies = [
+ "cloudabi",
+ "fuchsia-cprng",
+ "libc",
+ "rand_core 0.4.2",
+ "rdrand",
+ "winapi",
+]
+
+[[package]]
+name = "rand_pcg"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "abf9b09b01790cfe0364f52bf32995ea3c39f4d2dd011eac241d2914146d0b44"
+dependencies = [
+ "autocfg 0.1.8",
+ "rand_core 0.4.2",
+]
+
+[[package]]
+name = "rand_xorshift"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cbf7e9e623549b0e21f6e97cf8ecf247c1a8fd2e8a992ae265314300b2455d5c"
+dependencies = [
+ "rand_core 0.3.1",
 ]
 
 [[package]]
@@ -3972,7 +4464,7 @@ version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c06aca804d41dbc8ba42dfd964f0d01334eceb64314b9ecf7c5fad5188a06d90"
 dependencies = [
- "autocfg",
+ "autocfg 1.1.0",
  "crossbeam-deque",
  "either",
  "rayon-core",
@@ -3989,6 +4481,15 @@ dependencies = [
  "crossbeam-utils",
  "lazy_static",
  "num_cpus",
+]
+
+[[package]]
+name = "rdrand"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "678054eb77286b51581ba43620cc911abf02758c91f93f479767aed0f90458b2"
+dependencies = [
+ "rand_core 0.3.1",
 ]
 
 [[package]]
@@ -4273,10 +4774,10 @@ version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8980cafbe98a7ee7a9cc16b32ebce542c77883f512d83fbf2ddc8f6a85ea74c9"
 dependencies = [
- "bitvec",
+ "bitvec 1.0.0",
  "cfg-if 1.0.0",
  "derive_more",
- "parity-scale-codec",
+ "parity-scale-codec 3.1.2",
  "scale-info-derive",
 ]
 
@@ -4350,6 +4851,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "secp256k1"
+version = "0.22.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "26947345339603ae8395f68e2f3d85a6b0a8ddfe6315818e80b8504415099db0"
+dependencies = [
+ "rand 0.6.5",
+ "secp256k1-sys",
+]
+
+[[package]]
+name = "secp256k1-sys"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "152e20a0fd0519390fc43ab404663af8a0b794273d2a91d60ad4a39f13ffe110"
+dependencies = [
+ "cc",
+]
+
+[[package]]
 name = "security-framework"
 version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4413,9 +4933,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.79"
+version = "1.0.81"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e8d9fa5c3b304765ce1fd9c4c8a3de2c8db365a5b91be52f186efc675681d95"
+checksum = "9b7ce2b32a1aed03c558dc61a5cd328f15aff2dbc17daad8fb8af04d2100e15c"
 dependencies = [
  "itoa 1.0.1",
  "ryu",
@@ -4611,6 +5131,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2dd574626839106c320a323308629dcb1acfc96e32a8cba364ddc61ac23ee83"
 
 [[package]]
+name = "snapshot-service"
+version = "0.1.0"
+source = "git+https://github.com/input-output-hk/vit-servicing-station.git?branch=catalyst-fund9#d505dd0f9e619bbd318a935764cf2739317e4774"
+dependencies = [
+ "jormungandr-lib 0.13.0",
+ "notify",
+ "serde",
+ "serde_json",
+ "sled",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "voting-hir 0.1.0 (git+https://github.com/input-output-hk/catalyst-toolbox?branch=main)",
+ "warp",
+]
+
+[[package]]
 name = "socket2"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4619,6 +5156,11 @@ dependencies = [
  "libc",
  "winapi",
 ]
+
+[[package]]
+name = "sparse-array"
+version = "0.1.0"
+source = "git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9#1b01f0dbf9282102f394727b4f8637fe4ce1728e"
 
 [[package]]
 name = "sparse-array"
@@ -4702,7 +5244,7 @@ version = "0.3.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c6b5c64445ba8094a6ab0c3cd2ad323e07171012d9c98b0b15651daf1787a10"
 dependencies = [
- "clap",
+ "clap 2.34.0",
  "lazy_static",
  "structopt-derive",
 ]
@@ -4775,7 +5317,7 @@ checksum = "734676eb262c623cec13c3155096e08d1f8f29adce39ba17948b18dad1e54142"
 [[package]]
 name = "symmetric-cipher"
 version = "0.5.0"
-source = "git+https://github.com/input-output-hk/chain-wallet-libs.git?branch=master#cd1d4e0a61836c50e193ee140ec74579115de056"
+source = "git+https://github.com/input-output-hk/chain-wallet-libs.git?branch=catalyst-fund9#28ccee9ebfd07e63fe780a5e361f1dd51546ad0c"
 dependencies = [
  "cryptoxide 0.4.2",
  "rand 0.8.5",
@@ -4879,16 +5421,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "term_size"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e4129646ca0ed8f45d09b929036bafad5377103edd06e50bf574b353d2b08d9"
-dependencies = [
- "libc",
- "winapi",
-]
-
-[[package]]
 name = "termcolor"
 version = "1.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4943,8 +5475,16 @@ version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d326610f408c7a4eb6f51c37c330e496b08506c9457c9d34287ecc38809fb060"
 dependencies = [
- "term_size",
  "unicode-width",
+]
+
+[[package]]
+name = "textwrap"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1141d4d61095b28419e22cb0bbf02755f5e54e0526f97f1e3d1d160e60885fb"
+dependencies = [
+ "terminal_size",
 ]
 
 [[package]]
@@ -4970,23 +5510,23 @@ dependencies = [
 [[package]]
 name = "thor"
 version = "0.1.0"
-source = "git+https://github.com/input-output-hk/jormungandr.git?branch=master#a5ce1309f5465706a9d1ec3c87e5951ad1844c31"
+source = "git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9#eda3ddf73559ea0906adfd5d27ab2572eb330ca5"
 dependencies = [
  "assert_fs",
  "bech32 0.8.1",
  "bincode",
- "chain-addr",
- "chain-core",
- "chain-crypto",
- "chain-impl-mockchain",
- "chain-vote",
+ "chain-addr 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-core 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-impl-mockchain 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
+ "chain-vote 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=master)",
  "cocoon",
  "custom_debug",
  "dirs",
  "hex",
  "jcli",
  "jormungandr-automation",
- "jormungandr-lib",
+ "jormungandr-lib 0.15.0",
  "jortestkit",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
@@ -5083,14 +5623,14 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.17.0"
+version = "1.18.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2af73ac49756f3f7c01172e34a23e5d0216f6c32333757c2c61feb2bbff5a5ee"
+checksum = "4903bf0427cf68dddd5aa6a93220756f8be0c34fcfa9f5e6191e103e15a31395"
 dependencies = [
  "bytes",
  "libc",
  "memchr",
- "mio",
+ "mio 0.8.2",
  "num_cpus",
  "once_cell",
  "pin-project-lite",
@@ -5291,9 +5831,9 @@ checksum = "360dfd1d6d30e05fda32ace2c8c70e9c0a9da713275777f5a4dbb8a1893930c6"
 
 [[package]]
 name = "tracing"
-version = "0.1.32"
+version = "0.1.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a1bdf54a7c28a2bbf701e1d2233f6c77f473486b94bee4f9678da5a148dca7f"
+checksum = "5d0ecdcb44a79f0fe9844f0c4f33a342cbcbb5117de8001e6ba0dc2351327d09"
 dependencies = [
  "cfg-if 1.0.0",
  "log",
@@ -5424,6 +5964,11 @@ checksum = "59b11b2b5241ba34be09c3cc85a36e56e48f9888862e19cedf23336d35316ed1"
 dependencies = [
  "memchr",
 ]
+
+[[package]]
+name = "typed-bytes"
+version = "0.1.0"
+source = "git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9#1b01f0dbf9282102f394727b4f8637fe4ce1728e"
 
 [[package]]
 name = "typed-bytes"
@@ -5592,8 +6137,8 @@ dependencies = [
 
 [[package]]
 name = "vit-servicing-station-lib"
-version = "0.3.4-dev"
-source = "git+https://github.com/input-output-hk/vit-servicing-station.git?branch=master#3ea9ccddd0a6f983157eca738621c66dc1eca929"
+version = "0.5.0"
+source = "git+https://github.com/input-output-hk/vit-servicing-station.git?branch=catalyst-fund9#d505dd0f9e619bbd318a935764cf2739317e4774"
 dependencies = [
  "async-trait",
  "base64 0.12.3",
@@ -5604,9 +6149,11 @@ dependencies = [
  "itertools 0.9.0",
  "libsqlite3-sys",
  "log",
+ "notify",
  "serde",
  "serde_json",
  "simplelog",
+ "snapshot-service",
  "structopt",
  "strum 0.21.0",
  "strum_macros 0.21.1",
@@ -5616,6 +6163,7 @@ dependencies = [
  "tracing",
  "tracing-futures",
  "tracing-subscriber",
+ "voting-hir 0.1.0 (git+https://github.com/input-output-hk/catalyst-toolbox?branch=main)",
  "warp",
 ]
 
@@ -5629,7 +6177,16 @@ checksum = "6a02e4885ed3bc0f2de90ea6dd45ebcbb66dacffe03547fadbb0eeae2770887d"
 name = "voting-hir"
 version = "0.1.0"
 dependencies = [
- "jormungandr-lib",
+ "jormungandr-lib 0.15.0",
+ "serde",
+]
+
+[[package]]
+name = "voting-hir"
+version = "0.1.0"
+source = "git+https://github.com/input-output-hk/catalyst-toolbox?branch=main#00c2beb337fc730d0c9567055bef4c591ead78b0"
+dependencies = [
+ "jormungandr-lib 0.13.0",
  "serde",
 ]
 
@@ -5656,22 +6213,22 @@ dependencies = [
 [[package]]
 name = "wallet"
 version = "0.6.0-pre.1"
-source = "git+https://github.com/input-output-hk/chain-wallet-libs.git?branch=master#cd1d4e0a61836c50e193ee140ec74579115de056"
+source = "git+https://github.com/input-output-hk/chain-wallet-libs.git?branch=catalyst-fund9#28ccee9ebfd07e63fe780a5e361f1dd51546ad0c"
 dependencies = [
  "bip39",
- "cardano-legacy-address",
+ "cardano-legacy-address 0.1.1 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
  "cbor_event",
- "chain-addr",
- "chain-crypto",
- "chain-impl-mockchain",
+ "chain-addr 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-crypto 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
+ "chain-impl-mockchain 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
  "chain-path-derivation",
- "chain-time",
+ "chain-time 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
  "cryptoxide 0.4.2",
  "ed25519-bip32",
  "hashlink",
  "hdkeygen",
  "hex",
- "imhamt",
+ "imhamt 0.1.0 (git+https://github.com/input-output-hk/chain-libs.git?branch=catalyst-fund9)",
  "itertools 0.9.0",
  "thiserror",
  "zeroize",
@@ -5909,6 +6466,12 @@ checksum = "80d0f4e272c85def139476380b12f9ac60926689dd2e01d4923222f40580869d"
 dependencies = [
  "winapi",
 ]
+
+[[package]]
+name = "wyz"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85e60b0d1b5f99db2556934e21937020776a5d31520bf169e851ac44e6420214"
 
 [[package]]
 name = "wyz"
