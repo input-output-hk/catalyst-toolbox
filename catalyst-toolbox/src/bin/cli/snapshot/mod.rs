@@ -28,7 +28,7 @@ pub struct SnapshotCmd {
 
     /// Voter group to assign representatives to.
     /// If empty, defaults to "rep"
-    #[structopt(short, long)]
+    #[structopt(long)]
     representatives_group: Option<String>,
 
     /// Url of the representative db api server
