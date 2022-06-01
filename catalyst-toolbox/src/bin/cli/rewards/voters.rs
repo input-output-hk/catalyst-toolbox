@@ -1,7 +1,6 @@
 use catalyst_toolbox::rewards::voters::{calc_voter_rewards, Rewards, VoteCount};
 use catalyst_toolbox::snapshot::{registration::MainnetRewardAddress, SnapshotInfo};
 use catalyst_toolbox::utils::assert_are_close;
-use voting_hir::VotingGroup;
 
 use color_eyre::Report;
 use jcli_lib::jcli_lib::block::Common;
