@@ -28,33 +28,35 @@ pub enum Error {
 )]
 pub struct AllReps;
 
-fn get_all_reps(url: impl reqwest::IntoUrl) -> Result<HashSet<Identifier>, Error> {
-    let response: all_reps::ResponseData = reqwest::blocking::Client::new()
-        .post(url)
-        .json(&AllReps::build_query(all_reps::Variables))
-        .send()?
-        .json()?;
+#[allow(dead_code)]
+fn get_all_reps(_url: impl reqwest::IntoUrl) -> Result<HashSet<Identifier>, Error> {
+    // let response: all_reps::ResponseData = reqwest::blocking::Client::new()
+    //     .post(url)
+    //     .json(&AllReps::build_query(all_reps::Variables))
+    //     .send()?
+    //     .json()?;
 
-    Ok(response
-        .representatives
-        .iter()
-        .flat_map(|reps| reps.data.iter())
-        .flat_map(|rep| rep.attributes.as_ref())
-        .flat_map(|attributes| attributes.address.as_ref())
-        .flat_map(|addr| Identifier::from_hex(addr))
-        .collect())
+    // Ok(response
+    //     .representatives
+    //     .iter()
+    //     .flat_map(|reps| reps.data.iter())
+    //     .flat_map(|rep| rep.attributes.as_ref())
+    //     .flat_map(|attributes| attributes.address.as_ref())
+    //     .flat_map(|addr| Identifier::from_hex(addr))
+    //     .collect())
+    todo!()
 }
 
 impl RepsVotersAssigner {
     pub fn new(
         direct_voters: VotingGroup,
         reps: VotingGroup,
-        repsdb_url: impl reqwest::IntoUrl,
+        _repsdb_url: impl reqwest::IntoUrl,
     ) -> Result<Self, Error> {
         Ok(Self {
             direct_voters,
             reps,
-            repsdb: get_all_reps(repsdb_url)?,
+            repsdb: HashSet::new(),
         })
     }
 }
