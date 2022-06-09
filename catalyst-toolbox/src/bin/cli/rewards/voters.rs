@@ -5,9 +5,9 @@ use catalyst_toolbox::snapshot::{
 use catalyst_toolbox::utils::assert_are_close;
 
 use color_eyre::Report;
+use fraction::Fraction;
 use jcli_lib::jcli_lib::block::Common;
 use jormungandr_lib::{crypto::account::Identifier, interfaces::Block0Configuration};
-
 use structopt::StructOpt;
 
 use std::collections::BTreeMap;
