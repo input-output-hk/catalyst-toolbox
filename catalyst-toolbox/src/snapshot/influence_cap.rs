@@ -49,7 +49,6 @@ pub fn cap_voting_influence(
     mut voters: Vec<VoterEntry>,
     threshold: Fraction,
 ) -> Result<Vec<VoterEntry>, Error> {
-    println!("n voters: {}", voters.len());
     voters = voters
         .into_iter()
         .filter(|v| v.hir.voting_power > 0.into())
@@ -70,21 +69,21 @@ pub fn cap_voting_influence(
             .ok_or(Error::Overflow)?;
     }
     voters.sort_unstable_by_key(|v| v.hir.voting_power);
-    let cur = voters.len() - 1;
+    let last = voters.len() - 1;
 
-    let cur_vp = u64::from(voters[cur].hir.voting_power);
-    if Fraction::new(cur_vp, tot) <= threshold {
+    let last_vp = u64::from(voters[last].hir.voting_power);
+    if Fraction::new(last_vp, tot) <= threshold {
         return Ok(voters);
     }
 
-    let mut prev = cur - 1;
-    let mut next_vp = cur_vp;
+    let mut prev = last - 1;
+    let mut next_vp = last_vp;
     let next_vp = loop {
-        let set_len = (cur - prev) as u64;
+        let set_len = (last - prev) as u64;
         // Since it's guaranteed that all elements in S will have the same voting power,
         // to calculate the value of Y for each element in S it's sufficient to treat it as a single
         // value which should not exceed a threshold of T * |S| and get Y'.
-        // Given Y', we need to 'spread' it among all elements, from which we get Y = ceil(Y / len).
+        // Given Y', we need to 'spread' it among all elements, from which we get Y = ceil(Y' / len).
         let y = int_ceil(
             calc_vp_to_remove(next_vp * set_len, tot, threshold * set_len.into()),
             set_len,
@@ -103,7 +102,7 @@ pub fn cap_voting_influence(
         prev -= 1;
     };
 
-    for v in &mut voters[prev + 1..=cur] {
+    for v in &mut voters[prev + 1..=last] {
         v.hir.voting_power = next_vp.into();
     }
 
