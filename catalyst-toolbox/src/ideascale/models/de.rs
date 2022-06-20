@@ -168,11 +168,15 @@ fn deserialize_clean_challenge_title<'de, D: Deserializer<'de>>(
 fn deserialize_rewards<'de, D: Deserializer<'de>>(deserializer: D) -> Result<u64, D::Error> {
     let rewards_str = String::deserialize(deserializer)?;
 
+    if rewards_str.is_empty() {
+        return Ok(0);
+    }
+
     // input is not standarized, hack an early return if it is just 0 ada
     if rewards_str.starts_with("0 ada") {
         return Ok(0);
     }
-    sscanf::scanf!(rewards_str.trim_end(), "${} in {}", String, String)
+    sscanf::scanf!(rewards_str.trim_end(), "{} in {}", String, String)
         // trim all . or , in between numbers
         .map(|(mut amount, _currency)| {
             amount.retain(|c: char| c.is_numeric() && !(matches!(c, '.') || matches!(c, ',')));
