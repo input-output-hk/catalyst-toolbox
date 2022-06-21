@@ -58,6 +58,7 @@ pub fn fetch_all(
         .into_iter()
         .map(|f| (f.id, f))
         .collect();
+
     let funds = fetch::get_funds_data(client)?;
 
     let challenges: Vec<Challenge> = funds

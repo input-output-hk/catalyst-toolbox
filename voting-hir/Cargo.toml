@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-jormungandr-lib = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "master" }
+jormungandr-lib = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "catalyst-fund9" }
 serde = { version = "1", features = ["derive"], optional = true }
 proptest = { git = "https://github.com/input-output-hk/proptest.git", branch = "master", optional = true }
 hex = { version = "0.4", optional = true }
