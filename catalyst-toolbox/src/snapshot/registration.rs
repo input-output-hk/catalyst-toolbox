@@ -1,6 +1,6 @@
 use jormungandr_lib::crypto::account::Identifier;
 use jormungandr_lib::interfaces::Value;
-use serde::{de::Error, Deserialize};
+use serde::{de::Error, Deserialize, Serialize};
 
 pub type MainnetRewardAddress = String;
 pub type MainnetStakeAddress = String;
@@ -9,7 +9,7 @@ pub type MainnetStakeAddress = String;
 /// which is a generalizatin of CIP-15, allowing to distribute
 /// voting power among multiple keys in a single transaction and
 /// to tag the purpose of the vote.
-#[derive(Deserialize, Clone, Debug, PartialEq)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 pub struct VotingRegistration {
     pub stake_public_key: MainnetStakeAddress,
     pub voting_power: Value,
@@ -136,15 +136,52 @@ mod deser {
     }
 }
 
-#[cfg(test)]
-mod tests {
+#[cfg(feature = "test-api")]
+mod test_api {
     use super::deser::IdentifierDef;
+    use super::*;
+    use serde::Serializer;
+
+    // This is only to make it easier to test the Deserialize impl
+    impl Serialize for IdentifierDef {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            if serializer.is_human_readable() {
+                serializer.serialize_str(&format!("0x{}", self.0.to_hex()))
+            } else {
+                serializer.serialize_bytes(self.0.as_ref().as_ref())
+            }
+        }
+    }
+
+    // This is only to make it easier to test the Deserialize impl
+    impl Serialize for Delegations {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            match self {
+                Self::Legacy(key) => IdentifierDef(key.clone()).serialize(serializer),
+                Self::New(vec) => vec
+                    .iter()
+                    .map(|(vk, weight)| (IdentifierDef(vk.clone()), weight))
+                    .collect::<Vec<_>>()
+                    .serialize(serializer),
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+#[cfg(feature = "test-api")]
+mod tests {
     use super::*;
     use bech32::ToBase32;
     use chain_crypto::{Ed25519, SecretKey};
     use proptest::collection::vec;
     use proptest::prelude::*;
-    use serde::{Serialize, Serializer};
     use serde_test::{assert_de_tokens, Configure, Token};
     use test_strategy::proptest;
 
@@ -243,37 +280,6 @@ mod tests {
                 Token::SeqEnd,
             ],
         );
-    }
-
-    // This is only to make it easier to test the Deserialize impl
-    impl Serialize for IdentifierDef {
-        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
-        {
-            if serializer.is_human_readable() {
-                serializer.serialize_str(&format!("0x{}", self.0.to_hex()))
-            } else {
-                serializer.serialize_bytes(self.0.as_ref().as_ref())
-            }
-        }
-    }
-
-    // This is only to make it easier to test the Deserialize impl
-    impl Serialize for Delegations {
-        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
-        {
-            match self {
-                Self::Legacy(key) => IdentifierDef(key.clone()).serialize(serializer),
-                Self::New(vec) => vec
-                    .iter()
-                    .map(|(vk, weight)| (IdentifierDef(vk.clone()), weight))
-                    .collect::<Vec<_>>()
-                    .serialize(serializer),
-            }
-        }
     }
 
     #[proptest]
