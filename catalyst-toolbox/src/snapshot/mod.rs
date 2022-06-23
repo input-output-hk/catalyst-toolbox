@@ -2,7 +2,7 @@ mod influence_cap;
 pub mod registration;
 pub mod voting_group;
 
-use registration::{Delegations, MainnetRewardAddress, VotingRegistration};
+pub use registration::{Delegations, MainnetRewardAddress, VotingRegistration};
 use voting_group::VotingGroupAssigner;
 
 use fraction::Fraction;
