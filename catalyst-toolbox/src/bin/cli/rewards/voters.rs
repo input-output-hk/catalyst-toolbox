@@ -1,12 +1,14 @@
-use catalyst_toolbox::rewards::voters::{calc_voter_rewards, Rewards, VoteCount};
+use catalyst_toolbox::rewards::voters::{calc_voter_rewards, Rewards, Threshold, VoteCount};
 use catalyst_toolbox::snapshot::{registration::MainnetRewardAddress, SnapshotInfo};
 use catalyst_toolbox::utils::assert_are_close;
+use jormungandr_lib::interfaces::VotePlanStatusFull;
+use vit_servicing_station_lib::db::models::proposals::FullProposalInfo;
 
 use color_eyre::Report;
 use jcli_lib::jcli_lib::block::Common;
 use structopt::StructOpt;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::PathBuf;
 
 #[derive(StructOpt)]
@@ -22,12 +24,26 @@ pub struct VotersRewards {
     #[structopt(long)]
     snapshot_info_path: PathBuf,
 
+    /// Path to a json-encoded list of VotePlanStatusFull to consider for voters
+    /// participation in the election.
+    /// This can be retrived from the v1/vote/active/plans/full endpoint exposed
+    /// by a Jormungandr node.
     #[structopt(long)]
     votes_count_path: PathBuf,
 
-    /// Number of votes required to be able to receive voter rewards
+    /// Number of global votes required to be able to receive voter rewards
     #[structopt(long, default_value)]
     vote_threshold: u64,
+
+    /// Path to a json-encoded map from challenge id to an optional required threshold
+    /// per-challenge in order to receive rewards.
+    #[structopt(long)]
+    per_challenge_threshold: Option<PathBuf>,
+
+    /// Path to the list of proposals active in this election.
+    /// Can be obtained from /api/v0/proposals.
+    #[structopt(long)]
+    proposals: PathBuf,
 }
 
 fn write_rewards_results(
@@ -55,20 +71,47 @@ impl VotersRewards {
             snapshot_info_path,
             votes_count_path,
             vote_threshold,
+            per_challenge_threshold,
+            proposals,
         } = self;
 
-        let vote_count: VoteCount = serde_json::from_reader(jcli_lib::utils::io::open_file_read(
-            &Some(votes_count_path),
-        )?)?;
+        let vote_count = serde_json::from_reader::<_, Vec<VotePlanStatusFull>>(
+            jcli_lib::utils::io::open_file_read(&Some(votes_count_path))?,
+        )?
+        .into_iter()
+        .flat_map(|vp| vp.proposals.into_iter())
+        .map(|p| p.votes)
+        .fold(VoteCount::new(), |mut acc, votes| {
+            for (account, votes) in votes {
+                acc.entry(account).or_default().extend(votes);
+            }
+            acc
+        });
 
         let snapshot: Vec<SnapshotInfo> = serde_json::from_reader(
             jcli_lib::utils::io::open_file_read(&Some(snapshot_info_path))?,
         )?;
 
+        let proposals: Vec<FullProposalInfo> =
+            serde_json::from_reader(jcli_lib::utils::io::open_file_read(&Some(proposals))?)?;
+
+        let additional_thresholds: HashMap<i32, usize> = if let Some(file) = per_challenge_threshold
+        {
+            serde_json::from_reader(jcli_lib::utils::io::open_file_read(&Some(file))?)?
+        } else {
+            HashMap::new()
+        };
+
         let results = calc_voter_rewards(
             vote_count,
-            vote_threshold,
             snapshot,
+            Threshold::new(
+                vote_threshold
+                    .try_into()
+                    .expect("vote threshold is too big"),
+                additional_thresholds,
+                proposals,
+            )?,
             Rewards::from(total_rewards),
         )?;
 
