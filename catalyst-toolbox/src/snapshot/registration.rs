@@ -1,6 +1,6 @@
 use jormungandr_lib::crypto::account::Identifier;
 use jormungandr_lib::interfaces::Value;
-use serde::{de::Error, Deserialize, Serialize};
+use serde::{de::Error, Deserialize};
 
 pub type MainnetRewardAddress = String;
 pub type MainnetStakeAddress = String;
@@ -9,12 +9,15 @@ pub type MainnetStakeAddress = String;
 /// which is a generalizatin of CIP-15, allowing to distribute
 /// voting power among multiple keys in a single transaction and
 /// to tag the purpose of the vote.
-#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+#[derive(Deserialize, Clone, Debug, PartialEq)]
 pub struct VotingRegistration {
     pub stake_public_key: MainnetStakeAddress,
     pub voting_power: Value,
     /// Shelley address discriminated for the same network this transaction is submitted to.
-    #[serde(deserialize_with = "deser::reward_addr_from_hex")]
+    #[serde(
+        deserialize_with = "deser::reward_addr_from_hex",
+        serialize_with = "ser::reward_addr_to_hex"
+    )]
     pub reward_address: MainnetRewardAddress,
     pub delegations: Delegations,
     /// 0 = Catalyst, assumed 0 for old legacy registrations
@@ -136,11 +139,43 @@ mod deser {
     }
 }
 
-#[cfg(feature = "test-api")]
+mod ser {
+    use bech32::FromBase32;
+    use serde::ser::{Error, Serializer};
+
+    #[allow(dead_code)]
+    pub fn reward_addr_to_hex<S>(obj: &str, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let (_, data, _) = bech32::decode(obj)
+            .map_err(|e| S::Error::custom(format!("bech32 decoding failed: {}", e)))?;
+        let data = Vec::<u8>::from_base32(&data)
+            .map_err(|e| S::Error::custom(format!("invalid hex string: {}", e)))?;
+        serializer.serialize_str(&format!("0x{}", hex::encode(data)))
+    }
+}
+
+#[cfg(any(feature = "test-api", test))]
 mod test_api {
     use super::deser::IdentifierDef;
     use super::*;
-    use serde::Serializer;
+    use serde::{ser::SerializeStruct, Serialize, Serializer};
+
+    impl Serialize for VotingRegistration {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            let mut state = serializer.serialize_struct("VotingRegistration", 5)?;
+            state.serialize_field("stake_public_key", &self.stake_public_key)?;
+            state.serialize_field("voting_power", &self.voting_power)?;
+            state.serialize_field("delegations", &self.delegations)?;
+            state.serialize_field("reward_address", &self.reward_address)?;
+            state.serialize_field("voting_purpose", &self.voting_purpose)?;
+            state.end()
+        }
+    }
 
     // This is only to make it easier to test the Deserialize impl
     impl Serialize for IdentifierDef {
@@ -175,15 +210,32 @@ mod test_api {
 }
 
 #[cfg(test)]
-#[cfg(feature = "test-api")]
 mod tests {
     use super::*;
     use bech32::ToBase32;
     use chain_crypto::{Ed25519, SecretKey};
     use proptest::collection::vec;
     use proptest::prelude::*;
+    use serde::{Deserialize, Serialize};
     use serde_test::{assert_de_tokens, Configure, Token};
     use test_strategy::proptest;
+
+    #[test]
+    pub fn serialize_bijection() {
+        #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+        struct Test {
+            #[serde(
+                deserialize_with = "deser::reward_addr_from_hex",
+                serialize_with = "ser::reward_addr_to_hex"
+            )]
+            pub reward_address: MainnetRewardAddress,
+        }
+
+        let content =
+            "{\"reward_address\":\"0xe1ffff2912572257b59dca84c965e4638a09f1524af7a15787eb0d8a46\"}";
+        let test: Test = serde_json::from_str(content).unwrap();
+        assert_eq!(content, serde_json::to_string(&test).unwrap());
+    }
 
     impl Arbitrary for Delegations {
         type Parameters = ();

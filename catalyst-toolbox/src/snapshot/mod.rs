@@ -168,21 +168,28 @@ impl Snapshot {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use chain_addr::{Discrimination, Kind};
-    use jormungandr_lib::interfaces::{Address, InitialUTxO};
-    use proptest::prelude::*;
-    use test_strategy::proptest;
+#[cfg(feature = "test-api")]
+pub mod snapshot_test_api {
+    use crate::snapshot::VotingGroupAssigner;
+    use jormungandr_lib::crypto::account::Identifier;
 
-    struct DummyAssigner;
+    pub struct DummyAssigner;
 
     impl VotingGroupAssigner for DummyAssigner {
         fn assign(&self, _vk: &Identifier) -> String {
             String::new()
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::snapshot_test_api::DummyAssigner;
+    use super::*;
+    use chain_addr::{Discrimination, Kind};
+    use jormungandr_lib::interfaces::{Address, InitialUTxO};
+    use proptest::prelude::*;
+    use test_strategy::proptest;
 
     impl Snapshot {
         pub fn to_block0_initials(&self, discrimination: Discrimination) -> Vec<InitialUTxO> {
