@@ -516,7 +516,6 @@ dependencies = [
  "rust_decimal_macros",
  "serde",
  "serde_json",
- "serde_test",
  "serde_yaml",
  "sscanf",
  "structopt",
@@ -649,7 +648,7 @@ dependencies = [
 [[package]]
 name = "chain-crypto"
 version = "0.1.0"
-source = "git+https://github.com/input-output-hk/chain-libs.git?branch=master#4944822385be1a8987d319dc97e27677c6a89d77"
+source = "git+https://github.com/input-output-hk/chain-libs.git?branch=master#f7a05921f2091ae8f130d392eccb4f625b10c767"
 dependencies = [
  "bech32 0.8.1",
  "cryptoxide 0.4.2",
@@ -4855,15 +4854,6 @@ checksum = "9b7ce2b32a1aed03c558dc61a5cd328f15aff2dbc17daad8fb8af04d2100e15c"
 dependencies = [
  "itoa 1.0.2",
  "ryu",
- "serde",
-]
-
-[[package]]
-name = "serde_test"
-version = "1.0.137"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe196827aea34242c314d2f0dd49ed00a129225e80dda71b0dbf65d54d25628d"
-dependencies = [
  "serde",
 ]
 

@@ -2,7 +2,7 @@ use catalyst_toolbox::snapshot::{RawSnapshot, Snapshot};
 use chain_addr::Discrimination;
 use color_eyre::Report;
 use jcli_lib::utils::{output_file::OutputFile, output_format::OutputFormat};
-use jormungandr_lib::interfaces::Value;
+use jormungandr_lib::interfaces::Stake;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
@@ -17,7 +17,7 @@ pub struct SnapshotCmd {
     snapshot: PathBuf,
     /// Registrations voting power threshold for eligibility
     #[structopt(short, long)]
-    threshold: Value,
+    threshold: Stake,
 
     /// Discrimination to use for initial addresses
     #[structopt(short, long)]

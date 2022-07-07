@@ -1,5 +1,5 @@
 use catalyst_toolbox::rewards::voters::{calc_voter_rewards, Rewards, VoteCount};
-use catalyst_toolbox::snapshot::{registration::MainnetRewardAddress, Snapshot};
+use catalyst_toolbox::snapshot::{MainnetRewardAddress, Snapshot};
 use catalyst_toolbox::utils::assert_are_close;
 
 use color_eyre::Report;
