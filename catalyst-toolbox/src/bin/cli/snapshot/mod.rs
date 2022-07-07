@@ -1,6 +1,5 @@
 use catalyst_toolbox::snapshot::{voting_group::RepsVotersAssigner, RawSnapshot, Snapshot};
 use color_eyre::Report;
-use fraction::Fraction;
 use jcli_lib::utils::{output_file::OutputFile, output_format::OutputFormat};
 use jormungandr_lib::interfaces::Value;
 use std::fs::File;
@@ -8,7 +7,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-const DEFAULT_DIRECT_VOTER_GROUP: &str = "direct";
+const DEFAULT_DIRECT_VOTER_GROUP: &str = "voter";
 const DEFAULT_REPRESENTATIVE_GROUP: &str = "rep";
 
 /// Process raw registrations into blockchain initials
@@ -36,10 +35,6 @@ pub struct SnapshotCmd {
     #[structopt(long)]
     reps_db_api_url: reqwest::Url,
 
-    /// Voting power cap for each account
-    #[structopt(short, long)]
-    voting_power_cap: Fraction,
-
     #[structopt(flatten)]
     output: OutputFile,
 
@@ -57,13 +52,8 @@ impl SnapshotCmd {
             .representatives_group
             .unwrap_or_else(|| DEFAULT_REPRESENTATIVE_GROUP.into());
         let assigner = RepsVotersAssigner::new(direct_voter, representative, self.reps_db_api_url)?;
-        let initials = Snapshot::from_raw_snapshot(
-            raw_snapshot,
-            self.threshold,
-            self.voting_power_cap,
-            &assigner,
-        )?
-        .to_voter_hir();
+        let initials =
+            Snapshot::from_raw_snapshot(raw_snapshot, self.threshold).to_voter_hir(&assigner);
         let mut out_writer = self.output.open()?;
         let content = self
             .output_format
