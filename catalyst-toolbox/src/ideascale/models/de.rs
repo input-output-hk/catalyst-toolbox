@@ -169,12 +169,12 @@ fn deserialize_rewards<'de, D: Deserializer<'de>>(deserializer: D) -> Result<u64
     let rewards_str = String::deserialize(deserializer)?;
 
     // input is not standarized, hack an early return if it is just 0 ada
-    if rewards_str.starts_with("0 ada") {
+    if rewards_str.starts_with("0 ada") | rewards_str.is_empty() {
         return Ok(0);
     }
-    sscanf::scanf!(rewards_str.trim_end(), "{} in {}", String, String)
+    sscanf::scanf!(rewards_str.trim_end(), r"{/\$?/}{} {/(:?in )?/}{}", String, String, String, String)
         // trim all . or , in between numbers
-        .map(|(mut amount, _currency)| {
+        .map(|(_, mut amount, _, _currency)| {
             amount.retain(|c: char| c.is_numeric() && !(matches!(c, '.') || matches!(c, ',')));
             amount
         })
