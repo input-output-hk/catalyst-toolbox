@@ -62,8 +62,6 @@ graphql_client = "0.10"
 gag = "1"
 vit-servicing-station-lib = { git = "https://github.com/input-output-hk/vit-servicing-station.git", branch = "catalyst-fund9" }
 env_logger = "0.9"
-voting-hir = { path = "../voting-hir", features = ["serde"] }
-fraction = "0.10"
 
 [dev-dependencies]
 rand_chacha = "0.3"
@@ -73,8 +71,6 @@ assert_fs = "1.0.0"
 chain-vote = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "catalyst-fund9" }
 proptest = { git = "https://github.com/input-output-hk/proptest", branch = "master" }
 test-strategy = "0.2"
-serde_test = "1"
-voting-hir =  { path = "../voting-hir", features = ["serde", "proptest"] }
 
 [build-dependencies]
 versionisator = "1.0.3"

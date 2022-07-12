@@ -1,13 +1,11 @@
 use catalyst_toolbox::rewards::voters::{calc_voter_rewards, Rewards, VoteCount};
-use catalyst_toolbox::snapshot::{
-    registration::MainnetRewardAddress, voting_group::VotingGroupAssigner, Snapshot,
-};
+use catalyst_toolbox::snapshot::{MainnetRewardAddress, Snapshot};
 use catalyst_toolbox::utils::assert_are_close;
 
 use color_eyre::Report;
-use fraction::Fraction;
 use jcli_lib::jcli_lib::block::Common;
-use jormungandr_lib::{crypto::account::Identifier, interfaces::Block0Configuration};
+use jormungandr_lib::interfaces::Block0Configuration;
+
 use structopt::StructOpt;
 
 use std::collections::BTreeMap;
@@ -31,10 +29,6 @@ pub struct VotersRewards {
     /// will be ignored
     #[structopt(long)]
     registration_threshold: u64,
-
-    /// Voting power cap for each account
-    #[structopt(short, long)]
-    voting_power_cap: Fraction,
 
     #[structopt(long)]
     votes_count_path: PathBuf,
@@ -70,7 +64,6 @@ impl VotersRewards {
             registration_threshold,
             votes_count_path,
             vote_threshold,
-            voting_power_cap,
         } = self;
         let block = common.input.load_block()?;
         let block0 = Block0Configuration::from_block(&block)?;
@@ -82,9 +75,7 @@ impl VotersRewards {
         let snapshot = Snapshot::from_raw_snapshot(
             serde_json::from_reader(jcli_lib::utils::io::open_file_read(&Some(snapshot_path))?)?,
             registration_threshold.into(),
-            voting_power_cap,
-            &DummyAssigner,
-        )?;
+        );
 
         let results = calc_voter_rewards(
             vote_count,
@@ -99,12 +90,5 @@ impl VotersRewards {
 
         write_rewards_results(common, &results)?;
         Ok(())
-    }
-}
-
-struct DummyAssigner;
-impl VotingGroupAssigner for DummyAssigner {
-    fn assign(&self, _vk: &Identifier) -> String {
-        unimplemented!()
     }
 }
