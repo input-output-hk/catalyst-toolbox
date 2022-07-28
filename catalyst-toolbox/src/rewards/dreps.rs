@@ -1,15 +1,9 @@
-use super::{Threshold, VoteCount};
-use chain_addr::{Discrimination, Kind};
-use chain_impl_mockchain::transaction::UnspecifiedAccountIdentifier;
+use super::{Rewards, Threshold, VoteCount};
 use jormungandr_lib::crypto::account::Identifier;
-use jormungandr_lib::interfaces::Address;
 use rust_decimal::Decimal;
-use snapshot_lib::{registration::MainnetRewardAddress, SnapshotInfo};
-use std::collections::{BTreeMap, HashMap, HashSet};
+use snapshot_lib::{SnapshotInfo, VotingGroup};
+use std::collections::{BTreeMap, HashSet};
 use thiserror::Error;
-
-pub const ADA_TO_LOVELACE_FACTOR: u64 = 1_000_000;
-pub type Rewards = Decimal;
 
 #[derive(Debug, Error)]
 pub enum Error {
@@ -17,127 +11,75 @@ pub enum Error {
     Overflow,
     #[error("Multiple snapshot entries per voter are not supported")]
     MultipleEntries,
-    #[error("Unknown voter group {0}")]
-    UnknownVoterGroup(String),
-    #[error("Invalid blake2b256 hash")]
-    InvalidHash(Vec<u8>),
 }
 
-fn calculate_reward(
-    total_stake: u64,
-    stake_per_voter: HashMap<Identifier, u64>,
-    total_rewards: Rewards,
-) -> HashMap<Identifier, Rewards> {
-    stake_per_voter
-        .into_iter()
-        .map(|(k, v)| {
-            (
-                k,
-                (Rewards::from(v) / Rewards::from(total_stake) * total_rewards),
-            )
-        })
-        .collect()
-}
-
-fn filter_active_addresses(
-    vote_count: VoteCount,
-    snapshot_info: Vec<SnapshotInfo>,
-    threshold: Threshold,
+fn filter_requirements(
+    mut dreps: Vec<SnapshotInfo>,
+    votes: VoteCount,
+    top_dreps_to_reward: usize,
+    votes_threshold: Threshold,
 ) -> Vec<SnapshotInfo> {
-    snapshot_info
+    // only the top `top_dreps_to_reward` representatives get rewards
+    dreps.sort_by_key(|v| v.hir.voting_power);
+    dreps.reverse();
+    dreps.truncate(top_dreps_to_reward);
+
+    dreps
         .into_iter()
-        .filter(|v| {
-            if let Some(votes) = vote_count.get(&v.hir.voting_key) {
-                threshold.filter(votes)
-            } else {
-                threshold.filter(&HashSet::new())
-            }
-        })
+        .filter_map(|d| votes.get(&d.hir.voting_key).map(|d_votes| (d, d_votes)))
+        .filter(|(_d, d_votes)| votes_threshold.filter(d_votes))
+        .map(|(d, _d_votes)| d)
         .collect()
 }
 
-pub fn account_hex_to_address(
-    account_hex: String,
-    discrimination: Discrimination,
-) -> Result<Address, hex::FromHexError> {
-    let mut buffer = [0u8; 32];
-    hex::decode_to_slice(account_hex, &mut buffer)?;
-    let identifier: UnspecifiedAccountIdentifier = UnspecifiedAccountIdentifier::from(buffer);
-    Ok(Address::from(chain_addr::Address(
-        discrimination,
-        Kind::Account(
-            identifier
-                .to_single_account()
-                .expect("Only single accounts are supported")
-                .into(),
-        ),
-    )))
-}
+pub fn calc_dreps_rewards(
+    snapshot: Vec<SnapshotInfo>,
+    votes: VoteCount,
+    drep_voting_group: VotingGroup,
+    top_dreps_to_reward: usize,
+    dreps_votes_threshold: Threshold,
+    total_rewards: Decimal,
+) -> Result<BTreeMap<Identifier, Rewards>, Error> {
+    let total_active_stake = snapshot
+        .iter()
+        .try_fold(0u64, |acc, x| acc.checked_add(x.hir.voting_power.into()))
+        .ok_or(Error::Overflow)?;
 
-fn rewards_to_mainnet_addresses(
-    rewards: HashMap<Identifier, Rewards>,
-    voters: Vec<SnapshotInfo>,
-) -> BTreeMap<MainnetRewardAddress, Rewards> {
-    let mut res = BTreeMap::new();
-    let snapshot_info_by_key = voters
+    let dreps = snapshot
         .into_iter()
-        .map(|v| (v.hir.voting_key.clone(), v))
-        .collect::<HashMap<_, _>>();
-    for (addr, reward) in rewards {
-        let contributions = snapshot_info_by_key
-            .get(&addr)
-            .map(|v| v.contributions.clone())
-            .unwrap_or_default();
-        let total_value = contributions
-            .iter()
-            .map(|c| Rewards::from(c.value))
-            .sum::<Rewards>();
+        .filter(|v| v.hir.voting_group == drep_voting_group)
+        .collect::<Vec<_>>();
 
-        for c in contributions {
-            *res.entry(c.reward_address.clone()).or_default() +=
-                reward * Rewards::from(c.value) / total_value;
-        }
-    }
-
-    res
-}
-
-pub fn calc_voter_rewards(
-    vote_count: VoteCount,
-    voters: Vec<SnapshotInfo>,
-    vote_threshold: Threshold,
-    total_rewards: Rewards,
-) -> Result<BTreeMap<MainnetRewardAddress, Rewards>, Error> {
-    let unique_voters = voters
+    let unique_dreps = dreps
         .iter()
         .map(|s| s.hir.voting_key.clone())
         .collect::<HashSet<_>>();
-    if unique_voters.len() != voters.len() {
+    if unique_dreps.len() != dreps.len() {
         return Err(Error::MultipleEntries);
     }
-    let active_addresses = filter_active_addresses(vote_count, voters, vote_threshold);
 
-    let mut total_active_stake = 0u64;
-    let mut stake_per_voter = HashMap::new();
-    // iterative as Iterator::sum() panic on overflows
-    for voter in &active_addresses {
-        total_active_stake = total_active_stake
-            .checked_add(voter.hir.voting_power.into())
-            .ok_or(Error::Overflow)?;
-        stake_per_voter.insert(voter.hir.voting_key.clone(), voter.hir.voting_power.into());
-    }
-    let rewards = calculate_reward(total_active_stake, stake_per_voter, total_rewards);
-    Ok(rewards_to_mainnet_addresses(rewards, active_addresses))
+    let filtered = filter_requirements(dreps, votes, top_dreps_to_reward, dreps_votes_threshold);
+
+    Ok(filtered
+        .into_iter()
+        .map(|d| {
+            let reward = Decimal::from(u64::from(d.hir.voting_power))
+                / Decimal::from(total_active_stake)
+                * total_rewards;
+            (d.hir.voting_key, reward)
+        })
+        .collect())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::utils::assert_are_close;
-    use jormungandr_lib::crypto::account::Identifier;
-    use snapshot_lib::registration::{Delegations, VotingRegistration};
-    use snapshot_lib::Fraction;
-    use snapshot_lib::Snapshot;
+    use fraction::Fraction;
+    use jormungandr_lib::crypto::{account::Identifier, hash::Hash};
+    use snapshot_lib::registration::*;
+    use snapshot_lib::*;
+    use std::collections::HashMap;
     use test_strategy::proptest;
 
     #[proptest]
@@ -149,7 +91,7 @@ mod tests {
             .collect::<VoteCount>();
         let n_voters = votes_count.len();
         let voters = snapshot.to_full_snapshot_info();
-        let rewards = calc_voter_rewards(
+        let rewards = calc_dreps_rewards(
             votes_count,
             voters,
             Threshold::new(1, HashMap::new(), Vec::new()).unwrap(),
