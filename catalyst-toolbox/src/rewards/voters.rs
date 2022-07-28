@@ -69,7 +69,7 @@ pub enum Error {
     MultipleEntries,
     #[error("Unknown voter group {0}")]
     UnknownVoterGroup(String),
-    #[error("hash is not a valid blake2b256 hash")]
+    #[error("Invalid blake2b256 hash")]
     InvalidHash(Vec<u8>),
 }
 

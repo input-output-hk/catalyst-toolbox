@@ -36,7 +36,7 @@ pub struct VotersRewards {
 
     /// Number of global votes required to be able to receive voter rewards
     #[structopt(long, default_value)]
-    vote_threshold: u64,
+    vote_threshold: usize,
 
     /// Path to a json-encoded map from challenge id to an optional required threshold
     /// per-challenge in order to receive rewards.
@@ -132,9 +132,7 @@ impl VotersRewards {
             vote_count,
             snapshot,
             Threshold::new(
-                vote_threshold
-                    .try_into()
-                    .expect("vote threshold is too big"),
+                vote_threshold,
                 additional_thresholds,
                 proposals_per_voteplan
                     .into_iter()
