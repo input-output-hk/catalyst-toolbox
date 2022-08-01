@@ -1,7 +1,6 @@
 use catalyst_toolbox::rewards::voters::calc_voter_rewards;
 use catalyst_toolbox::rewards::{Rewards, Threshold};
 use catalyst_toolbox::snapshot::{registration::MainnetRewardAddress, SnapshotInfo};
-use catalyst_toolbox::utils::assert_are_close;
 use color_eyre::Report;
 use jcli_lib::jcli_lib::block::Common;
 use jormungandr_lib::{crypto::account::Identifier, interfaces::AccountVotes};
@@ -16,7 +15,8 @@ use std::path::PathBuf;
 pub struct DrepsRewards {
     #[structopt(flatten)]
     common: Common,
-    /// Reward (in dollars) to be distributed proportionally to delegated stake
+    /// Reward (in dollars) to be distributed proportionally to delegated stake with respect to total stake.
+    /// The total amount will only be awarded if dreps control all of the stake.
     #[structopt(long)]
     total_rewards: u64,
 
@@ -108,9 +108,6 @@ impl DrepsRewards {
             )?,
             Rewards::from(total_rewards),
         )?;
-
-        let actual_rewards = results.values().sum::<Rewards>();
-        assert_are_close(actual_rewards, Rewards::from(total_rewards));
 
         write_rewards_results(common, &results)?;
         Ok(())
