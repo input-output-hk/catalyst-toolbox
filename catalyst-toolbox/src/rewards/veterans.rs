@@ -77,6 +77,27 @@ fn calc_final_eligible_rankings(
         .collect()
 }
 
+fn calc_final_ranking_consensus_per_review(rankings: &[impl Borrow<VeteranRankingRow>]) -> Decimal {
+    let rankings_majority = Decimal::from(rankings.len()) / Decimal::from(2);
+    let ranks = rankings.iter().counts_by(|r| r.borrow().score());
+
+    match (ranks.get(&FilteredOut), ranks.get(&Excellent), ranks.get(&Good)) {
+        (Some(filtered_out), _, _) if Decimal::from(*filtered_out) >= rankings_majority => {
+            Decimal::from(*filtered_out) / Decimal::from(rankings.len())
+        }
+        (_, Some(excellent), _) if Decimal::from(*excellent) > rankings_majority => {
+            Decimal::from(*excellent) / Decimal::from(rankings.len())
+        }
+        (_, Some(excellent), Some(good)) => {
+            (Decimal::from(*excellent) + Decimal::from(*good)) / Decimal::from(rankings.len())
+        }
+        (_, _, Some(good)) => {
+           Decimal::from(*good) / Decimal::from(rankings.len())
+        }
+        _ => Decimal::ONE,
+    }
+}
+
 pub fn calculate_veteran_advisors_incentives(
     veteran_rankings: &[VeteranRankingRow],
     total_rewards: Rewards,
@@ -84,12 +105,20 @@ pub fn calculate_veteran_advisors_incentives(
     reputation_thresholds: EligibilityThresholds,
     rewards_mod_args: Vec<(Decimal, Decimal)>,
     reputation_mod_args: Vec<(Decimal, Decimal)>,
+    minimum_consensus: Decimal,
 ) -> HashMap<VeteranAdvisorId, VeteranAdvisorIncentive> {
     let final_rankings_per_review = veteran_rankings
         .iter()
         .into_group_map_by(|ranking| ranking.review_id())
         .into_iter()
         .map(|(review, rankings)| (review, calc_final_ranking_per_review(&rankings)))
+        .collect::<BTreeMap<_, _>>();
+
+    let final_rankings_consensus_per_review = veteran_rankings
+        .iter()
+        .into_group_map_by(|ranking| ranking.review_id())
+        .into_iter()
+        .map(|(review, rankings)| (review, calc_final_ranking_consensus_per_review(&rankings)))
         .collect::<BTreeMap<_, _>>();
 
     let rankings_per_vca = veteran_rankings
@@ -103,7 +132,7 @@ pub fn calculate_veteran_advisors_incentives(
                 .get(&ranking.review_id())
                 .unwrap()
                 .is_positive()
-                == ranking.score().is_positive()
+                == ranking.score().is_positive() || *final_rankings_consensus_per_review.get(&ranking.review_id()).unwrap() < minimum_consensus
         })
         .counts_by(|ranking| ranking.vca.clone());
 
@@ -156,6 +185,8 @@ mod tests {
     const VCA_1: &str = "vca1";
     const VCA_2: &str = "vca2";
     const VCA_3: &str = "vca3";
+    const SIMPLE_MINIMUM_CONSENSUS: Decimal = dec!(.5);
+    const QUALIFIED_MINIMUM_CONSENSUS: Decimal = dec!(.7);
 
     struct RandomIterator;
     impl Iterator for RandomIterator {
@@ -231,6 +262,7 @@ mod tests {
                 .into_iter()
                 .zip(REPUTATION_DISAGREEMENT_MODIFIERS.into_iter())
                 .collect(),
+            SIMPLE_MINIMUM_CONSENSUS,
         );
         assert!(results.get(VCA_1).is_none());
         let res = results.get(VCA_2).unwrap();
@@ -260,6 +292,7 @@ mod tests {
                 .into_iter()
                 .zip(REPUTATION_DISAGREEMENT_MODIFIERS.into_iter())
                 .collect(),
+            SIMPLE_MINIMUM_CONSENSUS,
         );
         let res1 = results.get(VCA_1).unwrap();
         assert_eq!(res1.reputation, 1);
@@ -283,12 +316,12 @@ mod tests {
             (Rewards::new(8, 1), Rewards::ONE, Rewards::ONE),
             (Rewards::new(9, 1), Rewards::new(125, 2), Rewards::ONE),
         ];
-        for (agreement, reward_modifier, reputation_modifier) in inputs {
+        for (vca3_agreement, reward_modifier, reputation_modifier) in inputs {
             let rankings = (0..100)
                 .flat_map(|i| {
                     let vcas =
                         vec![VCA_1.to_owned(), VCA_2.to_owned(), VCA_3.to_owned()].into_iter();
-                    let (good, filtered_out) = if Rewards::from(i) < agreement * Rewards::from(100)
+                    let (good, filtered_out) = if Rewards::from(i) < vca3_agreement * Rewards::from(100)
                     {
                         (3, 0)
                     } else {
@@ -297,7 +330,7 @@ mod tests {
                     gen_dummy_rankings(i.to_string(), 0, good, filtered_out, vcas).into_iter()
                 })
                 .collect::<Vec<_>>();
-            let results = calculate_veteran_advisors_incentives(
+            let results_simple_consensus = calculate_veteran_advisors_incentives(
                 &rankings,
                 total_rewards,
                 1..=200,
@@ -310,21 +343,58 @@ mod tests {
                     .into_iter()
                     .zip(REPUTATION_DISAGREEMENT_MODIFIERS.into_iter())
                     .collect(),
+                SIMPLE_MINIMUM_CONSENSUS,
             );
-            let expected_reward_portion = agreement * Rewards::from(100) * reward_modifier;
-            dbg!(expected_reward_portion);
-            dbg!(agreement, reward_modifier, reputation_modifier);
-            let expected_rewards = total_rewards
-                / (Rewards::from(125 * 2) + expected_reward_portion)
-                * expected_reward_portion;
-            let res = results.get(VCA_3).unwrap();
+            let vca3_expected_reward_portion_simple_consensus = vca3_agreement * Rewards::from(100) * reward_modifier;
+            dbg!(vca3_expected_reward_portion_simple_consensus);
+            dbg!(vca3_agreement, reward_modifier, reputation_modifier);
+            let vca3_expected_rewards_simple_consensus = total_rewards
+                / (Rewards::from(125 * 2) + vca3_expected_reward_portion_simple_consensus)
+                * vca3_expected_reward_portion_simple_consensus;
+            let res_vca3_simple_consensus = results_simple_consensus.get(VCA_3).unwrap();
             assert_eq!(
-                res.reputation,
-                (Rewards::from(100) * agreement * reputation_modifier)
+                res_vca3_simple_consensus.reputation,
+                (Rewards::from(100) * vca3_agreement * reputation_modifier)
                     .to_u64()
                     .unwrap()
             );
-            assert!(are_close(res.rewards, expected_rewards));
+            assert!(are_close(res_vca3_simple_consensus.rewards, vca3_expected_rewards_simple_consensus));
+
+
+            let results_qualified_consensus = calculate_veteran_advisors_incentives(
+                &rankings,
+                total_rewards,
+                1..=200,
+                1..=200,
+                THRESHOLDS
+                    .into_iter()
+                    .zip(REWARDS_DISAGREEMENT_MODIFIERS.into_iter())
+                    .collect(),
+                THRESHOLDS
+                    .into_iter()
+                    .zip(REPUTATION_DISAGREEMENT_MODIFIERS.into_iter())
+                    .collect(),
+                QUALIFIED_MINIMUM_CONSENSUS,
+            );
+
+            let vca3_expected_reward_portion_qualified_consensus = Rewards::from(100) * dec!(1.25); // low consensus so max reward modifier, agreement ratio doesn't count as all and rankings are all eligible
+            dbg!(vca3_expected_reward_portion_qualified_consensus);
+            dbg!(vca3_agreement, reward_modifier, reputation_modifier);
+
+            let vca3_expected_rewards_qualified_consensus = total_rewards
+                / (Rewards::from(125 * 2) + vca3_expected_reward_portion_qualified_consensus)
+                * vca3_expected_reward_portion_qualified_consensus; // 1/3 of the reward
+
+            let res_vca3_qualified_consensus = results_qualified_consensus.get(VCA_3).unwrap();
+
+
+            assert_eq!(
+                res_vca3_qualified_consensus.reputation,
+                (Rewards::from(100)) // all assessment are valid since consensus is low (2/3 < 0.7)
+                    .to_u64()
+                    .unwrap()
+            );
+            assert!(are_close(res_vca3_qualified_consensus.rewards, vca3_expected_rewards_qualified_consensus));
         }
     }
 }
