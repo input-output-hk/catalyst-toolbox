@@ -68,7 +68,7 @@ pub struct VeteransRewards {
     /// Simple majority is 50%.
     /// Qualified majority is 70%. Using 70% avoids punishing vCAs where the consensus is not clear.
     /// 70% is because when #vca == 3 consensus is only 66% and thus in this case, where there is just 1 vote in disagreement, all 3 vCAs get rewarded.
-    #[structopt(long = "minimum_consensus")]
+    #[structopt(long)]
     minimum_consensus: Decimal,
 }
 
@@ -126,7 +126,7 @@ impl VeteransRewards {
                 .into_iter()
                 .zip(reputation_agreement_rate_modifiers.into_iter())
                 .collect(),
-            Decimal::from(minimum_consensus),
+            minimum_consensus,
         );
 
         csv::dump_data_to_csv(rewards_to_csv_data(results).iter(), &to).unwrap();
