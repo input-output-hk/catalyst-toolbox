@@ -16,6 +16,11 @@ pub struct VeteranAdvisorIncentive {
     pub reputation: u64,
 }
 
+pub struct FinalRankingWithConsensus {
+    pub review_ranking: ReviewRanking,
+    pub consensus: Decimal,
+}
+
 pub type VcaRewards = HashMap<VeteranAdvisorId, VeteranAdvisorIncentive>;
 pub type EligibilityThresholds = std::ops::RangeInclusive<usize>;
 
@@ -25,18 +30,34 @@ pub type EligibilityThresholds = std::ops::RangeInclusive<usize>;
 // e.g. something like an expanded version of a AdvisorReviewRow
 // [proposal_id, advisor, ratings, ..(other fields from AdvisorReviewRow).., ranking (good/excellent/filtered out), vca]
 
-fn calc_final_ranking_per_review(rankings: &[impl Borrow<VeteranRankingRow>]) -> ReviewRanking {
+// note that the consensus returned here is either FO/total or ((E+G)/total) because for now we do
+// not discriminate between Excellent and Good...
+fn calc_final_ranking_with_consensus_per_review(rankings: &[impl Borrow<VeteranRankingRow>]) -> FinalRankingWithConsensus {
     let rankings_majority = Decimal::from(rankings.len()) / Decimal::from(2);
     let ranks = rankings.iter().counts_by(|r| r.borrow().score());
 
-    match (ranks.get(&FilteredOut), ranks.get(&Excellent)) {
-        (Some(filtered_out), _) if Decimal::from(*filtered_out) >= rankings_majority => {
-            ReviewRanking::FilteredOut
+    match (ranks.get(&Excellent), ranks.get(&Good), ranks.get(&FilteredOut)) {
+        (_, _, Some(filtered_out)) if Decimal::from(*filtered_out) >= rankings_majority => {
+            FinalRankingWithConsensus {
+                review_ranking: FilteredOut,
+                consensus: Decimal::from(*filtered_out) / Decimal::from(rankings.len()),
+            }
         }
-        (_, Some(excellent)) if Decimal::from(*excellent) > rankings_majority => {
-            ReviewRanking::Excellent
+        (Some(excellent), maybe_good, _) if Decimal::from(*excellent) > rankings_majority => {
+            FinalRankingWithConsensus {
+                review_ranking: Excellent,
+                consensus: (maybe_good.map(|good| Decimal::from(*good)).unwrap_or_default()
+                    + Decimal::from(*excellent)) / Decimal::from(rankings.len()),
+            }
         }
-        _ => ReviewRanking::Good,
+        (maybe_excellent, Some(good), _) => {
+            FinalRankingWithConsensus {
+                review_ranking: Good,
+                consensus: (maybe_excellent.map(|excellent| Decimal::from(*excellent)).unwrap_or_default()
+                    + Decimal::from(*good)) / Decimal::from(rankings.len()),
+            }
+        }
+        _ => unreachable!(),
     }
 }
 
@@ -77,24 +98,6 @@ fn calc_final_eligible_rankings(
         .collect()
 }
 
-fn calc_final_ranking_consensus_per_review(rankings: &[impl Borrow<VeteranRankingRow>]) -> Decimal {
-    let rankings_majority = Decimal::from(rankings.len()) / Decimal::from(2);
-    let ranks = rankings.iter().counts_by(|r| r.borrow().score());
-
-    match (ranks.get(&FilteredOut), ranks.get(&Excellent), ranks.get(&Good)) {
-        (Some(filtered_out), _, _) if Decimal::from(*filtered_out) >= rankings_majority => {
-            Decimal::from(*filtered_out) / Decimal::from(rankings.len())
-        }
-        (_, Some(excellent), _) if Decimal::from(*excellent) > rankings_majority => {
-            Decimal::from(*excellent) / Decimal::from(rankings.len())
-        }
-        (_, maybe_excellent, Some(good)) => {
-            (maybe_excellent.map(|excellent| Decimal::from(*excellent)).unwrap_or_default()
-                + Decimal::from(*good)) / Decimal::from(rankings.len())
-        }
-        _ => unreachable!(),
-    }
-}
 
 pub fn calculate_veteran_advisors_incentives(
     veteran_rankings: &[VeteranRankingRow],
@@ -105,18 +108,11 @@ pub fn calculate_veteran_advisors_incentives(
     reputation_mod_args: Vec<(Decimal, Decimal)>,
     minimum_consensus: Decimal,
 ) -> HashMap<VeteranAdvisorId, VeteranAdvisorIncentive> {
-    let final_rankings_per_review = veteran_rankings
+    let final_rankings_with_consensus_per_review = veteran_rankings
         .iter()
         .into_group_map_by(|ranking| ranking.review_id())
         .into_iter()
-        .map(|(review, rankings)| (review, calc_final_ranking_per_review(&rankings)))
-        .collect::<BTreeMap<_, _>>();
-
-    let final_rankings_consensus_per_review = veteran_rankings
-        .iter()
-        .into_group_map_by(|ranking| ranking.review_id())
-        .into_iter()
-        .map(|(review, rankings)| (review, calc_final_ranking_consensus_per_review(&rankings)))
+        .map(|(review, rankings)| (review, calc_final_ranking_with_consensus_per_review(&rankings)))
         .collect::<BTreeMap<_, _>>();
 
     let rankings_per_vca = veteran_rankings
@@ -126,11 +122,13 @@ pub fn calculate_veteran_advisors_incentives(
     let eligible_rankings_per_vca = veteran_rankings
         .iter()
         .filter(|ranking| {
-            final_rankings_per_review
+            let final_ranking_with_consensus = final_rankings_with_consensus_per_review
                 .get(&ranking.review_id())
-                .unwrap()
-                .is_positive()
-                == ranking.score().is_positive() || *final_rankings_consensus_per_review.get(&ranking.review_id()).unwrap() < minimum_consensus
+                .unwrap();
+
+            final_ranking_with_consensus.review_ranking
+                .is_positive() == ranking.score().is_positive()
+                || final_ranking_with_consensus.consensus < minimum_consensus
         })
         .counts_by(|ranking| ranking.vca.clone());
 
@@ -217,23 +215,39 @@ mod tests {
     #[test]
     fn final_ranking_is_correct() {
         assert!(matches!(
-            calc_final_ranking_per_review(&gen_dummy_rankings("".into(), 5, 5, 5, RandomIterator),),
-            ReviewRanking::Good
+            calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 5, 5, 5, RandomIterator)),
+            FinalRankingWithConsensus {
+                review_ranking: Good,
+                consensus
+            } if consensus == (dec!(10) / dec!(15))
         ));
 
         assert!(matches!(
-            calc_final_ranking_per_review(&gen_dummy_rankings("".into(), 4, 2, 5, RandomIterator)),
-            ReviewRanking::Good
+            calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 4, 2, 5, RandomIterator)),
+            FinalRankingWithConsensus {
+                review_ranking: Good,
+                consensus
+            } if consensus == (dec!(6) / dec!(11))
+
         ));
 
         assert!(matches!(
-            calc_final_ranking_per_review(&gen_dummy_rankings("".into(), 4, 1, 5, RandomIterator)),
-            ReviewRanking::FilteredOut
+            calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 4, 1, 5, RandomIterator)),
+            FinalRankingWithConsensus {
+                review_ranking: FilteredOut,
+                consensus,
+            } if consensus == (dec!(5) / dec!(10))
         ));
 
+        let excellent_final =calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 3, 1, 1, RandomIterator));
+
+            dbg!(excellent_final.consensus);
         assert!(matches!(
-            calc_final_ranking_per_review(&gen_dummy_rankings("".into(), 3, 1, 1, RandomIterator)),
-            ReviewRanking::Excellent
+            calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 3, 1, 1, RandomIterator)),
+            FinalRankingWithConsensus {
+                review_ranking: Excellent,
+                consensus,
+            } if consensus == (dec!(4) / dec!(5))
         ));
     }
 
