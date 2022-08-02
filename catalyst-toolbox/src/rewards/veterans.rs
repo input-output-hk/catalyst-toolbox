@@ -88,13 +88,11 @@ fn calc_final_ranking_consensus_per_review(rankings: &[impl Borrow<VeteranRankin
         (_, Some(excellent), _) if Decimal::from(*excellent) > rankings_majority => {
             Decimal::from(*excellent) / Decimal::from(rankings.len())
         }
-        (_, Some(excellent), Some(good)) => {
-            (Decimal::from(*excellent) + Decimal::from(*good)) / Decimal::from(rankings.len())
+        (_, maybe_excellent, Some(good)) => {
+            (maybe_excellent.map(|excellent| Decimal::from(*excellent)).unwrap_or_default()
+                + Decimal::from(*good)) / Decimal::from(rankings.len())
         }
-        (_, _, Some(good)) => {
-           Decimal::from(*good) / Decimal::from(rankings.len())
-        }
-        _ => Decimal::ONE,
+        _ => unreachable!(),
     }
 }
 
