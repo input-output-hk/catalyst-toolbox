@@ -16,11 +16,11 @@ pub struct VeteranAdvisorIncentive {
     pub reputation: u64,
 }
 
-struct FinalRankingWithConsensus {
+struct FinalRankingWithConfidence {
     review_ranking: ReviewRanking,
 
     /// This is to be used in conjunction with `ReviewRanking::is_positive()` to assess the
-    /// confidence of the boolean reply. It is either `#FO / #Rankings` or `(#Excellent + #Good) / #Rankings`.
+    /// confidence of the boolean reply. It is either `#FO / #Rankings` or `(#Excellent + #Good) / #Rankings` depending on the final ranking.
     /// For now we do not discriminate between Good and Excellent but this might change in the future.
     confidence: Decimal,
 }
@@ -34,9 +34,9 @@ pub type EligibilityThresholds = std::ops::RangeInclusive<usize>;
 // e.g. something like an expanded version of a AdvisorReviewRow
 // [proposal_id, advisor, ratings, ..(other fields from AdvisorReviewRow).., ranking (good/excellent/filtered out), vca]
 
-fn calc_final_ranking_with_consensus_per_review(
+fn calc_final_ranking_with_confidence_per_review(
     rankings: &[impl Borrow<VeteranRankingRow>],
-) -> FinalRankingWithConsensus {
+) -> FinalRankingWithConfidence {
     let rankings_majority = Decimal::from(rankings.len()) / Decimal::from(2);
     let ranks = rankings.iter().counts_by(|r| r.borrow().score());
 
@@ -46,20 +46,20 @@ fn calc_final_ranking_with_consensus_per_review(
         ranks.get(&FilteredOut),
     ) {
         (_, _, Some(filtered_out)) if Decimal::from(*filtered_out) >= rankings_majority => {
-            FinalRankingWithConsensus {
+            FinalRankingWithConfidence {
                 review_ranking: FilteredOut,
                 confidence: Decimal::from(*filtered_out) / Decimal::from(rankings.len()),
             }
         }
         (Some(excellent), maybe_good, _) if Decimal::from(*excellent) > rankings_majority => {
-            FinalRankingWithConsensus {
+            FinalRankingWithConfidence {
                 review_ranking: Excellent,
                 confidence: (Decimal::from(maybe_good.copied().unwrap_or_default())
                     + Decimal::from(*excellent))
                     / Decimal::from(rankings.len()),
             }
         }
-        (maybe_excellent, Some(good), _) => FinalRankingWithConsensus {
+        (maybe_excellent, Some(good), _) => FinalRankingWithConfidence {
             review_ranking: Good,
             confidence: (Decimal::from(maybe_excellent.copied().unwrap_or_default())
                 + Decimal::from(*good))
@@ -113,16 +113,16 @@ pub fn calculate_veteran_advisors_incentives(
     reputation_thresholds: EligibilityThresholds,
     rewards_mod_args: Vec<(Decimal, Decimal)>,
     reputation_mod_args: Vec<(Decimal, Decimal)>,
-    minimum_consensus: Decimal,
+    minimum_confidence: Decimal,
 ) -> HashMap<VeteranAdvisorId, VeteranAdvisorIncentive> {
-    let final_rankings_with_consensus_per_review = veteran_rankings
+    let final_rankings_with_confidence_per_review = veteran_rankings
         .iter()
         .into_group_map_by(|ranking| ranking.review_id())
         .into_iter()
         .map(|(review, rankings)| {
             (
                 review,
-                calc_final_ranking_with_consensus_per_review(&rankings),
+                calc_final_ranking_with_confidence_per_review(&rankings),
             )
         })
         .collect::<BTreeMap<_, _>>();
@@ -134,13 +134,13 @@ pub fn calculate_veteran_advisors_incentives(
     let eligible_rankings_per_vca = veteran_rankings
         .iter()
         .filter(|ranking| {
-            let final_ranking_with_consensus = final_rankings_with_consensus_per_review
+            let final_ranking_with_confidence = final_rankings_with_confidence_per_review
                 .get(&ranking.review_id())
                 .unwrap();
 
-            final_ranking_with_consensus.review_ranking.is_positive()
+            final_ranking_with_confidence.review_ranking.is_positive()
                 == ranking.score().is_positive()
-                || final_ranking_with_consensus.confidence < minimum_consensus
+                || final_ranking_with_confidence.confidence < minimum_confidence
         })
         .counts_by(|ranking| ranking.vca.clone());
 
@@ -193,8 +193,8 @@ mod tests {
     const VCA_1: &str = "vca1";
     const VCA_2: &str = "vca2";
     const VCA_3: &str = "vca3";
-    const SIMPLE_MINIMUM_CONSENSUS: Decimal = dec!(.5);
-    const QUALIFIED_MINIMUM_CONSENSUS: Decimal = dec!(.7);
+    const SIMPLE_MAJORITY_CONFIDENCE: Decimal = dec!(.5);
+    const QUALIFIED_MAJORITY_CONFIDENCE: Decimal = dec!(.7);
 
     struct RandomIterator;
     impl Iterator for RandomIterator {
@@ -227,16 +227,16 @@ mod tests {
     #[test]
     fn final_ranking_is_correct() {
         assert!(matches!(
-            calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 5, 5, 5, RandomIterator)),
-            FinalRankingWithConsensus {
+            calc_final_ranking_with_confidence_per_review(&gen_dummy_rankings("".into(), 5, 5, 5, RandomIterator)),
+            FinalRankingWithConfidence {
                 review_ranking: Good,
                 confidence
             } if confidence == (dec!(10) / dec!(15))
         ));
 
         assert!(matches!(
-            calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 4, 2, 5, RandomIterator)),
-            FinalRankingWithConsensus {
+            calc_final_ranking_with_confidence_per_review(&gen_dummy_rankings("".into(), 4, 2, 5, RandomIterator)),
+            FinalRankingWithConfidence {
                 review_ranking: Good,
                 confidence
             } if confidence == (dec!(6) / dec!(11))
@@ -244,16 +244,16 @@ mod tests {
         ));
 
         assert!(matches!(
-            calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 4, 1, 5, RandomIterator)),
-            FinalRankingWithConsensus {
+            calc_final_ranking_with_confidence_per_review(&gen_dummy_rankings("".into(), 4, 1, 5, RandomIterator)),
+            FinalRankingWithConfidence {
                 review_ranking: FilteredOut,
                 confidence,
             } if confidence == (dec!(5) / dec!(10))
         ));
 
         assert!(matches!(
-            calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 3, 1, 1, RandomIterator)),
-            FinalRankingWithConsensus {
+            calc_final_ranking_with_confidence_per_review(&gen_dummy_rankings("".into(), 3, 1, 1, RandomIterator)),
+            FinalRankingWithConfidence {
                 review_ranking: Excellent,
                 confidence,
             } if confidence == (dec!(4) / dec!(5))
@@ -283,7 +283,7 @@ mod tests {
                 .into_iter()
                 .zip(REPUTATION_DISAGREEMENT_MODIFIERS.into_iter())
                 .collect(),
-            SIMPLE_MINIMUM_CONSENSUS,
+            SIMPLE_MAJORITY_CONFIDENCE,
         );
         assert!(results.get(VCA_1).is_none());
         let res = results.get(VCA_2).unwrap();
@@ -313,7 +313,7 @@ mod tests {
                 .into_iter()
                 .zip(REPUTATION_DISAGREEMENT_MODIFIERS.into_iter())
                 .collect(),
-            SIMPLE_MINIMUM_CONSENSUS,
+            SIMPLE_MAJORITY_CONFIDENCE,
         );
         let res1 = results.get(VCA_1).unwrap();
         assert_eq!(res1.reputation, 1);
@@ -351,7 +351,7 @@ mod tests {
                     gen_dummy_rankings(i.to_string(), 0, good, filtered_out, vcas).into_iter()
                 })
                 .collect::<Vec<_>>();
-            let results_simple_consensus = calculate_veteran_advisors_incentives(
+            let results_simple_confidence = calculate_veteran_advisors_incentives(
                 &rankings,
                 total_rewards,
                 1..=200,
@@ -364,28 +364,28 @@ mod tests {
                     .into_iter()
                     .zip(REPUTATION_DISAGREEMENT_MODIFIERS.into_iter())
                     .collect(),
-                SIMPLE_MINIMUM_CONSENSUS,
+                SIMPLE_MAJORITY_CONFIDENCE,
             );
-            let vca3_expected_reward_portion_simple_consensus =
+            let vca3_expected_reward_portion_simple_confidence =
                 vca3_agreement * Rewards::from(100) * reward_modifier;
-            dbg!(vca3_expected_reward_portion_simple_consensus);
+            dbg!(vca3_expected_reward_portion_simple_confidence);
             dbg!(vca3_agreement, reward_modifier, reputation_modifier);
-            let vca3_expected_rewards_simple_consensus = total_rewards
-                / (Rewards::from(125 * 2) + vca3_expected_reward_portion_simple_consensus)
-                * vca3_expected_reward_portion_simple_consensus;
-            let res_vca3_simple_consensus = results_simple_consensus.get(VCA_3).unwrap();
+            let vca3_expected_rewards_simple_confidence = total_rewards
+                / (Rewards::from(125 * 2) + vca3_expected_reward_portion_simple_confidence)
+                * vca3_expected_reward_portion_simple_confidence;
+            let res_vca3_simple_confidence = results_simple_confidence.get(VCA_3).unwrap();
             assert_eq!(
-                res_vca3_simple_consensus.reputation,
+                res_vca3_simple_confidence.reputation,
                 (Rewards::from(100) * vca3_agreement * reputation_modifier)
                     .to_u64()
                     .unwrap()
             );
             assert!(are_close(
-                res_vca3_simple_consensus.rewards,
-                vca3_expected_rewards_simple_consensus
+                res_vca3_simple_confidence.rewards,
+                vca3_expected_rewards_simple_confidence
             ));
 
-            let results_qualified_consensus = calculate_veteran_advisors_incentives(
+            let results_qualified_confidence = calculate_veteran_advisors_incentives(
                 &rankings,
                 total_rewards,
                 1..=200,
@@ -398,28 +398,28 @@ mod tests {
                     .into_iter()
                     .zip(REPUTATION_DISAGREEMENT_MODIFIERS.into_iter())
                     .collect(),
-                QUALIFIED_MINIMUM_CONSENSUS,
+                QUALIFIED_MAJORITY_CONFIDENCE,
             );
 
-            let vca3_expected_reward_portion_qualified_consensus = Rewards::from(100) * dec!(1.25); // low consensus so max reward modifier, agreement ratio doesn't count as all and rankings are all eligible
-            dbg!(vca3_expected_reward_portion_qualified_consensus);
+            let vca3_expected_reward_portion_qualified_confidence = Rewards::from(100) * dec!(1.25); // low confidence so max reward modifier, agreement ratio doesn't count as all and rankings are all eligible
+            dbg!(vca3_expected_reward_portion_qualified_confidence);
             dbg!(vca3_agreement, reward_modifier, reputation_modifier);
 
-            let vca3_expected_rewards_qualified_consensus = total_rewards
-                / (Rewards::from(125 * 2) + vca3_expected_reward_portion_qualified_consensus)
-                * vca3_expected_reward_portion_qualified_consensus; // 1/3 of the reward
+            let vca3_expected_rewards_qualified_confidence = total_rewards
+                / (Rewards::from(125 * 2) + vca3_expected_reward_portion_qualified_confidence)
+                * vca3_expected_reward_portion_qualified_confidence; // 1/3 of the reward
 
-            let res_vca3_qualified_consensus = results_qualified_consensus.get(VCA_3).unwrap();
+            let res_vca3_qualified_confidence = results_qualified_confidence.get(VCA_3).unwrap();
 
             assert_eq!(
-                res_vca3_qualified_consensus.reputation,
-                (Rewards::from(100)) // all assessment are valid since consensus is low (2/3 < 0.7)
+                res_vca3_qualified_confidence.reputation,
+                (Rewards::from(100)) // all assessment are valid since confidence is low (2/3 < 0.7)
                     .to_u64()
                     .unwrap()
             );
             assert!(are_close(
-                res_vca3_qualified_consensus.rewards,
-                vca3_expected_rewards_qualified_consensus
+                res_vca3_qualified_confidence.rewards,
+                vca3_expected_rewards_qualified_confidence
             ));
         }
     }
