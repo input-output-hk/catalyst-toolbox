@@ -239,9 +239,6 @@ mod tests {
             } if consensus == (dec!(5) / dec!(10))
         ));
 
-        let excellent_final =calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 3, 1, 1, RandomIterator));
-
-            dbg!(excellent_final.consensus);
         assert!(matches!(
             calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 3, 1, 1, RandomIterator)),
             FinalRankingWithConsensus {
