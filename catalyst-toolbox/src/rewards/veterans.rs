@@ -46,14 +46,14 @@ fn calc_final_ranking_with_consensus_per_review(rankings: &[impl Borrow<VeteranR
         (Some(excellent), maybe_good, _) if Decimal::from(*excellent) > rankings_majority => {
             FinalRankingWithConsensus {
                 review_ranking: Excellent,
-                consensus: (maybe_good.map(|good| Decimal::from(*good)).unwrap_or_default()
+                consensus: (Decimal::from(maybe_good.copied().unwrap_or_default())
                     + Decimal::from(*excellent)) / Decimal::from(rankings.len()),
             }
         }
         (maybe_excellent, Some(good), _) => {
             FinalRankingWithConsensus {
                 review_ranking: Good,
-                consensus: (maybe_excellent.map(|excellent| Decimal::from(*excellent)).unwrap_or_default()
+                consensus: (Decimal::from(maybe_excellent.copied().unwrap_or_default())
                     + Decimal::from(*good)) / Decimal::from(rankings.len()),
             }
         }
