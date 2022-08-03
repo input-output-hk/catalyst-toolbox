@@ -16,13 +16,13 @@ pub struct VeteranAdvisorIncentive {
     pub reputation: u64,
 }
 
-pub struct FinalRankingWithConsensus {
-    pub review_ranking: ReviewRanking,
+struct FinalRankingWithConsensus {
+    review_ranking: ReviewRanking,
 
     /// This is to be used in conjunction with `ReviewRanking::is_positive()` to assess the
-    /// consensus of the boolean reply. It is either `#FO / #Rankings` or `(#Excellent + #Good) / #Rankings`.
+    /// confidence of the boolean reply. It is either `#FO / #Rankings` or `(#Excellent + #Good) / #Rankings`.
     /// For now we do not discriminate between Good and Excellent but this might change in the future.
-    pub negative_or_positive_consensus: Decimal,
+    confidence: Decimal,
 }
 
 pub type VcaRewards = HashMap<VeteranAdvisorId, VeteranAdvisorIncentive>;
@@ -48,24 +48,21 @@ fn calc_final_ranking_with_consensus_per_review(
         (_, _, Some(filtered_out)) if Decimal::from(*filtered_out) >= rankings_majority => {
             FinalRankingWithConsensus {
                 review_ranking: FilteredOut,
-                negative_or_positive_consensus: Decimal::from(*filtered_out)
-                    / Decimal::from(rankings.len()),
+                confidence: Decimal::from(*filtered_out) / Decimal::from(rankings.len()),
             }
         }
         (Some(excellent), maybe_good, _) if Decimal::from(*excellent) > rankings_majority => {
             FinalRankingWithConsensus {
                 review_ranking: Excellent,
-                negative_or_positive_consensus: (Decimal::from(
-                    maybe_good.copied().unwrap_or_default(),
-                ) + Decimal::from(*excellent))
+                confidence: (Decimal::from(maybe_good.copied().unwrap_or_default())
+                    + Decimal::from(*excellent))
                     / Decimal::from(rankings.len()),
             }
         }
         (maybe_excellent, Some(good), _) => FinalRankingWithConsensus {
             review_ranking: Good,
-            negative_or_positive_consensus: (Decimal::from(
-                maybe_excellent.copied().unwrap_or_default(),
-            ) + Decimal::from(*good))
+            confidence: (Decimal::from(maybe_excellent.copied().unwrap_or_default())
+                + Decimal::from(*good))
                 / Decimal::from(rankings.len()),
         },
         _ => unreachable!(),
@@ -143,7 +140,7 @@ pub fn calculate_veteran_advisors_incentives(
 
             final_ranking_with_consensus.review_ranking.is_positive()
                 == ranking.score().is_positive()
-                || final_ranking_with_consensus.negative_or_positive_consensus < minimum_consensus
+                || final_ranking_with_consensus.confidence < minimum_consensus
         })
         .counts_by(|ranking| ranking.vca.clone());
 
@@ -233,16 +230,16 @@ mod tests {
             calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 5, 5, 5, RandomIterator)),
             FinalRankingWithConsensus {
                 review_ranking: Good,
-                negative_or_positive_consensus
-            } if negative_or_positive_consensus == (dec!(10) / dec!(15))
+                confidence
+            } if confidence == (dec!(10) / dec!(15))
         ));
 
         assert!(matches!(
             calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 4, 2, 5, RandomIterator)),
             FinalRankingWithConsensus {
                 review_ranking: Good,
-                negative_or_positive_consensus
-            } if negative_or_positive_consensus == (dec!(6) / dec!(11))
+                confidence
+            } if confidence == (dec!(6) / dec!(11))
 
         ));
 
@@ -250,16 +247,16 @@ mod tests {
             calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 4, 1, 5, RandomIterator)),
             FinalRankingWithConsensus {
                 review_ranking: FilteredOut,
-                negative_or_positive_consensus,
-            } if negative_or_positive_consensus == (dec!(5) / dec!(10))
+                confidence,
+            } if confidence == (dec!(5) / dec!(10))
         ));
 
         assert!(matches!(
             calc_final_ranking_with_consensus_per_review(&gen_dummy_rankings("".into(), 3, 1, 1, RandomIterator)),
             FinalRankingWithConsensus {
                 review_ranking: Excellent,
-                negative_or_positive_consensus,
-            } if negative_or_positive_consensus == (dec!(4) / dec!(5))
+                confidence,
+            } if confidence == (dec!(4) / dec!(5))
         ));
     }
 
