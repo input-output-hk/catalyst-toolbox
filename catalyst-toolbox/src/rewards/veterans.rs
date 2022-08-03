@@ -32,11 +32,17 @@ pub type EligibilityThresholds = std::ops::RangeInclusive<usize>;
 
 // note that the consensus returned here is either FO/total or ((E+G)/total) because for now we do
 // not discriminate between Excellent and Good...
-fn calc_final_ranking_with_consensus_per_review(rankings: &[impl Borrow<VeteranRankingRow>]) -> FinalRankingWithConsensus {
+fn calc_final_ranking_with_consensus_per_review(
+    rankings: &[impl Borrow<VeteranRankingRow>],
+) -> FinalRankingWithConsensus {
     let rankings_majority = Decimal::from(rankings.len()) / Decimal::from(2);
     let ranks = rankings.iter().counts_by(|r| r.borrow().score());
 
-    match (ranks.get(&Excellent), ranks.get(&Good), ranks.get(&FilteredOut)) {
+    match (
+        ranks.get(&Excellent),
+        ranks.get(&Good),
+        ranks.get(&FilteredOut),
+    ) {
         (_, _, Some(filtered_out)) if Decimal::from(*filtered_out) >= rankings_majority => {
             FinalRankingWithConsensus {
                 review_ranking: FilteredOut,
@@ -47,16 +53,16 @@ fn calc_final_ranking_with_consensus_per_review(rankings: &[impl Borrow<VeteranR
             FinalRankingWithConsensus {
                 review_ranking: Excellent,
                 consensus: (Decimal::from(maybe_good.copied().unwrap_or_default())
-                    + Decimal::from(*excellent)) / Decimal::from(rankings.len()),
+                    + Decimal::from(*excellent))
+                    / Decimal::from(rankings.len()),
             }
         }
-        (maybe_excellent, Some(good), _) => {
-            FinalRankingWithConsensus {
-                review_ranking: Good,
-                consensus: (Decimal::from(maybe_excellent.copied().unwrap_or_default())
-                    + Decimal::from(*good)) / Decimal::from(rankings.len()),
-            }
-        }
+        (maybe_excellent, Some(good), _) => FinalRankingWithConsensus {
+            review_ranking: Good,
+            consensus: (Decimal::from(maybe_excellent.copied().unwrap_or_default())
+                + Decimal::from(*good))
+                / Decimal::from(rankings.len()),
+        },
         _ => unreachable!(),
     }
 }
@@ -98,7 +104,6 @@ fn calc_final_eligible_rankings(
         .collect()
 }
 
-
 pub fn calculate_veteran_advisors_incentives(
     veteran_rankings: &[VeteranRankingRow],
     total_rewards: Rewards,
@@ -112,7 +117,12 @@ pub fn calculate_veteran_advisors_incentives(
         .iter()
         .into_group_map_by(|ranking| ranking.review_id())
         .into_iter()
-        .map(|(review, rankings)| (review, calc_final_ranking_with_consensus_per_review(&rankings)))
+        .map(|(review, rankings)| {
+            (
+                review,
+                calc_final_ranking_with_consensus_per_review(&rankings),
+            )
+        })
         .collect::<BTreeMap<_, _>>();
 
     let rankings_per_vca = veteran_rankings
@@ -126,8 +136,8 @@ pub fn calculate_veteran_advisors_incentives(
                 .get(&ranking.review_id())
                 .unwrap();
 
-            final_ranking_with_consensus.review_ranking
-                .is_positive() == ranking.score().is_positive()
+            final_ranking_with_consensus.review_ranking.is_positive()
+                == ranking.score().is_positive()
                 || final_ranking_with_consensus.consensus < minimum_consensus
         })
         .counts_by(|ranking| ranking.vca.clone());
@@ -330,12 +340,12 @@ mod tests {
                 .flat_map(|i| {
                     let vcas =
                         vec![VCA_1.to_owned(), VCA_2.to_owned(), VCA_3.to_owned()].into_iter();
-                    let (good, filtered_out) = if Rewards::from(i) < vca3_agreement * Rewards::from(100)
-                    {
-                        (3, 0)
-                    } else {
-                        (2, 1)
-                    };
+                    let (good, filtered_out) =
+                        if Rewards::from(i) < vca3_agreement * Rewards::from(100) {
+                            (3, 0)
+                        } else {
+                            (2, 1)
+                        };
                     gen_dummy_rankings(i.to_string(), 0, good, filtered_out, vcas).into_iter()
                 })
                 .collect::<Vec<_>>();
@@ -354,7 +364,8 @@ mod tests {
                     .collect(),
                 SIMPLE_MINIMUM_CONSENSUS,
             );
-            let vca3_expected_reward_portion_simple_consensus = vca3_agreement * Rewards::from(100) * reward_modifier;
+            let vca3_expected_reward_portion_simple_consensus =
+                vca3_agreement * Rewards::from(100) * reward_modifier;
             dbg!(vca3_expected_reward_portion_simple_consensus);
             dbg!(vca3_agreement, reward_modifier, reputation_modifier);
             let vca3_expected_rewards_simple_consensus = total_rewards
@@ -367,8 +378,10 @@ mod tests {
                     .to_u64()
                     .unwrap()
             );
-            assert!(are_close(res_vca3_simple_consensus.rewards, vca3_expected_rewards_simple_consensus));
-
+            assert!(are_close(
+                res_vca3_simple_consensus.rewards,
+                vca3_expected_rewards_simple_consensus
+            ));
 
             let results_qualified_consensus = calculate_veteran_advisors_incentives(
                 &rankings,
@@ -396,14 +409,16 @@ mod tests {
 
             let res_vca3_qualified_consensus = results_qualified_consensus.get(VCA_3).unwrap();
 
-
             assert_eq!(
                 res_vca3_qualified_consensus.reputation,
                 (Rewards::from(100)) // all assessment are valid since consensus is low (2/3 < 0.7)
                     .to_u64()
                     .unwrap()
             );
-            assert!(are_close(res_vca3_qualified_consensus.rewards, vca3_expected_rewards_qualified_consensus));
+            assert!(are_close(
+                res_vca3_qualified_consensus.rewards,
+                vca3_expected_rewards_qualified_consensus
+            ));
         }
     }
 }

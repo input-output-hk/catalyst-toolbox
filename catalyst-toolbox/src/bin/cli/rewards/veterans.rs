@@ -109,7 +109,7 @@ impl VeteransRewards {
             bail!("Expected rewards_agreement_rate_cutoffs to be descending");
         }
 
-        if minimum_consensus < Decimal::new(5,1) || minimum_consensus > Decimal::ONE {
+        if minimum_consensus < Decimal::new(5, 1) || minimum_consensus > Decimal::ONE {
             bail!("Expected minimum_consensus to range between .5 and 1");
         }
 
