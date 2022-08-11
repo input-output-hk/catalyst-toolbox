@@ -8,15 +8,14 @@ use color_eyre::{
 use itertools::Itertools;
 use jormungandr_lib::{
     crypto::hash::Hash,
-    interfaces::{
-        Address, Block0Configuration, Initial, Tally, VotePlanStatus, VoteProposalStatus,
-    },
+    interfaces::{Tally, VotePlanStatus, VoteProposalStatus},
 };
 use log::debug;
 use vit_servicing_station_lib::db::models::{challenges::Challenge, proposals::Proposal};
 
 pub use types::*;
 pub use util::build_path_for_challenge;
+use voting_hir::VoterHIR;
 
 use self::{io::vecs_to_maps, types::NotFundedReason};
 
@@ -25,24 +24,22 @@ mod types;
 mod util;
 
 pub struct ProposerRewardsInputs {
-    pub block0_config: Block0Configuration,
+    pub hirs: Vec<VoterHIR>,
     pub proposals: Vec<Proposal>,
     pub voteplans: Vec<VotePlanStatus>,
     pub challenges: Vec<Challenge>,
     pub excluded_proposals: HashSet<String>,
-    pub committee_keys: Vec<Address>,
     pub total_stake_threshold: f64,
     pub approval_threshold: f64,
 }
 
 pub fn proposer_rewards(
     ProposerRewardsInputs {
-        block0_config,
+        hirs,
         proposals,
         voteplans,
         challenges,
         excluded_proposals,
-        committee_keys,
         total_stake_threshold,
         approval_threshold,
     }: ProposerRewardsInputs,
@@ -52,7 +49,7 @@ pub fn proposer_rewards(
 
     let proposals = filter_excluded_proposals(&proposals, &excluded_proposals);
 
-    let Value(total_stake) = calculate_total_stake_from_block0(&block0_config, &committee_keys);
+    let Value(total_stake) = calculate_total_stake_from_block0(&hirs);
     let total_stake_approval_threshold = total_stake_threshold * total_stake as f64;
 
     let mut result = Vec::with_capacity(challenges.len());
@@ -278,24 +275,12 @@ fn filter_excluded_proposals(
         .collect()
 }
 
-fn calculate_total_stake_from_block0(
-    block0_config: &Block0Configuration,
-    committee_keys: &[Address],
-) -> Value {
-    block0_config
-        .initial
-        .iter()
-        .filter_map(|initial| match initial {
-            Initial::Fund(fund) => Some(fund),
-            _ => None,
+fn calculate_total_stake_from_block0(hirs: &[VoterHIR]) -> Value {
+    hirs.iter()
+        .map(|h| h.voting_power)
+        .try_fold(jormungandr_lib::interfaces::Value::from(0), |a, b| {
+            a.checked_add(b)
         })
-        .flatten()
-        .filter_map(|initial| {
-            if committee_keys.contains(&initial.address) {
-                None
-            } else {
-                Some(Value::from(initial.value))
-            }
-        })
-        .sum()
+        .expect("value overflowed")
+        .into()
 }
