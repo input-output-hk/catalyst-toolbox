@@ -134,7 +134,7 @@ pub fn calc_voter_rewards(
 mod tests {
     use super::*;
     use crate::utils::assert_are_close;
-    use jormungandr_lib::crypto::account::Identifier;
+    use jormungandr_lib::crypto::{account::Identifier, hash::Hash};
     use snapshot_lib::registration::{Delegations, VotingRegistration};
     use snapshot_lib::Fraction;
     use snapshot_lib::Snapshot;
