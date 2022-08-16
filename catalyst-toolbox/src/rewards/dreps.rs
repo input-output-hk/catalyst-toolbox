@@ -90,6 +90,7 @@ pub fn calc_dreps_rewards(
 mod tests {
     use super::*;
     use jormungandr_lib::crypto::hash::Hash;
+    use proptest::prop_assert_eq;
     use snapshot_lib::*;
     use std::collections::HashMap;
     use test_strategy::proptest;
@@ -140,7 +141,7 @@ mod tests {
         )
         .unwrap();
         // Rewards should ignore inactive voters
-        assert_eq!(rewards, rewards_no_inactive);
+        prop_assert_eq!(rewards, rewards_no_inactive);
     }
 
     #[proptest]
@@ -156,7 +157,7 @@ mod tests {
             Rewards::ONE,
         )
         .unwrap();
-        assert_eq!(rewards.len(), std::cmp::min(1, voters.len()))
+        prop_assert_eq!(rewards.len(), std::cmp::min(1, voters.len()))
     }
 
     #[proptest]
@@ -232,6 +233,6 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(rewards_only_active, rewards);
+        prop_assert_eq!(rewards_only_active, rewards);
     }
 }
