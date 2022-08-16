@@ -4,9 +4,7 @@ use chain_impl_mockchain::{
 };
 use chain_ser::mempack::{ReadBuf, Readable};
 use jormungandr_lib::interfaces::{AccountIdentifier, Address};
-
 use serde::Serialize;
-
 use std::{collections::HashMap, path::Path};
 
 const MAIN_TAG: &str = "HEAD";
@@ -31,8 +29,9 @@ struct Vote {
     fragment_id: String,
     caster: Address,
     proposal: u8,
+    voteplan_id: String,
     time: String,
-    choice: u8,
+    choice: Option<u8>,
     raw_fragment: String,
 }
 
@@ -81,17 +80,20 @@ pub fn generate_archive_files(jormungandr_database: &Path, output_dir: &Path) ->
                     });
 
                 let choice = match certificate.payload() {
-                    chain_impl_mockchain::vote::Payload::Public { choice } => choice.as_byte(),
+                    chain_impl_mockchain::vote::Payload::Public { choice } => {
+                        Some(choice.as_byte())
+                    }
                     chain_impl_mockchain::vote::Payload::Private { .. } => {
                         // zeroing data to enable private voting support
                         // (at least everying exception choice, since it is disabled by desing in private vote)
-                        0u8
+                        None
                     }
                 };
 
                 writer.serialize(Vote {
                     fragment_id: fragment_id.to_string(),
                     caster,
+                    voteplan_id: certificate.vote_plan().to_string(),
                     proposal: certificate.proposal_index(),
                     time: block.header().block_date().to_string(),
                     raw_fragment: hex::encode(tx.as_ref()),
