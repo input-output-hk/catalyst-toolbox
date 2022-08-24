@@ -6,10 +6,10 @@ pub type MainnetRewardAddress = String;
 pub type MainnetStakeAddress = String;
 
 /// The voting registration/delegation format as introduced in CIP-36,
-/// which is a generalizatin of CIP-15, allowing to distribute
+/// which is a generalization of CIP-15, allowing to distribute
 /// voting power among multiple keys in a single transaction and
 /// to tag the purpose of the vote.
-#[derive(Deserialize, Clone, Debug, PartialEq)]
+#[derive(Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct VotingRegistration {
     pub stake_public_key: MainnetStakeAddress,
     pub voting_power: Value,
@@ -22,10 +22,20 @@ pub struct VotingRegistration {
     pub voting_purpose: u64,
 }
 
+impl VotingRegistration {
+    pub fn is_legacy(&self) -> bool {
+        matches!(self.delegations, Delegations::Legacy(_))
+    }
+
+    pub fn is_new(&self) -> bool {
+        !self.is_legacy()
+    }
+}
+
 /// To allow backward compatibility and avoid requiring existing users to
 /// re-register we still consider valid old CIP-15 registrations, with the
 /// simple correspondence between the two described in CIP-36.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Delegations {
     /// Tuples of (voting key, weight)
     New(Vec<(Identifier, u32)>),
@@ -136,7 +146,7 @@ mod deser {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "proptest"))]
 mod tests {
     use super::deser::IdentifierDef;
     use super::*;
@@ -145,7 +155,9 @@ mod tests {
     use proptest::collection::vec;
     use proptest::prelude::*;
     use serde::{Serialize, Serializer};
+    #[cfg(test)]
     use serde_test::{assert_de_tokens, Configure, Token};
+    #[cfg(test)]
     use test_strategy::proptest;
 
     impl Arbitrary for Delegations {
@@ -210,6 +222,7 @@ mod tests {
         }
     }
 
+    #[cfg(test)]
     #[test]
     fn parse_example() {
         assert_de_tokens(
@@ -276,6 +289,7 @@ mod tests {
         }
     }
 
+    #[cfg(test)]
     #[proptest]
     fn serde_json(d: Delegations) {
         assert_eq!(
@@ -284,6 +298,7 @@ mod tests {
         )
     }
 
+    #[cfg(test)]
     #[proptest]
     fn serde_yaml(d: Delegations) {
         assert_eq!(
@@ -292,16 +307,19 @@ mod tests {
         )
     }
 
+    #[cfg(test)]
     #[test]
     fn test_empty_delegations_are_rejected() {
         assert!(serde_json::from_str::<Delegations>(r#"[]"#,).is_err());
     }
 
+    #[cfg(test)]
     #[test]
     fn test_u64_weight_is_rejected() {
         assert!(serde_json::from_str::<Delegations>(r#"[["0xa6a3c0447aeb9cc54cf6422ba32b294e5e1c3ef6d782f2acff4a70694c4d1663", 4294967296]]"#,).is_err());
     }
 
+    #[cfg(test)]
     #[test]
     fn test_legacy_delegation_is_ok() {
         assert!(serde_json::from_str::<Delegations>(
@@ -310,6 +328,7 @@ mod tests {
         .is_ok());
     }
 
+    #[cfg(test)]
     #[test]
     fn test_u32_weight_is_ok() {
         serde_json::from_str::<Delegations>(
