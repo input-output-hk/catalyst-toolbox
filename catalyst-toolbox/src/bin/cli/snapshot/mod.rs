@@ -23,6 +23,11 @@ pub struct SnapshotCmd {
     #[structopt(short, long)]
     discrimination: Discrimination,
 
+    /// Voting power is expressed in lovelace or ada
+    #[structopt(short, long)]
+    lovelace: bool,
+
+
     #[structopt(flatten)]
     output: OutputFile,
 
@@ -34,7 +39,7 @@ impl SnapshotCmd {
     pub fn exec(self) -> Result<(), Report> {
         let raw_snapshot: RawSnapshot = serde_json::from_reader(File::open(&self.snapshot)?)?;
         let initials = Snapshot::from_raw_snapshot(raw_snapshot, self.threshold)
-            .to_block0_initials(self.discrimination);
+            .to_block0_initials(self.discrimination,self.lovelace);
         let mut out_writer = self.output.open()?;
         let content = self
             .output_format

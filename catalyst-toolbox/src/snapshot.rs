@@ -14,9 +14,9 @@ pub struct CatalystRegistration {
     pub stake_public_key: MainnetStakeAddress,
     pub voting_power: Stake,
     #[serde(deserialize_with = "reward_addr_from_hex")]
-    pub reward_address: MainnetRewardAddress,
+    pub rewards_address: MainnetRewardAddress,
     #[serde(deserialize_with = "identifier_from_hex")]
-    pub voting_public_key: Identifier,
+    pub delegations: Identifier,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -44,9 +44,7 @@ impl Snapshot {
                 .into_iter()
                 .filter(|reg| reg.voting_power >= stake_threshold)
                 .fold(HashMap::new(), |mut acc, reg| {
-                    acc.entry(reg.voting_public_key.clone())
-                        .or_default()
-                        .push(reg);
+                    acc.entry(reg.delegations.clone()).or_default().push(reg);
                     acc
                 }),
             stake_threshold,
@@ -61,13 +59,24 @@ impl Snapshot {
     /// Whether this can be directly converted into an entry in the blockchain
     /// genesis block may depend on further limitations imposed by the blockchain deployment and that
     /// are ignored at this level (e.g. maximum number of outputs in a single fragment)
-    pub fn to_block0_initials(&self, discrimination: Discrimination) -> Vec<InitialUTxO> {
+    pub fn to_block0_initials(
+        &self,
+        discrimination: Discrimination,
+        in_lovelace: bool,
+    ) -> Vec<InitialUTxO> {
         self.inner
             .iter()
             .map(|(vk, regs)| {
                 let value: Value = regs
                     .iter()
-                    .map(|reg| u64::from(reg.voting_power))
+                    .map(|reg| {
+                        let value = u64::from(reg.voting_power);
+                        if in_lovelace {
+                            value / 1_000_000 as u64
+                        } else {
+                            value
+                        }
+                    })
                     .sum::<u64>()
                     .into();
                 let address: Address =
@@ -140,8 +149,8 @@ mod tests {
                     CatalystRegistration {
                         stake_public_key,
                         voting_power,
-                        reward_address,
-                        voting_public_key,
+                        rewards_address: reward_address,
+                        delegations: voting_public_key,
                     }
                 })
                 .boxed()

@@ -135,7 +135,7 @@ fn rewards_to_mainnet_addresses(
             .sum::<Rewards>();
 
         for reg in registrations {
-            *res.entry(reg.reward_address.clone()).or_default() +=
+            *res.entry(reg.rewards_address.clone()).or_default() +=
                 reward * Rewards::from(u64::from(reg.voting_power)) / total_stake;
         }
     }
@@ -223,7 +223,7 @@ mod tests {
             .map(|key| (key.to_hex(), 1))
             .collect::<VoteCount>();
         let n_voters = votes_count.len();
-        let initial = snapshot.to_block0_initials(Discrimination::Test);
+        let initial = snapshot.to_block0_initials(Discrimination::Test,true);
         let block0 = blockchain_configuration(initial);
         let rewards = calc_voter_rewards(votes_count, 1, &block0, snapshot, Rewards::ONE).unwrap();
         if n_voters > 0 {
@@ -236,7 +236,7 @@ mod tests {
     #[proptest]
     fn test_all_inactive(snapshot: Snapshot) {
         let votes_count = VoteCount::new();
-        let initial = snapshot.to_block0_initials(Discrimination::Test);
+        let initial = snapshot.to_block0_initials(Discrimination::Test,true);
         let block0 = blockchain_configuration(initial);
         let rewards = calc_voter_rewards(votes_count, 1, &block0, snapshot, Rewards::ONE).unwrap();
         assert_eq!(rewards.len(), 0);
@@ -252,7 +252,7 @@ mod tests {
             .map(|(i, key)| (key.to_hex(), (i % 2 == 0) as u64))
             .collect::<VoteCount>();
         let n_voters = votes_count.iter().filter(|(_, votes)| **votes > 0).count();
-        let initial = snapshot.to_block0_initials(Discrimination::Test);
+        let initial = snapshot.to_block0_initials(Discrimination::Test,true);
         let block0 = blockchain_configuration(initial);
         let mut rewards =
             calc_voter_rewards(votes_count, 1, &block0, snapshot.clone(), Rewards::ONE).unwrap();
@@ -265,10 +265,10 @@ mod tests {
         for (i, vk) in voting_keys.into_iter().enumerate() {
             for reg in snapshot.registrations_for_voting_key(vk.clone()) {
                 if i % 2 == 0 {
-                    assert!(*rewards.get(&reg.reward_address).unwrap() > Rewards::ZERO);
+                    assert!(*rewards.get(&reg.rewards_address).unwrap() > Rewards::ZERO);
                 } else {
                     assert_eq!(
-                        rewards.remove(&reg.reward_address).unwrap_or_default(),
+                        rewards.remove(&reg.rewards_address).unwrap_or_default(),
                         Rewards::ZERO
                     );
                 }
@@ -289,8 +289,8 @@ mod tests {
             raw_snapshot.push(CatalystRegistration {
                 stake_public_key,
                 voting_power,
-                reward_address,
-                voting_public_key: voting_pub_key.clone(),
+                rewards_address: reward_address,
+                delegations: voting_pub_key.clone(),
             });
             total_stake += i;
         }
@@ -303,7 +303,7 @@ mod tests {
             .map(|key| (key.to_hex(), 1))
             .collect::<VoteCount>();
 
-        let initial = snapshot.to_block0_initials(Discrimination::Test);
+        let initial = snapshot.to_block0_initials(Discrimination::Test,true);
         let block0 = blockchain_configuration(initial);
 
         let rewards = calc_voter_rewards(votes_count, 1, &block0, snapshot, Rewards::ONE).unwrap();
