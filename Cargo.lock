@@ -2739,7 +2739,7 @@ dependencies = [
 [[package]]
 name = "jormungandr-lib"
 version = "0.13.0"
-source = "git+https://github.com/input-output-hk/jormungandr.git?branch=master#b20022ea89c9eb781a025616ebddf1eee01a5950"
+source = "git+https://github.com/input-output-hk/jormungandr.git?branch=master#79eb8f35cdf3b358ae2b966940fc6ecb330a99b0"
 dependencies = [
  "base64 0.13.0",
  "bech32 0.8.1",
@@ -4914,7 +4914,7 @@ dependencies = [
 [[package]]
 name = "snapshot-lib"
 version = "0.1.0"
-source = "git+https://github.com/input-output-hk/catalyst-toolbox?branch=nix-direnv-files#621c3324f5435c673a8ea3bfdb9faf6e93d3d604"
+source = "git+https://github.com/input-output-hk/catalyst-toolbox?branch=nix-direnv-files#73ccd208023e8363a21258f4f9b71525f41f7b0c"
 dependencies = [
  "bech32 0.8.1",
  "chain-crypto",
@@ -4927,25 +4927,6 @@ dependencies = [
  "rust_decimal_macros",
  "serde",
  "thiserror",
-]
-
-[[package]]
-name = "snapshot-service"
-version = "0.1.0"
-source = "git+https://github.com/input-output-hk/vit-servicing-station.git?branch=fix-ci#7e1d2c617b746105d6db9b448a1f02a6501de46b"
-dependencies = [
- "chain-ser",
- "jormungandr-lib",
- "notify",
- "serde",
- "serde_json",
- "sled",
- "snapshot-lib 0.1.0 (git+https://github.com/input-output-hk/catalyst-toolbox?branch=nix-direnv-files)",
- "thiserror",
- "time 0.3.11",
- "tokio",
- "tracing",
- "warp",
 ]
 
 [[package]]
@@ -5913,22 +5894,25 @@ dependencies = [
 [[package]]
 name = "vit-servicing-station-lib"
 version = "0.3.4-dev"
-source = "git+https://github.com/input-output-hk/vit-servicing-station.git?branch=fix-ci#7e1d2c617b746105d6db9b448a1f02a6501de46b"
+source = "git+https://github.com/input-output-hk/vit-servicing-station.git?branch=fix-ci#f04ec5b37f263377527630f4ef41312cf45ad57b"
 dependencies = [
  "async-trait",
  "base64 0.12.3",
+ "chain-ser",
  "diesel",
  "diesel_migrations",
  "dotenv",
  "http-zipkin",
  "itertools 0.9.0",
+ "jormungandr-lib",
  "libsqlite3-sys",
  "log",
  "notify",
  "serde",
  "serde_json",
  "simplelog",
- "snapshot-service",
+ "sled",
+ "snapshot-lib 0.1.0 (git+https://github.com/input-output-hk/catalyst-toolbox?branch=nix-direnv-files)",
  "structopt",
  "strum 0.21.0",
  "strum_macros 0.21.1",
@@ -5944,7 +5928,7 @@ dependencies = [
 [[package]]
 name = "vit-servicing-station-tests"
 version = "0.3.4-dev"
-source = "git+https://github.com/input-output-hk/vit-servicing-station.git?branch=fix-ci#7e1d2c617b746105d6db9b448a1f02a6501de46b"
+source = "git+https://github.com/input-output-hk/vit-servicing-station.git?branch=fix-ci#f04ec5b37f263377527630f4ef41312cf45ad57b"
 dependencies = [
  "assert_cmd 2.0.4",
  "assert_fs",
