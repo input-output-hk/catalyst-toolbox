@@ -50,7 +50,7 @@
             extensions = [
               "rust-src"
               "rust-analysis"
-              "rls-preview"
+              #"rls-preview"
               "rustfmt-preview"
               "clippy-preview"
             ];
