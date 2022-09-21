@@ -219,7 +219,7 @@ async def get_proposals_voteplans_and_challenges_from_api(
         proposal.chain_proposal_id: proposal for proposal in await proposals_task
     }
     voteplans_proposals = {
-        proposal.chain_proposal_id: proposal
+        proposal.proposal_id: proposal
         for proposal in itertools.chain.from_iterable(
             voteplan.proposals for voteplan in await voteplans_task
         )
