@@ -100,7 +100,7 @@ pub fn calculate_results(
         let (total_result, threshold_success) = success_results[proposal_id];
         let (yes, no) = extract_yes_no_votes(proposal, voteplan)?;
 
-        let funded = threshold_success && depletion > 0 && depletion >= proposal.proposal_funds;
+        let funded = threshold_success && depletion > proposal.proposal_funds && depletion >= proposal.proposal_funds;
 
         let not_funded_reason = match (funded, threshold_success) {
             (true, _) => None,

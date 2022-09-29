@@ -1,5 +1,8 @@
 unset shellHook
+PATH=${PATH:-}
 nix_saved_PATH="$PATH"
+XDG_DATA_DIRS=${XDG_DATA_DIRS:-}
+nix_saved_XDG_DATA_DIRS="$XDG_DATA_DIRS"
 AR='ar'
 export AR
 AS='as'
@@ -11,8 +14,6 @@ CONFIG_SHELL='/nix/store/j9rc786ylq8cid4zgcn6idknilkbd4ax-bash-5.1-p16/bin/bash'
 export CONFIG_SHELL
 CXX='g++'
 export CXX
-EPOCHREALTIME='1657580840.892235'
-EPOCHSECONDS='1657580840'
 HOSTTYPE='x86_64'
 HOST_PATH='/nix/store/q7iay0f56vf25jvraffxkyf8jvisbcc7-rust-default-1.61.0/bin:/nix/store/r2d2ndspymv19dxm1s4nqqjrqkwhzpcp-pkg-config-wrapper-0.29.2/bin:/nix/store/0amx6k0b9i34kj5rbfq359s95mzj4xg8-openssl-1.1.1p-bin/bin:/nix/store/bhmp1ydh4ab68mcm7rh23nbv3y7z1w9k-protobuf-3.19.4/bin:/nix/store/l2xyarvzahpz3fysr9hqbvcsgv5gnrnk-coreutils-9.1/bin:/nix/store/ip1zdc23sqyq15957lbjrxj31m5xh72c-findutils-4.9.0/bin:/nix/store/fagksixa18rdzwhm7mnwzdp022nrnv5l-diffutils-3.8/bin:/nix/store/l62i4fn54qry9xamnj209wfizpw2bng5-gnused-4.8/bin:/nix/store/1rfvqdj1sc27ckiypcw5hnmfb30paj80-gnugrep-3.7/bin:/nix/store/kd0dqqh4r906b8iwrvim4c0qv3dmamnf-gawk-5.1.1/bin:/nix/store/vq67896gm97w895dv8vj6nyf5313zc58-gnutar-1.34/bin:/nix/store/nkzahhyaf1yb9isqwyfq9n5gxq7civ0z-gzip-1.12/bin:/nix/store/79p6fdmfh5j2xcxhyk8m9sl7adzhkdpq-bzip2-1.0.6.0.2-bin/bin:/nix/store/8q06kxhkl4dq3vjd3ai2j8n9kr26c271-gnumake-4.3/bin:/nix/store/j9rc786ylq8cid4zgcn6idknilkbd4ax-bash-5.1-p16/bin:/nix/store/mfabz5ca7wvfvcrxvn33g8hm5fa3j444-patch-2.7.6/bin:/nix/store/n2rjs5jhndw6xs3nrssnh2s5sqmjwqch-xz-5.2.5-bin/bin:/nix/store/8ira0m19haxn7ivyljszvv0isrx9wajp-file-5.42/bin'
 export HOST_PATH
@@ -22,19 +23,19 @@ IN_NIX_SHELL='impure'
 export IN_NIX_SHELL
 LD='ld'
 export LD
-LINENO='73'
+LINENO='76'
 MACHTYPE='x86_64-pc-linux-gnu'
 NIX_BINTOOLS='/nix/store/wvfcmk36krxvxip5j9374h8h8flpa0ic-binutils-wrapper-2.38'
 export NIX_BINTOOLS
 NIX_BINTOOLS_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu='1'
 export NIX_BINTOOLS_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu
-NIX_BUILD_CORES='20'
+NIX_BUILD_CORES='16'
 export NIX_BUILD_CORES
 NIX_CC='/nix/store/aq67a6bzcjyh6rcjj78miirqjl9rav72-gcc-wrapper-11.3.0'
 export NIX_CC
 NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu='1'
 export NIX_CC_WRAPPER_TARGET_HOST_x86_64_unknown_linux_gnu
-NIX_CFLAGS_COMPILE=' -frandom-seed=prx7ylxzgd -isystem /nix/store/imfqrwbn9a9zxhs7kmr5p2jm35zqbzda-openssl-1.1.1p-dev/include -isystem /nix/store/bhmp1ydh4ab68mcm7rh23nbv3y7z1w9k-protobuf-3.19.4/include -isystem /nix/store/imfqrwbn9a9zxhs7kmr5p2jm35zqbzda-openssl-1.1.1p-dev/include -isystem /nix/store/bhmp1ydh4ab68mcm7rh23nbv3y7z1w9k-protobuf-3.19.4/include'
+NIX_CFLAGS_COMPILE=' -frandom-seed=8821nmn8l5 -isystem /nix/store/imfqrwbn9a9zxhs7kmr5p2jm35zqbzda-openssl-1.1.1p-dev/include -isystem /nix/store/bhmp1ydh4ab68mcm7rh23nbv3y7z1w9k-protobuf-3.19.4/include -isystem /nix/store/imfqrwbn9a9zxhs7kmr5p2jm35zqbzda-openssl-1.1.1p-dev/include -isystem /nix/store/bhmp1ydh4ab68mcm7rh23nbv3y7z1w9k-protobuf-3.19.4/include'
 export NIX_CFLAGS_COMPILE
 NIX_ENFORCE_NO_NATIVE='1'
 export NIX_ENFORCE_NO_NATIVE
@@ -133,7 +134,7 @@ declare -a envHostHostHooks=('ccWrapper_addCVars' 'bintoolsWrapper_addLDVars' )
 declare -a envHostTargetHooks=('ccWrapper_addCVars' 'bintoolsWrapper_addLDVars' )
 declare -a envTargetTargetHooks=('pkgConfigWrapper_addPkgConfigPath' )
 declare -a fixupOutputHooks=('if [ -z "${dontPatchELF-}" ]; then patchELF "$prefix"; fi' '_makeSymlinksRelative' 'if [ -z "${dontGzipMan-}" ]; then compressManPages "$prefix"; fi' '_doStrip' 'patchShebangsAuto' '_pruneLibtoolFiles' 'if [[ -z "${noAuditTmpdir-}" && -e "$prefix" ]]; then auditTmpdir "$prefix"; fi' '_moveSystemdUserUnits' '_moveSbin' '_moveLib64' )
-guess='20'
+guess='16'
 initialPath='/nix/store/l2xyarvzahpz3fysr9hqbvcsgv5gnrnk-coreutils-9.1 /nix/store/ip1zdc23sqyq15957lbjrxj31m5xh72c-findutils-4.9.0 /nix/store/fagksixa18rdzwhm7mnwzdp022nrnv5l-diffutils-3.8 /nix/store/l62i4fn54qry9xamnj209wfizpw2bng5-gnused-4.8 /nix/store/1rfvqdj1sc27ckiypcw5hnmfb30paj80-gnugrep-3.7 /nix/store/kd0dqqh4r906b8iwrvim4c0qv3dmamnf-gawk-5.1.1 /nix/store/vq67896gm97w895dv8vj6nyf5313zc58-gnutar-1.34 /nix/store/nkzahhyaf1yb9isqwyfq9n5gxq7civ0z-gzip-1.12 /nix/store/79p6fdmfh5j2xcxhyk8m9sl7adzhkdpq-bzip2-1.0.6.0.2-bin /nix/store/8q06kxhkl4dq3vjd3ai2j8n9kr26c271-gnumake-4.3 /nix/store/j9rc786ylq8cid4zgcn6idknilkbd4ax-bash-5.1-p16 /nix/store/mfabz5ca7wvfvcrxvn33g8hm5fa3j444-patch-2.7.6 /nix/store/n2rjs5jhndw6xs3nrssnh2s5sqmjwqch-xz-5.2.5-bin /nix/store/8ira0m19haxn7ivyljszvv0isrx9wajp-file-5.42'
 name='nix-shell'
 export name
@@ -1724,6 +1725,7 @@ updateSourceDateEpoch ()
     fi
 }
 PATH="$PATH:$nix_saved_PATH"
+XDG_DATA_DIRS="$XDG_DATA_DIRS:$nix_saved_XDG_DATA_DIRS"
 export NIX_BUILD_TOP="$(mktemp -d -t nix-shell.XXXXXX)"
 export TMP="$NIX_BUILD_TOP"
 export TMPDIR="$NIX_BUILD_TOP"
