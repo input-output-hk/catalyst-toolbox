@@ -1,7 +1,10 @@
 mod community_advisors;
+mod full;
 mod proposers;
 mod veterans;
 mod voters;
+
+use std::path::PathBuf;
 
 use catalyst_toolbox::{http::default_http_client, rewards::proposers as proposers_lib};
 use color_eyre::Report;
@@ -19,6 +22,9 @@ pub enum Rewards {
     /// Calculate rewards for veteran community advisors
     Veterans(veterans::VeteransRewards),
 
+    /// Calculate full rewards based on a config file
+    Full { path: PathBuf },
+
     /// Calculate rewards for propsers
     Proposers(proposers_lib::ProposerRewards),
 }
@@ -29,6 +35,7 @@ impl Rewards {
             Rewards::Voters(cmd) => cmd.exec(),
             Rewards::CommunityAdvisors(cmd) => cmd.exec(),
             Rewards::Veterans(cmd) => cmd.exec(),
+            Rewards::Full { path } => full::full_rewards(&path),
             Rewards::Proposers(proposers) => {
                 proposers::rewards(&proposers, &default_http_client(None))
             }
