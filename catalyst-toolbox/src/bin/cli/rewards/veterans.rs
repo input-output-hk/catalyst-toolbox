@@ -62,6 +62,14 @@ pub struct VeteransRewards {
     /// if the first cutoff is selected then the first modifier is used.
     #[structopt(long, required = true)]
     reputation_agreement_rate_modifiers: Vec<Decimal>,
+
+    /// Value in range [0.5, 1]
+    /// The minimum confidence for a vCA ranking to be excluded from eligible rankings when in disagreement from simple majority.
+    /// Confidence is either `#FO / #Rankings` or `(#Excellent + #Good) / #Rankings` depending on the final ranking.
+    /// Simple majority is 50%. Qualified majority is 70%. Using 70% avoids punishing vCAs where this confidence is not clear.
+    /// 70% is because when #vCA == 3 confidence is only 66% and thus in this case, where there is just 1 vote in disagreement, all 3 vCAs get rewarded.
+    #[structopt(long)]
+    minimum_confidence: Decimal,
 }
 
 impl VeteransRewards {
@@ -77,6 +85,7 @@ impl VeteransRewards {
             rewards_agreement_rate_modifiers,
             reputation_agreement_rate_cutoffs,
             reputation_agreement_rate_modifiers,
+            minimum_confidence,
         } = self;
         let reviews: Vec<VeteranRankingRow> = csv::load_data_from_csv::<_, b','>(&from)?;
 
@@ -100,6 +109,10 @@ impl VeteransRewards {
             bail!("Expected rewards_agreement_rate_cutoffs to be descending");
         }
 
+        if minimum_confidence < Decimal::new(5, 1) || minimum_confidence > Decimal::ONE {
+            bail!("Expected minimum_confidence to range between .5 and 1");
+        }
+
         let results = veterans::calculate_veteran_advisors_incentives(
             &reviews,
             Rewards::from(total_rewards),
@@ -113,6 +126,7 @@ impl VeteransRewards {
                 .into_iter()
                 .zip(reputation_agreement_rate_modifiers.into_iter())
                 .collect(),
+            minimum_confidence,
         );
 
         csv::dump_data_to_csv(rewards_to_csv_data(results)?.iter(), &to).unwrap();
