@@ -135,7 +135,7 @@ fn rewards_to_mainnet_addresses(
             .sum::<Rewards>();
 
         for reg in registrations {
-            *res.entry(reg.rewards_address.clone()).or_default() +=
+            *res.entry(reg.stake_public_key.clone()).or_default() +=
                 reward * Rewards::from(u64::from(reg.voting_power)) / total_stake;
         }
     }
