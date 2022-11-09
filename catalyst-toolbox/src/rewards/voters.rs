@@ -223,7 +223,7 @@ mod tests {
             .map(|key| (key.to_hex(), 1))
             .collect::<VoteCount>();
         let n_voters = votes_count.len();
-        let initial = snapshot.to_block0_initials(Discrimination::Test,true);
+        let initial = snapshot.to_block0_initials(Discrimination::Test, true);
         let block0 = blockchain_configuration(initial);
         let rewards = calc_voter_rewards(votes_count, 1, &block0, snapshot, Rewards::ONE).unwrap();
         if n_voters > 0 {
@@ -236,7 +236,7 @@ mod tests {
     #[proptest]
     fn test_all_inactive(snapshot: Snapshot) {
         let votes_count = VoteCount::new();
-        let initial = snapshot.to_block0_initials(Discrimination::Test,true);
+        let initial = snapshot.to_block0_initials(Discrimination::Test, true);
         let block0 = blockchain_configuration(initial);
         let rewards = calc_voter_rewards(votes_count, 1, &block0, snapshot, Rewards::ONE).unwrap();
         assert_eq!(rewards.len(), 0);
@@ -252,7 +252,7 @@ mod tests {
             .map(|(i, key)| (key.to_hex(), (i % 2 == 0) as u64))
             .collect::<VoteCount>();
         let n_voters = votes_count.iter().filter(|(_, votes)| **votes > 0).count();
-        let initial = snapshot.to_block0_initials(Discrimination::Test,true);
+        let initial = snapshot.to_block0_initials(Discrimination::Test, true);
         let block0 = blockchain_configuration(initial);
         let mut rewards =
             calc_voter_rewards(votes_count, 1, &block0, snapshot.clone(), Rewards::ONE).unwrap();
@@ -303,7 +303,7 @@ mod tests {
             .map(|key| (key.to_hex(), 1))
             .collect::<VoteCount>();
 
-        let initial = snapshot.to_block0_initials(Discrimination::Test,true);
+        let initial = snapshot.to_block0_initials(Discrimination::Test, true);
         let block0 = blockchain_configuration(initial);
 
         let rewards = calc_voter_rewards(votes_count, 1, &block0, snapshot, Rewards::ONE).unwrap();
