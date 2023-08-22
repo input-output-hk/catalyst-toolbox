@@ -1,3 +1,4 @@
+## This repo is unmaintained please refer to https://github.com/input-output-hk/catalyst-core/tree/main/src/catalyst-toolbox
 # catalyst-toolbox
 Catalyst Tools, cli's and scripts related
 
