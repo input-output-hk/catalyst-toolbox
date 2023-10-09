@@ -219,7 +219,7 @@ async def get_proposals_voteplans_and_challenges_from_api(
         proposal.chain_proposal_id: proposal for proposal in await proposals_task
     }
     voteplans_proposals = {
-        proposal.chain_proposal_id: proposal
+        proposal.proposal_id: proposal
         for proposal in itertools.chain.from_iterable(
             voteplan.proposals for voteplan in await voteplans_task
         )
@@ -317,6 +317,7 @@ Result = namedtuple(
         "no",
         "result",
         "meets_approval_threshold",
+        "wallets",
         "requested_dollars",
         "status",
         "fund_depletion",
@@ -371,6 +372,7 @@ def calc_results(
             no=no_result,
             result=total_result,
             meets_approval_threshold=YES if threshold_success else NO,
+            wallets=voteplan_proposal.votes_cast,
             requested_dollars=proposal.proposal_funds,
             status=FUNDED if funded else NOT_FUNDED,
             fund_depletion=depletion,
