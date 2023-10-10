@@ -1,5 +1,5 @@
 use catalyst_toolbox::rewards::voters::{calc_voter_rewards, Rewards, VoteCount};
-use catalyst_toolbox::snapshot::{MainnetRewardAddress, Snapshot};
+use catalyst_toolbox::snapshot::{RewardAddress, Snapshot};
 use catalyst_toolbox::utils::assert_are_close;
 
 use color_eyre::Report;
@@ -40,7 +40,7 @@ pub struct VotersRewards {
 
 fn write_rewards_results(
     common: Common,
-    rewards: &BTreeMap<MainnetRewardAddress, Rewards>,
+    rewards: &BTreeMap<RewardAddress, Rewards>,
 ) -> Result<(), Report> {
     let writer = common.open_output()?;
     let header = ["Address", "Reward for the voter (lovelace)"];
