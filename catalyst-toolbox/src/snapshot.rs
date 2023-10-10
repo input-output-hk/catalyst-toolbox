@@ -161,7 +161,7 @@ where
         Testnet,
     }
 
-    // Following cip-0019 specification https://github.com/cardano-foundation/CIPs/blob
+    // Following cip-0019 specification https://cips.cardano.org/cips/cip19/
     use bech32::ToBase32;
     let bytes = hex::decode(String::deserialize(deserializer)?.trim_start_matches("0x"))
         .map_err(|e| D::Error::custom(format!("invalid hex string: {}", e)))?;
