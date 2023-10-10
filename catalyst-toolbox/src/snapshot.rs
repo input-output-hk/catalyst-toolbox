@@ -106,7 +106,39 @@ fn identifier_from_hex<'de, D>(deserializer: D) -> Result<Identifier, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let hex = String::deserialize(deserializer)?;
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum NewDelegationRegistrationInput {
+        String(String),
+        Int(u64),
+    }
+
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum DelegationRegistration {
+        // new registration
+        // `"delegations": [["0x221fc1fbcc4abb38c425a922a048af6d492d1260d1b6f055e129385e18f2c603", 1]]`
+        New(Vec<Vec<NewDelegationRegistrationInput>>),
+        // old registration
+        // `"delegations": "0xe8322036dd13fa4576b0e6abe51150c040fc5a9f20a94ecbd918986023354ba3",`
+        Old(String),
+    }
+
+    let hex = match DelegationRegistration::deserialize(deserializer)? {
+        DelegationRegistration::New(delegations) => match delegations
+            .get(0)
+            .ok_or_else(|| D::Error::custom("Invalid delegations format"))?
+            .get(0)
+            .ok_or_else(|| D::Error::custom("Invalid delegations format"))?
+        {
+            NewDelegationRegistrationInput::String(val) => Ok(val.clone()),
+            NewDelegationRegistrationInput::Int(_) => {
+                Err(D::Error::custom("Invalid delegations format"))
+            }
+        }?,
+        DelegationRegistration::Old(delegations) => delegations,
+    };
+
     Identifier::from_hex(hex.trim_start_matches("0x"))
         .map_err(|e| D::Error::custom(format!("invalid public key {}", e)))
 }
@@ -194,22 +226,27 @@ mod tests {
         let raw: RawSnapshot = serde_json::from_str(
             r#"[
             {
-                "reward_address": "0xe1ffff2912572257b59dca84c965e4638a09f1524af7a15787eb0d8a46",
-                "stake_public_key": "0xe7d6616840734686855ec80ee9658f5ead9e29e494ec6889a5d1988b50eb8d0f",
-                "voting_power": 177689370111,
-                "voting_public_key": "0xc21ddb4abb04bd5ce21091eef1676e44889d806e6e1a6a9a7dc25c0eba54cc33"
+                "delegations": "0xe8322036dd13fa4576b0e6abe51150c040fc5a9f20a94ecbd918986023354ba3",
+                "rewards_address": "0xe176cc506ad5d3845e0f51344ca896600df7debf96f58f4af3c1046bd9",
+                "stake_public_key": "0x76d416ebfc0a6044b7b00afeeafea330ad1ee2dc3f63b9c4fc5fb685f1dfef01",
+                "voting_power": 0,
+                "voting_purpose": null,
+                "tx_id": 10554899,
+                "nonce": 37222821
             },
             {
-                "reward_address": "0xe1fffc8bcb1578a15413bf11413639fa270a9ffa36d9a0c4d2c93536fe",
-                "stake_public_key": "0x2f9a90d87321a255efd038fea5df2a2349ea2c32fa584b73f2a46f655f235919",
-                "voting_power": 9420156337,
-                "voting_public_key": "0x3f656a1ba4ea8b33c81961fee6f15f09600f024435b1a7ada1e5b77b03a41a6d"
-            },
-            {
-                "reward_address": "0xe1fff825e1bf009d35d9160f6340250b581f5d37c17538e960c0410b20",
-                "stake_public_key": "0x66ae1553036548b99b93c783811bb281be5a196a12d950bda4ac9b83630afbd1",
-                "voting_power": 82168168290,
-                "voting_public_key": "0x125860fc4870bb480d1d2a97f101e1c5c845c0222400fdaba7bcca93e79bd66e"
+                "delegations": [
+                    [
+                      "0x221fc1fbcc4abb38c425a922a048af6d492d1260d1b6f055e129385e18f2c603",
+                      1
+                    ]
+                  ],
+                "rewards_address": "0x017514bf116e3625b3d3f534fb0c23b9914876bf82ba6966543688dffb372daf66c2fc9a5d19453a4f429711cba3aee6ae9d78425c23aeaa85",
+                "stake_public_key": "0xd96073e70e5c426463e6c5f732712939daa0c6c35313dd989752c7cb672b0b4c",
+                "voting_power": 41248637318,
+                "voting_purpose": 0,
+                "tx_id": 70591630,
+                "nonce": 96778096
             }
         ]"#,
         ).unwrap();
