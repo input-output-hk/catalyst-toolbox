@@ -27,11 +27,11 @@ chain-time = { git = "https://github.com/input-output-hk/chain-libs.git", branch
 chain-impl-mockchain = { git = "https://github.com/input-output-hk/chain-libs.git", branch = "catalyst-fund9" }
 time = { version = "0.3", features = ["formatting", "parsing", "macros"] }
 itertools = "0.10"
-jcli = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "catalyst-fund9" }
-jormungandr-lib = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "catalyst-fund9" }
-jormungandr-integration-tests = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "catalyst-fund9" }
-jormungandr-automation = { git = "https://github.com/input-output-hk/jormungandr.git",  branch = "catalyst-fund9" }
-thor = { git = "https://github.com/input-output-hk/jormungandr.git",  branch = "catalyst-fund9" }
+jcli = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "catalyst-fund11" }
+jormungandr-lib = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "catalyst-fund11" }
+jormungandr-integration-tests = { git = "https://github.com/input-output-hk/jormungandr.git", branch = "catalyst-fund11" }
+jormungandr-automation = { git = "https://github.com/input-output-hk/jormungandr.git",  branch = "catalyst-fund11" }
+thor = { git = "https://github.com/input-output-hk/jormungandr.git",  branch = "catalyst-fund11" }
 jortestkit = { git = "https://github.com/input-output-hk/jortestkit.git", branch = "master" }
 rayon = "1.5"
 rust_decimal = "1.16"
