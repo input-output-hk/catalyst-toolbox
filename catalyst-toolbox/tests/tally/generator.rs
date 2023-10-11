@@ -45,7 +45,7 @@ fn account_from_slice<P>(
     }
 }
 
-impl<'a> VoteRoundGenerator {
+impl VoteRoundGenerator {
     pub fn new(blockchain: TestBlockchain) -> Self {
         let TestBlockchain {
             config,
@@ -225,7 +225,7 @@ impl<'a> VoteRoundGenerator {
                         let decrypted_tally = DecryptedPrivateTally::new(
                             results
                                 .into_iter()
-                                .zip(shares.into_iter())
+                                .zip(shares)
                                 .map(|(tally_result, decrypt_shares)| {
                                     DecryptedPrivateTallyProposal {
                                         decrypt_shares,

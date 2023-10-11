@@ -1,4 +1,4 @@
-use crate::snapshot::{MainnetRewardAddress, Snapshot};
+use crate::snapshot::{RewardAddress, Snapshot};
 use chain_addr::{Discrimination, Kind};
 use chain_impl_mockchain::transaction::UnspecifiedAccountIdentifier;
 use chain_impl_mockchain::vote::CommitteeId;
@@ -85,7 +85,7 @@ fn active_addresses(
         // even if they didn't vote and the threshold is 0.
         // Active accounts are overwritten with the correct count.
         .map(|key| (key.to_hex(), 0))
-        .chain(vote_count.into_iter())
+        .chain(vote_count)
         .filter_map(|(account_hex, count)| {
             if count >= threshold {
                 Some(
@@ -120,7 +120,7 @@ fn account_hex_to_address(
 fn rewards_to_mainnet_addresses(
     rewards: HashMap<&'_ Address, Rewards>,
     snapshot: Snapshot,
-) -> BTreeMap<MainnetRewardAddress, Rewards> {
+) -> BTreeMap<RewardAddress, Rewards> {
     let mut res = BTreeMap::new();
     for (addr, reward) in rewards {
         let registrations = snapshot.registrations_for_voting_key(
@@ -149,7 +149,7 @@ pub fn calc_voter_rewards(
     block0: &Block0Configuration,
     snapshot: Snapshot,
     total_rewards: Rewards,
-) -> Result<BTreeMap<MainnetRewardAddress, Rewards>, Error> {
+) -> Result<BTreeMap<RewardAddress, Rewards>, Error> {
     let active_addresses = active_addresses(vote_count, block0, vote_threshold, &snapshot);
 
     let committee_keys: HashSet<Address> = block0
@@ -219,7 +219,6 @@ mod tests {
     fn test_all_active(snapshot: Snapshot) {
         let votes_count = snapshot
             .voting_keys()
-            .into_iter()
             .map(|key| (key.to_hex(), 1))
             .collect::<VoteCount>();
         let n_voters = votes_count.len();
@@ -299,7 +298,6 @@ mod tests {
 
         let votes_count = snapshot
             .voting_keys()
-            .into_iter()
             .map(|key| (key.to_hex(), 1))
             .collect::<VoteCount>();
 

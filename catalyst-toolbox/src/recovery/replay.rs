@@ -36,6 +36,7 @@ impl Replay {
         }
     }
 
+    #[allow(clippy::result_large_err)]
     pub fn exec(self) -> Result<(), Error> {
         let fragments = load_persistent_fragments_logs_from_folder_path(&self.logs_path)
             .map_err(Error::PersistenLogsLoading)?;
@@ -53,7 +54,7 @@ impl Replay {
         let mut out_writer = self.output.open()?;
         let content = self
             .output_format
-            .format_json(serde_json::to_value(&voteplan_status)?)?;
+            .format_json(serde_json::to_value(voteplan_status)?)?;
         out_writer.write_all(content.as_bytes())?;
         Ok(())
     }
