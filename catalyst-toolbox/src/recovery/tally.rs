@@ -245,6 +245,7 @@ pub struct VoteFragmentFilter<I: Iterator<Item = PersistentFragmentLog>> {
 }
 
 impl<I: Iterator<Item = PersistentFragmentLog>> VoteFragmentFilter<I> {
+    #[allow(clippy::result_large_err)]
     pub fn new(block0: Block, range_check: Range<u32>, fragments: I) -> Result<Self, Error> {
         let block0_configuration = Block0Configuration::from_block(&block0)?;
         let fees = block0_configuration.blockchain_configuration.linear_fees;
@@ -347,6 +348,7 @@ impl<I: Iterator<Item = PersistentFragmentLog>> Iterator for VoteFragmentFilter<
     }
 }
 
+#[allow(clippy::result_large_err)]
 pub fn recover_ledger_from_logs(
     block0: &Block,
     fragment_logs: impl Iterator<Item = Result<PersistentFragmentLog, FragmentLogDeserializeError>>,
@@ -435,6 +437,7 @@ struct FragmentReplayer {
 
 impl FragmentReplayer {
     // build a new block0 with mirror accounts and same configuration as original one
+    #[allow(clippy::result_large_err)]
     fn from_block0(block0: &Block) -> Result<(Self, Block), Error> {
         let mut config =
             Block0Configuration::from_block(block0).map_err(Error::Block0ConfigurationError)?;
@@ -502,6 +505,7 @@ impl FragmentReplayer {
         ))
     }
 
+    #[allow(clippy::result_large_err)]
     fn replay_votecast(&mut self, tx: TransactionSlice<VoteCast>) -> Result<Fragment, Error> {
         let (vote_cast, identifier, _) = deconstruct_account_transaction(&tx)?;
         let address =
@@ -526,6 +530,7 @@ impl FragmentReplayer {
         Ok(res)
     }
 
+    #[allow(clippy::result_large_err)]
     fn replay_tx(&mut self, tx: TransactionSlice<NoExtra>) -> Result<Fragment, Error> {
         let (_, identifier, _) = deconstruct_account_transaction(&tx)?;
         let address =
@@ -544,9 +549,7 @@ impl FragmentReplayer {
             self.non_voting_wallets
                 .entry(address.clone())
                 .or_insert_with(|| {
-                    Wallet::new_from_key(<SecretKey<Ed25519Extended>>::generate(
-                        &mut rand::thread_rng(),
-                    ))
+                    Wallet::new_from_key(<SecretKey<Ed25519Extended>>::generate(rand::thread_rng()))
                 })
                 .account_id()
         }
@@ -576,6 +579,7 @@ impl FragmentReplayer {
     }
 
     // rebuild a fragment to be used in the new ledger configuration with the account mirror account.
+    #[allow(clippy::result_large_err)]
     fn replay(
         &mut self,
         original: ValidatedFragment,

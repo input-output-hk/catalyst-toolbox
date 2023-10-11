@@ -180,9 +180,6 @@ fn deserialize_rewards<'de, D: Deserializer<'de>>(deserializer: D) -> Result<u64
         })
         .and_then(|s| s.parse().ok())
         .ok_or_else(|| {
-            D::Error::custom(&format!(
-                "Unable to read malformed value: '{}'",
-                rewards_str
-            ))
+            D::Error::custom(format!("Unable to read malformed value: '{}'", rewards_str))
         })
 }

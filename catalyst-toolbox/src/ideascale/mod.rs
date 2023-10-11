@@ -127,11 +127,12 @@ pub fn build_challenges(
             (
                 c.id,
                 models::se::Challenge {
+                    #[allow(clippy::obfuscated_if_else)]
                     challenge_type: funnels
                         .get(&c.funnel_id)
                         .unwrap_or_else(|| panic!("A funnel with id {} wasn't found", c.funnel_id))
                         .is_community()
-                        .then(|| "community-choice")
+                        .then_some("community-choice")
                         .unwrap_or("simple")
                         .to_string(),
                     challenge_url: c.challenge_url.clone(),

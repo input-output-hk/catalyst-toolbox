@@ -85,7 +85,7 @@ fn active_addresses(
         // even if they didn't vote and the threshold is 0.
         // Active accounts are overwritten with the correct count.
         .map(|key| (key.to_hex(), 0))
-        .chain(vote_count.into_iter())
+        .chain(vote_count)
         .filter_map(|(account_hex, count)| {
             if count >= threshold {
                 Some(
@@ -219,7 +219,6 @@ mod tests {
     fn test_all_active(snapshot: Snapshot) {
         let votes_count = snapshot
             .voting_keys()
-            .into_iter()
             .map(|key| (key.to_hex(), 1))
             .collect::<VoteCount>();
         let n_voters = votes_count.len();
@@ -299,7 +298,6 @@ mod tests {
 
         let votes_count = snapshot
             .voting_keys()
-            .into_iter()
             .map(|key| (key.to_hex(), 1))
             .collect::<VoteCount>();
 

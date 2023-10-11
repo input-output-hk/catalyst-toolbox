@@ -77,7 +77,7 @@ impl Snapshot {
                     .map(|reg| {
                         let value = u64::from(reg.voting_power);
                         if in_lovelace {
-                            value / 1_000_000 as u64
+                            value / 1_000_000_u64
                         } else {
                             value
                         }
@@ -180,7 +180,7 @@ where
 
     let addr_type = match addr_type {
         // Shelley
-        0x0 | 0x1 | 0x2 | 0x3 | 0x4 | 0x5 | 0x6 | 0x7 => AddrType::Shelley,
+        0x0..=0x7 => AddrType::Shelley,
         // Stake
         0xf | 0xe => AddrType::Stake,
         _ => {
@@ -232,7 +232,7 @@ mod tests {
                 .prop_map(|((stake_key, rewards_addr, voting_key), vp)| {
                     let stake_public_key = hex::encode(stake_key);
                     let reward_address =
-                        bech32::encode("stake", &rewards_addr.to_base32(), bech32::Variant::Bech32)
+                        bech32::encode("stake", rewards_addr.to_base32(), bech32::Variant::Bech32)
                             .unwrap();
                     let voting_public_key = <SecretKey<Ed25519>>::from_binary(&voting_key)
                         .expect("every binary sequence is a valid secret key")
