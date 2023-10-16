@@ -95,8 +95,18 @@ mod tests {
     use std::collections::HashMap;
     use test_strategy::proptest;
 
+    const DEFAULT_SNAPSHOT_THRESHOLD: u64 = 1;
+
     #[proptest]
-    fn test_small(snapshot: Snapshot) {
+    fn test_small(raw_snapshot: RawSnapshot) {
+
+        let snapshot = Snapshot::from_raw_snapshot(
+            raw_snapshot,
+            DEFAULT_SNAPSHOT_THRESHOLD.into(),
+            Fraction::from(1),
+            &|_vk: &Identifier| String::new(),
+        ).unwrap();
+
         let voting_keys = snapshot.voting_keys().collect::<Vec<_>>();
 
         let votes_count = voting_keys
@@ -113,7 +123,11 @@ mod tests {
                 )
             })
             .collect::<VoteCount>();
+
+        //println!("Vote count: {:?}", votes_count);
+
         let voters = snapshot.to_full_snapshot_info();
+
         let voters_active = voters
             .clone()
             .into_iter()
@@ -131,6 +145,7 @@ mod tests {
             Rewards::ONE,
         )
         .unwrap();
+
         let rewards_no_inactive = calc_dreps_rewards(
             voters_active,
             votes_count,
@@ -140,6 +155,7 @@ mod tests {
             Rewards::ONE,
         )
         .unwrap();
+
         // Rewards should ignore inactive voters
         prop_assert_eq!(rewards, rewards_no_inactive);
     }
