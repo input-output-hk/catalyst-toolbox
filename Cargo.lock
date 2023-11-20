@@ -514,8 +514,8 @@ dependencies = [
  "hex",
  "image",
  "itertools 0.10.5",
- "jcli 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
- "jormungandr-automation 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9)",
+ "jcli",
+ "jormungandr-automation",
  "jormungandr-integration-tests",
  "jormungandr-lib 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
  "jortestkit",
@@ -540,7 +540,7 @@ dependencies = [
  "symmetric-cipher",
  "test-strategy 0.2.1",
  "thiserror",
- "thor 0.1.0 (git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9)",
+ "thor",
  "time 0.3.17",
  "tokio",
  "url",
@@ -2295,7 +2295,7 @@ dependencies = [
  "custom_debug",
  "hex",
  "indicatif",
- "jormungandr-automation 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
+ "jormungandr-automation",
  "jormungandr-lib 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
  "jortestkit",
  "parity-multiaddr",
@@ -2309,7 +2309,7 @@ dependencies = [
  "serde_yaml",
  "structopt",
  "thiserror",
- "thor 0.1.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
+ "thor",
  "yaml-rust",
 ]
 
@@ -2719,40 +2719,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jcli"
-version = "0.15.0"
-source = "git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9#47e874c5792bccd2eb073ef65ea89ac5d0525c04"
-dependencies = [
- "base64 0.13.1",
- "bech32 0.8.1",
- "bincode",
- "bytes",
- "chain-addr",
- "chain-core",
- "chain-crypto",
- "chain-impl-mockchain",
- "chain-time",
- "chain-vote",
- "clap 3.2.23",
- "ed25519-bip32",
- "gtmpl",
- "hex",
- "jormungandr-lib 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9)",
- "rand 0.8.5",
- "rand_chacha 0.3.1",
- "rayon",
- "reqwest",
- "rpassword",
- "serde",
- "serde_derive",
- "serde_json",
- "serde_yaml",
- "structopt",
- "thiserror",
- "versionisator",
-]
-
-[[package]]
 name = "jobserver"
 version = "0.1.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2826,70 +2792,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jormungandr-automation"
-version = "0.15.0"
-source = "git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9#47e874c5792bccd2eb073ef65ea89ac5d0525c04"
-dependencies = [
- "assert_cmd 2.0.6",
- "assert_fs",
- "base64 0.13.1",
- "bech32 0.8.1",
- "bytesize",
- "cardano-legacy-address",
- "chain-addr",
- "chain-core",
- "chain-crypto",
- "chain-impl-mockchain",
- "chain-storage",
- "chain-time",
- "chain-vote",
- "custom_debug",
- "flate2",
- "fs_extra",
- "futures",
- "graphql_client",
- "hex",
- "humantime",
- "jormungandr-lib 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9)",
- "jortestkit",
- "json",
- "keynesis",
- "lazy_static",
- "log",
- "netstat2",
- "os_info",
- "parity-multiaddr",
- "poldercast",
- "predicates 2.1.2",
- "prost",
- "rand 0.8.5",
- "rand_chacha 0.3.1",
- "rand_core 0.6.4",
- "regex",
- "reqwest",
- "semver",
- "serde",
- "serde_derive",
- "serde_json",
- "serde_yaml",
- "strum 0.23.0",
- "sysinfo 0.23.13",
- "tar",
- "tempfile",
- "thiserror",
- "tokio",
- "tokio-stream",
- "tonic",
- "tonic-build",
- "tracing",
- "tracing-subscriber",
- "typed-bytes",
- "url",
- "warp",
- "zip",
-]
-
-[[package]]
 name = "jormungandr-integration-tests"
 version = "0.15.0"
 source = "git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0#47e874c5792bccd2eb073ef65ea89ac5d0525c04"
@@ -2910,7 +2812,7 @@ dependencies = [
  "hersir",
  "hex",
  "indicatif",
- "jormungandr-automation 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
+ "jormungandr-automation",
  "jormungandr-lib 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
  "jortestkit",
  "json",
@@ -2933,7 +2835,7 @@ dependencies = [
  "serde_yaml",
  "tempfile",
  "thiserror",
- "thor 0.1.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
+ "thor",
  "tokio",
  "tonic",
  "tracing",
@@ -3227,7 +3129,7 @@ dependencies = [
  "chain-crypto",
  "chain-impl-mockchain",
  "custom_debug",
- "jormungandr-automation 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
+ "jormungandr-automation",
  "jormungandr-lib 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
  "parity-multiaddr",
  "rand 0.8.5",
@@ -3237,7 +3139,7 @@ dependencies = [
  "serde_yaml",
  "structopt",
  "thiserror",
- "thor 0.1.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
+ "thor",
  "tokio",
  "warp",
 ]
@@ -3388,7 +3290,7 @@ dependencies = [
  "chain-time",
  "chain-vote",
  "indicatif",
- "jormungandr-automation 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
+ "jormungandr-automation",
  "jormungandr-lib 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
  "jortestkit",
  "loki",
@@ -3396,7 +3298,7 @@ dependencies = [
  "rand_core 0.6.4",
  "structopt",
  "thiserror",
- "thor 0.1.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
+ "thor",
  "tokio",
  "versionisator",
 ]
@@ -5578,40 +5480,9 @@ dependencies = [
  "custom_debug",
  "dirs",
  "hex",
- "jcli 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
- "jormungandr-automation 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
+ "jcli",
+ "jormungandr-automation",
  "jormungandr-lib 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?tag=v0.15.0)",
- "jortestkit",
- "rand 0.8.5",
- "rand_chacha 0.3.1",
- "rand_core 0.6.4",
- "serde",
- "serde_yaml",
- "structopt",
- "thiserror",
- "time 0.3.17",
-]
-
-[[package]]
-name = "thor"
-version = "0.1.0"
-source = "git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9#47e874c5792bccd2eb073ef65ea89ac5d0525c04"
-dependencies = [
- "assert_fs",
- "bech32 0.8.1",
- "bincode",
- "chain-addr",
- "chain-core",
- "chain-crypto",
- "chain-impl-mockchain",
- "chain-vote",
- "cocoon",
- "custom_debug",
- "dirs",
- "hex",
- "jcli 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9)",
- "jormungandr-automation 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9)",
- "jormungandr-lib 0.15.0 (git+https://github.com/input-output-hk/jormungandr.git?branch=catalyst-fund9)",
  "jortestkit",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
